@@ -1,0 +1,26 @@
+repository:
+  object_storage: gs://terraform-internal-neptune-3dedd705-9275-592b-11c9-bc65c9821980
+  branch: master
+  plan_requirements:
+    - undiverged
+    - rebased
+  apply_requirements:
+    - approved
+    - mergeable
+    - undiverged
+    - rebased
+  allowed_workflow: default
+
+workflows:
+  default:
+    plan:
+      steps:
+        - run: echo "Custom command"
+        - run: terramate run --parallel $(nproc --all) --changed -- terragrunt init -upgrade
+        - run: terramate run --changed -- terragrunt plan
+    apply:
+      depends_on:
+        - plan
+      steps:
+        - run: echo "Custom command"
+        - run: terramate run --changed -- terragrunt apply -auto-approve

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "neptune-cli"
+version = "0.1.0"
+description = "A Terraform pull request automation tool inspired by Atlantis"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Kaio Fellipe" }
+]
+dependencies = [
+    "typer[all]>=0.9.0",
+    "pyyaml>=6.0.1",
+    "requests>=2.31.0",
+    "google-cloud-storage>=2.14.0",
+    "GitPython>=3.1.0",
+    "typing-extensions>=4.9.0"
+]
+
+[project.scripts]
+neptune = "neptune.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["neptune"]
