@@ -1,0 +1,13 @@
+---
+description: Test, lint, and release workflows; semver and GoReleaser
+globs: ".github/**/*.yml,Makefile,.goreleaser.yml"
+alwaysApply: false
+---
+
+# CI and Release
+
+- **test.yml**: Runs on push to `main`/`release-*` and on PRs. Path filter for `**.go`, `go.*`, `Makefile`, workflow file. Jobs: `make test-all`, `make check-fmt`. Do not remove path filter or break job dependencies.
+- **lint.yml**: Runs on PRs. Path filter for Go and config. Uses golangci-lint. Keep version and filters consistent.
+- **release.yml**: Triggers on push of tags `v*.*.*`. Uses GoReleaser; needs `contents: write`. Do not change tag pattern or permissions without good reason.
+- **Semver**: Tags are `vMAJOR.MINOR.PATCH` (e.g. `v0.2.0`). GoReleaser reads tag and injects version/commit/date via ldflags in `main.go`.
+- **.goreleaser.yml**: Builds single binary `neptune` from `.`; multi-OS/arch. Do not remove ldflags or rename binary without updating docs.

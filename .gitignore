@@ -16,3 +16,8 @@ venv.bak/
 
 # Neptune Development config file
 .neptune.yaml
+
+# Go
+/neptune
+dist/
+neptune*

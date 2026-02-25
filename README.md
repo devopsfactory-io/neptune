@@ -44,9 +44,23 @@ workflows:
 
 ## Installation
 
+### Go (recommended)
+
+```bash
+# Build from source
+go build -o neptune .
+
+# Or install into $GOPATH/bin
+go install .
+```
+
+Binaries for Linux, macOS, and Windows are published to the GitHub Releases page when you push a version tag (e.g. `v0.2.0`) via GoReleaser.
+
+### Python (legacy)
+
 ```bash
 # From the repository root
-pip install -e tools/python/neptune-cli
+pip install -e .
 
 # Enable shell completion (optional)
 neptune --install-completion
@@ -54,7 +68,7 @@ neptune --install-completion
 
 ### Using with GitHub Actions
 
-[TODO: Add documentation for using with GitHub Actions]
+Set the same environment variables in your workflow (`GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_COMMENT_ID`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`), then run `neptune command plan` or `neptune command apply` as needed.
 
 ## Usage
 
@@ -62,14 +76,29 @@ neptune --install-completion
 # Show help
 neptune --help
 
-# Run a workflow configured in the .neptune.yaml file
-neptune command [workflow]
+# Print version
+neptune version
 
-# Use auto-completion
-neptune [TAB][TAB]
+# Run a workflow phase (plan or apply)
+neptune command plan
+neptune command apply
+
+# Unlock all stacks (requires --all)
+neptune unlock --all
 ```
 
 ## Development
+
+### Go
+
+```bash
+make build      # build binary
+make test-all   # run tests
+make check-fmt  # check formatting
+make lint       # run golangci-lint (optional)
+```
+
+### Python (legacy)
 
 This tool is built with:
 - Typer - For modern, type-safe CLI interface
