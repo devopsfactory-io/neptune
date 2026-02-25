@@ -47,7 +47,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v1.61.0
+          version: v2.0.0
 
   skip:
     needs: [changes]

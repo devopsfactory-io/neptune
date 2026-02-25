@@ -1,23 +1,27 @@
+version: "2"
+
 run:
   timeout: 5m
   modules-download-mode: readonly
 
 linters:
+  default: none
   enable:
     - errcheck
-    - gofmt
     - govet
     - ineffassign
     - staticcheck
     - unused
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
 
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
+formatters:
+  enable:
+    - gofmt
