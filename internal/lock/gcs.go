@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"cloud.google.com/go/storage"
@@ -50,7 +51,11 @@ func (s *GCSStorage) GetLockFile(ctx context.Context, stackPath string) (*domain
 		}
 		return nil, fmt.Errorf("failed to get lock file for stack %s: %w", stackPath, err)
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "close reader: %v\n", err)
+		}
+	}()
 	var lf domain.LockFile
 	if err := json.NewDecoder(reader).Decode(&lf); err != nil {
 		return nil, fmt.Errorf("failed to decode lock file for stack %s: %w", stackPath, err)
@@ -68,7 +73,9 @@ func (s *GCSStorage) CreateOrUpdateLockFile(ctx context.Context, stackPath strin
 	w := obj.NewWriter(ctx)
 	w.ContentType = "application/json"
 	if _, err := w.Write(data); err != nil {
-		_ = w.Close()
+		if closeErr := w.Close(); closeErr != nil {
+			return fmt.Errorf("write failed: %w; close: %v", err, closeErr)
+		}
 		return err
 	}
 	return w.Close()

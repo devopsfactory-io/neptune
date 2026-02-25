@@ -3,6 +3,8 @@ package run
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -24,7 +26,9 @@ type Runner struct {
 func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 	out := &domain.StepsOutput{Phase: r.Phase, OverallStatus: 0}
 	if r.Locks != nil && len(r.Stacks) > 0 {
-		_ = r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusInProgress)
+		if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusInProgress); err != nil {
+			fmt.Fprintf(os.Stderr, "update stacks: %v\n", err)
+		}
 	}
 	for _, step := range r.Steps {
 		if step.Run == "" {
@@ -35,13 +39,17 @@ func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 		if runOut.Status != 0 {
 			out.OverallStatus = 1
 			if r.Locks != nil && len(r.Stacks) > 0 {
-				_ = r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusPending)
+				if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusPending); err != nil {
+					fmt.Fprintf(os.Stderr, "update stacks: %v\n", err)
+				}
 			}
 			return out, nil
 		}
 	}
 	if r.Locks != nil && len(r.Stacks) > 0 {
-		_ = r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusCompleted)
+		if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusCompleted); err != nil {
+			fmt.Fprintf(os.Stderr, "update stacks: %v\n", err)
+		}
 	}
 	return out, nil
 }

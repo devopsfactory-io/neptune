@@ -2,6 +2,8 @@ package lock
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 
 	"neptune/internal/domain"
@@ -39,7 +41,9 @@ func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPRO
 	}
 	details, err := getLockDetails(ctx, storage, stacks.Stacks)
 	if err != nil {
-		_ = storage.Close()
+		if closeErr := storage.Close(); closeErr != nil {
+			return nil, fmt.Errorf("get lock details: %w; close: %v", err, closeErr)
+		}
 		return nil, err
 	}
 	return &Interface{
@@ -95,7 +99,9 @@ func (iface *Interface) StacksLocked(ctx context.Context) (*domain.LockedStacks,
 			return nil, err
 		}
 		if !open {
-			_ = iface.Storage.DeleteLockFile(ctx, d.Path)
+			if err := iface.Storage.DeleteLockFile(ctx, d.Path); err != nil {
+				fmt.Fprintf(os.Stderr, "delete lock file %s: %v\n", d.Path, err)
+			}
 			continue
 		}
 		if lockedBy != currentPR {

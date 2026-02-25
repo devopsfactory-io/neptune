@@ -73,7 +73,11 @@ func runCommand(_ *cobra.Command, args []string) error {
 	if err != nil {
 		notifyAndExit(cfg, "Failed to get changed Terraform stacks: "+err.Error(), 1)
 	}
-	defer lockIface.Close()
+	defer func() {
+		if err := lockIface.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "close lock: %v\n", err)
+		}
+	}()
 
 	if len(lockIface.TerraformStacks.Stacks) == 0 {
 		notifyAndExit(cfg, "No Terraform stacks found", 0)
@@ -116,7 +120,9 @@ func runCommand(_ *cobra.Command, args []string) error {
 	}
 	notifier := githubnotify.NewNotifier(cfg)
 	if notifier != nil {
-		_ = notifier.CreateComment(comment)
+		if err := notifier.CreateComment(comment); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to post comment: %v\n", err)
+		}
 	}
 
 	msg := fmt.Sprintf("Workflow %s completed with status %d", workflow, stepsOut.OverallStatus)
@@ -131,10 +137,12 @@ func runCommand(_ *cobra.Command, args []string) error {
 func notifyAndExit(cfg *domain.NeptuneConfig, output string, status int) {
 	notifier := githubnotify.NewNotifier(cfg)
 	if notifier != nil {
-		_ = notifier.CreateComment(&domain.PullRequestComment{
+		if err := notifier.CreateComment(&domain.PullRequestComment{
 			SimpleOutput:  output,
 			OverallStatus: status,
-		})
+		}); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to post comment: %v\n", err)
+		}
 	}
 	if status != 0 {
 		fmt.Fprintln(os.Stderr, "Error:", output)

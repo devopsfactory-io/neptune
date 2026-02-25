@@ -29,11 +29,13 @@ func (c *Client) CheckRequirements(ctx context.Context, requirements []string) *
 				failed = append(failed, req)
 			}
 		case "mergeable":
-			if v, _ := prInfo.Response["mergeable"].(bool); !v {
+			v, ok := prInfo.Response["mergeable"].(bool)
+			if !ok || !v {
 				failed = append(failed, req)
 			}
 		case "undiverged":
-			if v, _ := prInfo.Response["mergeable_state"].(string); v == "behind" {
+			v, ok := prInfo.Response["mergeable_state"].(string)
+			if ok && v == "behind" {
 				failed = append(failed, req)
 			}
 		case "rebased":

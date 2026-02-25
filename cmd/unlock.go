@@ -57,7 +57,11 @@ func runUnlock() error {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
-	defer lockIface.Close()
+	defer func() {
+		if err := lockIface.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "close lock: %v\n", err)
+		}
+	}()
 	if err := lockIface.UnlockAllStacks(ctx); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)

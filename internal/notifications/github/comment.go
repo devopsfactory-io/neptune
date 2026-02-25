@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 
@@ -77,7 +78,11 @@ func (n *Notifier) CreateComment(comment *domain.PullRequestComment) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "close response body: %v\n", err)
+		}
+	}()
 	if resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("failed to create comment: status %d", resp.StatusCode)
 	}
@@ -85,7 +90,10 @@ func (n *Notifier) CreateComment(comment *domain.PullRequestComment) error {
 }
 
 func escapeJSON(s string) string {
-	b, _ := json.Marshal(s)
+	b, err := json.Marshal(s)
+	if err != nil {
+		return s
+	}
 	return string(b)
 }
 
