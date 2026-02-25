@@ -1,0 +1,19 @@
+package cmd
+
+import (
+	"github.com/spf13/cobra"
+)
+
+// NewRootCmd returns the root command for the Neptune CLI.
+func NewRootCmd(version, commit, date string) *cobra.Command {
+	root := &cobra.Command{
+		Use:   "neptune",
+		Short: "Neptune CLI - Terraform pull request automation tool inspired by Atlantis",
+		Long:  "Neptune is a Terraform pull request automation tool. Run plans and applies on PRs with Terramate and GCS-backed locking.",
+	}
+	root.CompletionOptions.DisableDefaultCmd = true
+	root.AddCommand(NewVersionCmd(version, commit, date))
+	root.AddCommand(NewCommandCmd())
+	root.AddCommand(NewUnlockCmd())
+	return root
+}

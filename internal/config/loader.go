@@ -1,0 +1,162 @@
+package config
+
+import (
+	"os"
+	"path/filepath"
+
+	"neptune/internal/domain"
+
+	"gopkg.in/yaml.v3"
+)
+
+// Required env vars (all must be set).
+var requiredEnvVars = []string{
+	"NEPTUNE_CONFIG_PATH",
+	"GITHUB_REPOSITORY",
+	"GITHUB_PULL_REQUEST_BRANCH",
+	"GITHUB_PULL_REQUEST_NUMBER",
+	"GITHUB_PULL_REQUEST_COMMENT_ID",
+	"GITHUB_RUN_ID",
+	"GITHUB_TOKEN",
+}
+
+type rawRepository struct {
+	ObjectStorage     string   `yaml:"object_storage"`
+	Branch            string   `yaml:"branch"`
+	PlanRequirements  []string `yaml:"plan_requirements"`
+	ApplyRequirements []string `yaml:"apply_requirements"`
+	AllowedWorkflow   string   `yaml:"allowed_workflow"`
+}
+
+type rawStep struct {
+	Run string `yaml:"run"`
+}
+
+type rawPhase struct {
+	Steps     []rawStep `yaml:"steps"`
+	DependsOn []string  `yaml:"depends_on"`
+}
+
+type rawConfig struct {
+	Repository rawRepository                  `yaml:"repository"`
+	Workflows  map[string]map[string]rawPhase `yaml:"workflows"`
+}
+
+// LoadEnv loads required environment variables. Returns a map of all required vars or error.
+func LoadEnv() (map[string]string, error) {
+	env := make(map[string]string)
+	env["NEPTUNE_CONFIG_PATH"] = getEnv("NEPTUNE_CONFIG_PATH", ".neptune.yaml")
+	env["GITHUB_REPOSITORY"] = os.Getenv("GITHUB_REPOSITORY")
+	env["GITHUB_PULL_REQUEST_BRANCH"] = os.Getenv("GITHUB_PULL_REQUEST_BRANCH")
+	env["GITHUB_PULL_REQUEST_NUMBER"] = os.Getenv("GITHUB_PULL_REQUEST_NUMBER")
+	env["GITHUB_PULL_REQUEST_COMMENT_ID"] = os.Getenv("GITHUB_PULL_REQUEST_COMMENT_ID")
+	env["GITHUB_RUN_ID"] = os.Getenv("GITHUB_RUN_ID")
+	env["GITHUB_TOKEN"] = os.Getenv("GITHUB_TOKEN")
+
+	var missing []string
+	for _, k := range requiredEnvVars {
+		if env[k] == "" {
+			missing = append(missing, k)
+		}
+	}
+	if len(missing) > 0 {
+		return nil, &LoadError{Message: "environment variables " + joinQuoted(missing) + " are required"}
+	}
+	return env, nil
+}
+
+func getEnv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+// Load reads config from env and the YAML file. Caller should then call Validate.
+func Load(env map[string]string) (*domain.NeptuneConfig, error) {
+	configPath := env["NEPTUNE_CONFIG_PATH"]
+	if configPath == "" {
+		configPath = ".neptune.yaml"
+	}
+	path := filepath.Clean(configPath)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, &LoadError{Message: "config file not found: " + configPath}
+	}
+
+	var raw rawConfig
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil, &LoadError{Message: "invalid YAML: " + err.Error()}
+	}
+
+	githubCfg := &domain.GitHubConfig{
+		Repository:           env["GITHUB_REPOSITORY"],
+		PullRequestBranch:    env["GITHUB_PULL_REQUEST_BRANCH"],
+		PullRequestNumber:    env["GITHUB_PULL_REQUEST_NUMBER"],
+		PullRequestCommentID: env["GITHUB_PULL_REQUEST_COMMENT_ID"],
+		RunID:                env["GITHUB_RUN_ID"],
+		Token:                env["GITHUB_TOKEN"],
+	}
+
+	repo := &domain.RepositoryConfig{
+		ObjectStorage:     raw.Repository.ObjectStorage,
+		Branch:            raw.Repository.Branch,
+		PlanRequirements:  raw.Repository.PlanRequirements,
+		ApplyRequirements: raw.Repository.ApplyRequirements,
+		AllowedWorkflow:   raw.Repository.AllowedWorkflow,
+		GitHub:            githubCfg,
+	}
+	if repo.Branch == "" {
+		repo.Branch = "master"
+	}
+	if repo.PlanRequirements == nil {
+		repo.PlanRequirements = []string{}
+	}
+	if repo.ApplyRequirements == nil {
+		repo.ApplyRequirements = []string{}
+	}
+
+	workflows := &domain.Workflows{Workflows: make(map[string]domain.WorkflowStatement)}
+	for wfName, phases := range raw.Workflows {
+		st := domain.WorkflowStatement{Name: wfName, Phases: make(map[string]domain.WorkflowPhase)}
+		for phaseName, rp := range phases {
+			steps := make([]domain.WorkflowStep, 0, len(rp.Steps))
+			for _, s := range rp.Steps {
+				steps = append(steps, domain.WorkflowStep{Run: s.Run})
+			}
+			st.Phases[phaseName] = domain.WorkflowPhase{
+				Steps:     steps,
+				DependsOn: rp.DependsOn,
+			}
+		}
+		workflows.Workflows[wfName] = st
+	}
+
+	return &domain.NeptuneConfig{
+		Repository: repo,
+		Workflows:  workflows,
+	}, nil
+}
+
+// LoadError is a config load error (no GitHub comment).
+type LoadError struct {
+	Message string
+}
+
+func (e *LoadError) Error() string {
+	return e.Message
+}
+
+func joinQuoted(ss []string) string {
+	if len(ss) == 0 {
+		return ""
+	}
+	b := ""
+	for i, s := range ss {
+		if i > 0 {
+			b += ", "
+		}
+		b += "'" + s + "'"
+	}
+	return b
+}
