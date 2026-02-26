@@ -1,0 +1,20 @@
+log_level: DEBUG
+
+repository:
+  object_storage: s3://neptune-e2e
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+
+workflows:
+  default:
+    plan:
+      steps:
+        - run: terramate run --changed -- terraform init -input=false
+        - run: terramate run --changed -- terraform plan -input=false -out=tfplan
+    apply:
+      depends_on:
+        - plan
+      steps:
+        - run: terramate run --changed -- terraform apply -input=false tfplan

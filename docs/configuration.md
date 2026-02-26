@@ -2,6 +2,15 @@
 
 Neptune reads repository configuration from a `.neptune.yaml` file in the root of your Infrastructure as Code repository.
 
+## Log level
+
+You can control how verbose Neptune's logs are:
+
+- **Config file**: Set `log_level` at the top level of `.neptune.yaml` to one of `DEBUG`, `INFO`, or `ERROR` (case-insensitive). Default is `INFO`.
+- **Environment**: Set `NEPTUNE_LOG_LEVEL` to one of `DEBUG`, `INFO`, or `ERROR`. This overrides the config file value.
+
+Use `DEBUG` for detailed output (e.g. each step and lock operation); use `ERROR` to only see errors. Log lines include a source (e.g. `neptune.config`, `neptune.lock`, `neptune.run`), and bordered banners are printed for the command, config summary, requirements check, lock, runner, and steps summary.
+
 ## Repository configuration
 
 Your repository must have a `.neptune.yaml` file with the following structure:
@@ -42,6 +51,10 @@ workflows:
 - **plan_requirements**: Requirements that must be met before running plan (e.g. `undiverged`, `rebased`).
 - **apply_requirements**: Requirements that must be met before apply (e.g. `approved`, `mergeable`, `undiverged`, `rebased`).
 - **allowed_workflow**: Name of the workflow to run (e.g. `default`).
+
+### Top-level optional fields
+
+- **log_level**: One of `DEBUG`, `INFO`, or `ERROR`. Default `INFO`. Overridden by the `NEPTUNE_LOG_LEVEL` environment variable.
 
 ### Workflows
 

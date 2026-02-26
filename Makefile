@@ -1,4 +1,4 @@
-.PHONY: build test-all check-fmt
+.PHONY: build test-all check-fmt e2e
 BINARY := neptune
 
 build:
@@ -12,3 +12,6 @@ check-fmt:
 
 lint:
 	golangci-lint run ./...
+
+e2e:
+	./e2e/run.sh

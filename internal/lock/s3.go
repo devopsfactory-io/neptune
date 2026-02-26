@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"neptune/internal/domain"
+	"neptune/internal/log"
 )
 
 // Ensure S3Storage implements ObjectStorage.
@@ -50,7 +50,10 @@ func NewS3Storage(ctx context.Context, bucketURL, parentFolder string) (*S3Stora
 	if cfg.Region == "" {
 		cfg.Region = "us-east-1"
 	}
-	client := s3.NewFromConfig(cfg)
+	// Path-style is required for MinIO and other S3-compatible endpoints so the bucket is in the path (e.g. http://localhost:9000/bucket/...) not the host (http://bucket.localhost:9000/...).
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	})
 	parent := strings.ReplaceAll(parentFolder, "/", "-")
 	parent = strings.ReplaceAll(parent, ":", "")
 	parent = strings.ReplaceAll(parent, ".", "-")
@@ -71,6 +74,7 @@ func (s *S3Storage) objectKey(stackPath string) string {
 
 // GetLockFile returns the lock file for the given stack path, or nil if not found.
 func (s *S3Storage) GetLockFile(ctx context.Context, stackPath string) (*domain.LockFile, error) {
+	log.For("lock").Debug("Getting lock file for stack " + stackPath)
 	out, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(s.objectKey(stackPath)),
@@ -85,7 +89,7 @@ func (s *S3Storage) GetLockFile(ctx context.Context, stackPath string) (*domain.
 	defer func() {
 		if out.Body != nil {
 			if err := out.Body.Close(); err != nil {
-				fmt.Fprintf(os.Stderr, "close S3 response body: %v\n", err)
+				log.Error("close S3 response body", "err", err)
 			}
 		}
 	}()
@@ -102,6 +106,7 @@ func (s *S3Storage) GetLockFile(ctx context.Context, stackPath string) (*domain.
 
 // CreateOrUpdateLockFile writes the lock file for the given stack.
 func (s *S3Storage) CreateOrUpdateLockFile(ctx context.Context, stackPath string, lockData *domain.LockFile) error {
+	log.For("lock").Debug("Creating or updating lock file for stack " + stackPath)
 	data, err := json.MarshalIndent(lockData, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal lock file: %w", err)

@@ -3,8 +3,10 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"neptune/internal/domain"
+	"neptune/internal/log"
 
 	"gopkg.in/yaml.v3"
 )
@@ -38,26 +40,35 @@ type rawPhase struct {
 }
 
 type rawConfig struct {
+	LogLevel   string                         `yaml:"log_level"`
 	Repository rawRepository                  `yaml:"repository"`
 	Workflows  map[string]map[string]rawPhase `yaml:"workflows"`
 }
 
 // LoadEnv loads required environment variables. Returns a map of all required vars or error.
+// When NEPTUNE_E2E=1, GitHub vars may be empty and get default values so e2e tests can run without a real token.
 func LoadEnv() (map[string]string, error) {
+	log.For("config").Info("Loading environment variables")
 	env := make(map[string]string)
+	e2eMode := os.Getenv("NEPTUNE_E2E") == "1"
+
 	env["NEPTUNE_CONFIG_PATH"] = getEnv("NEPTUNE_CONFIG_PATH", ".neptune.yaml")
-	env["GITHUB_REPOSITORY"] = os.Getenv("GITHUB_REPOSITORY")
-	env["GITHUB_PULL_REQUEST_BRANCH"] = os.Getenv("GITHUB_PULL_REQUEST_BRANCH")
-	env["GITHUB_PULL_REQUEST_NUMBER"] = os.Getenv("GITHUB_PULL_REQUEST_NUMBER")
-	env["GITHUB_PULL_REQUEST_COMMENT_ID"] = os.Getenv("GITHUB_PULL_REQUEST_COMMENT_ID")
-	env["GITHUB_RUN_ID"] = os.Getenv("GITHUB_RUN_ID")
+	env["GITHUB_REPOSITORY"] = getEnv("GITHUB_REPOSITORY", "e2e/neptune-test")
+	env["GITHUB_PULL_REQUEST_BRANCH"] = getEnv("GITHUB_PULL_REQUEST_BRANCH", "pr-1")
+	env["GITHUB_PULL_REQUEST_NUMBER"] = getEnv("GITHUB_PULL_REQUEST_NUMBER", "1")
+	env["GITHUB_PULL_REQUEST_COMMENT_ID"] = getEnv("GITHUB_PULL_REQUEST_COMMENT_ID", "")
+	env["GITHUB_RUN_ID"] = getEnv("GITHUB_RUN_ID", "1")
 	env["GITHUB_TOKEN"] = os.Getenv("GITHUB_TOKEN")
 
 	var missing []string
 	for _, k := range requiredEnvVars {
-		if env[k] == "" {
-			missing = append(missing, k)
+		if env[k] != "" {
+			continue
 		}
+		if e2eMode {
+			continue
+		}
+		missing = append(missing, k)
 	}
 	if len(missing) > 0 {
 		return nil, &LoadError{Message: "environment variables " + joinQuoted(missing) + " are required"}
@@ -78,6 +89,7 @@ func Load(env map[string]string) (*domain.NeptuneConfig, error) {
 	if configPath == "" {
 		configPath = ".neptune.yaml"
 	}
+	log.For("config").Info("Loading config file")
 	path := filepath.Clean(configPath)
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -132,9 +144,18 @@ func Load(env map[string]string) (*domain.NeptuneConfig, error) {
 		workflows.Workflows[wfName] = st
 	}
 
+	effectiveLevel := strings.TrimSpace(raw.LogLevel)
+	if effectiveLevel == "" {
+		effectiveLevel = "INFO"
+	}
+	if v := os.Getenv("NEPTUNE_LOG_LEVEL"); v != "" {
+		effectiveLevel = strings.TrimSpace(v)
+	}
+
 	return &domain.NeptuneConfig{
 		Repository: repo,
 		Workflows:  workflows,
+		LogLevel:   effectiveLevel,
 	}, nil
 }
 

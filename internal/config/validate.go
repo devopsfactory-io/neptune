@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"neptune/internal/domain"
+	"neptune/internal/log"
 )
 
 var allowedRequirements = map[string]bool{
@@ -15,8 +16,11 @@ var allowedRequirements = map[string]bool{
 	"rebased":    true,
 }
 
+var allowedLogLevels = map[string]bool{"DEBUG": true, "INFO": true, "ERROR": true}
+
 // Validate checks the loaded config. Returns an error suitable for GitHub comment if validation fails.
 func Validate(cfg *domain.NeptuneConfig) error {
+	log.For("config").Info("Checking config options")
 	repo := cfg.Repository
 	if repo == nil {
 		return errors.New("repository config is required")
@@ -51,6 +55,9 @@ func Validate(cfg *domain.NeptuneConfig) error {
 	}
 	if repo.GitHub != nil && repo.GitHub.PullRequestBranch == repo.Branch {
 		return errors.New("the repository.branch (default branch) should not be used to execute the workflows; run workflows in the pull request branch")
+	}
+	if cfg.LogLevel != "" && !allowedLogLevels[strings.ToUpper(strings.TrimSpace(cfg.LogLevel))] {
+		return errors.New("log_level must be one of: DEBUG, INFO, ERROR")
 	}
 
 	for _, wf := range cfg.Workflows.Workflows {

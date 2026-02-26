@@ -6,6 +6,7 @@ import (
 
 	"neptune/internal/domain"
 	"neptune/internal/git"
+	"neptune/internal/log"
 )
 
 // CheckRequirements checks if the PR meets the given requirements (approved, mergeable, undiverged, rebased).
@@ -13,6 +14,8 @@ func (c *Client) CheckRequirements(ctx context.Context, requirements []string) *
 	if len(requirements) == 0 {
 		return &domain.PRRequirementsStatus{IsCompliant: true}
 	}
+	log.For("github").Info("Checking requirements for PR " + c.prNum)
+	log.For("github").Info("Getting PR info")
 	prInfo, err := c.GetPRInfo(ctx)
 	if err != nil {
 		return &domain.PRRequirementsStatus{
@@ -20,8 +23,10 @@ func (c *Client) CheckRequirements(ctx context.Context, requirements []string) *
 			ErrorMessage: "Could not fetch PR information. Make sure GITHUB_TOKEN is set and has access to the repository.",
 		}
 	}
+	log.For("github").Info("Getting PR requirements information")
 	var failed []string
 	for _, req := range requirements {
+		log.For("github").Info("Checking requirement: " + req)
 		switch req {
 		case "approved":
 			ok, err := c.checkApproved(ctx)
@@ -29,21 +34,25 @@ func (c *Client) CheckRequirements(ctx context.Context, requirements []string) *
 				failed = append(failed, req)
 			}
 		case "mergeable":
+			log.For("github").Info("Checking PR mergeability")
 			v, ok := prInfo.Response["mergeable"].(bool)
 			if !ok || !v {
 				failed = append(failed, req)
 			}
 		case "undiverged":
+			log.For("github").Info("Checking PR branch is up to date with base")
 			v, ok := prInfo.Response["mergeable_state"].(string)
 			if ok && v == "behind" {
 				failed = append(failed, req)
 			}
 		case "rebased":
+			log.For("github").Info("Checking PR branch is rebased...")
 			if !git.IsBranchRebased(c.cfg) {
 				failed = append(failed, req)
 			}
 		}
 	}
+	log.For("github").Info("PR requirements collected")
 	compliant := len(failed) == 0
 	msg := ""
 	if !compliant {

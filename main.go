@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"neptune/cmd"
+	"neptune/internal/log"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 func main() {
 	rootCmd := cmd.NewRootCmd(version, commit, date)
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		log.Error("Error", "err", err)
 		os.Exit(1)
 	}
 }
