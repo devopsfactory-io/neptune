@@ -1,0 +1,76 @@
+name: e2e
+
+on:
+  push:
+    branches:
+      - main
+      - "release-**"
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches:
+      - main
+      - "release-**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changes:
+    outputs:
+      should-run: ${{ steps.changes.outputs.e2e == 'true' }}
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            e2e:
+              - 'e2e/**'
+              - 'internal/lock/**'
+              - 'cmd/**'
+              - 'internal/config/**'
+              - 'docker-compose*.yaml'
+              - 'docker-compose*.yml'
+              - '.github/workflows/e2e.yml'
+
+  e2e:
+    needs: [changes]
+    if: needs.changes.outputs.should-run == 'true'
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install Terramate
+        uses: terramate-io/terramate-action@v1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Run e2e
+        run: ./e2e/run.sh
+        env:
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
+          AWS_REGION: us-east-1
+          AWS_ENDPOINT_URL_S3: http://localhost:9000
+
+  skip:
+    needs: [changes]
+    if: needs.changes.outputs.should-run == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No e2e-relevant changes, skipping e2e"

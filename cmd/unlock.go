@@ -10,6 +10,7 @@ import (
 	"neptune/internal/config"
 	"neptune/internal/github"
 	"neptune/internal/lock"
+	"neptune/internal/log"
 )
 
 // NewUnlockCmd returns the unlock subcommand.
@@ -33,18 +34,19 @@ func runUnlock() error {
 	ctx := context.Background()
 	env, err := config.LoadEnv()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
 	cfg, err := config.Load(env)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
 	if err := config.Validate(cfg); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
+	log.Init(cfg.LogLevel)
 	ghClient := github.NewClient(cfg)
 	isPROpen := func(ctx context.Context, prNumber string) (bool, error) {
 		if ghClient == nil {
@@ -54,18 +56,18 @@ func runUnlock() error {
 	}
 	lockIface, err := lock.NewInterface(ctx, cfg, isPROpen)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
 	defer func() {
 		if err := lockIface.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "close lock: %v\n", err)
+			log.For("cli").Error("close lock", "err", err)
 		}
 	}()
 	if err := lockIface.UnlockAllStacks(ctx); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
+		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
-	fmt.Println("Success: All changed stacks unlocked")
+	log.For("cli").Info("Success: All changed stacks unlocked")
 	return nil
 }

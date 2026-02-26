@@ -3,10 +3,11 @@ package lock
 import (
 	"context"
 	"fmt"
-	"os"
+	"strings"
 	"sync"
 
 	"neptune/internal/domain"
+	"neptune/internal/log"
 )
 
 // IsPROpenFunc returns true if the given PR number is still open.
@@ -27,6 +28,7 @@ func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPRO
 	if err != nil {
 		return nil, err
 	}
+	log.For("lock").Info("Getting changed Terraform stacks with Terramate")
 	if len(stacks.Stacks) == 0 {
 		return &Interface{
 			Config:           cfg,
@@ -39,6 +41,12 @@ func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPRO
 	if err != nil {
 		return nil, err
 	}
+	if strings.HasPrefix(cfg.Repository.ObjectStorage, "gs://") {
+		log.For("lock").Info("Initializing GCS storage client")
+	} else {
+		log.For("lock").Info("Initializing S3 storage client")
+	}
+	log.For("lock").Info("Getting lock details for stacks")
 	details, err := getLockDetails(ctx, storage, stacks.Stacks)
 	if err != nil {
 		if closeErr := storage.Close(); closeErr != nil {
@@ -87,6 +95,7 @@ func getLockDetails(ctx context.Context, s ObjectStorage, stacks []string) ([]do
 
 // StacksLocked returns which stacks are locked by other PRs. If a lock's PR is closed, the lock is deleted.
 func (iface *Interface) StacksLocked(ctx context.Context) (*domain.LockedStacks, error) {
+	log.For("lock").Info("Checking locked status of stacks...")
 	out := &domain.LockedStacks{Locked: false}
 	currentPR := iface.Config.Repository.GitHub.PullRequestNumber
 	for _, d := range iface.LockStackDetails {
@@ -99,8 +108,11 @@ func (iface *Interface) StacksLocked(ctx context.Context) (*domain.LockedStacks,
 			return nil, err
 		}
 		if !open {
+			log.For("lock").Info("PR " + lockedBy + " is not open, unlocking stack " + d.Path)
 			if err := iface.Storage.DeleteLockFile(ctx, d.Path); err != nil {
-				fmt.Fprintf(os.Stderr, "delete lock file %s: %v\n", d.Path, err)
+				log.For("lock").Error("delete lock file", "path", d.Path, "err", err)
+			} else {
+				log.For("lock").Info("Deleting lock file for stack " + d.Path)
 			}
 			continue
 		}
@@ -110,11 +122,13 @@ func (iface *Interface) StacksLocked(ctx context.Context) (*domain.LockedStacks,
 			out.PRs = append(out.PRs, lockedBy)
 		}
 	}
+	log.For("lock").Info("Stacks lock status: LockedStacks(locked=" + fmt.Sprint(out.Locked) + ", stack_path=" + fmt.Sprint(out.StackPath) + ", prs=" + fmt.Sprint(out.PRs) + ")")
 	return out, nil
 }
 
 // DependsOnCompleted returns true if all depends_on phases for the given phase are completed for every stack.
 func (iface *Interface) DependsOnCompleted(phase string) bool {
+	log.For("lock").Debug("Checking depends_on for phase " + phase)
 	wf, ok := iface.Config.Workflows.Workflows[iface.Config.Repository.AllowedWorkflow]
 	if !ok {
 		return false
@@ -124,8 +138,10 @@ func (iface *Interface) DependsOnCompleted(phase string) bool {
 		return true
 	}
 	if len(ph.DependsOn) == 0 {
+		log.For("lock").Debug("Depends on: None")
 		return true
 	}
+	log.For("lock").Debug("Depends on: " + strings.Join(ph.DependsOn, ", "))
 	for _, dep := range ph.DependsOn {
 		for _, d := range iface.LockStackDetails {
 			if d.LockFile == nil {
@@ -163,12 +179,14 @@ func (iface *Interface) defineLockFile(ctx context.Context, phase, stackPath str
 
 // LockStacks writes lock files for all stacks with the given phase and status.
 func (iface *Interface) LockStacks(ctx context.Context, phase string, stacks []string, status domain.WorkflowStatus) error {
+	log.For("lock").Info("Locking stacks for phase " + phase + " and status " + string(status))
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(stacks))
 	for _, s := range stacks {
 		wg.Add(1)
 		go func(stack string) {
 			defer wg.Done()
+			log.For("lock").Debug("Defining lock file for stack " + stack + " and phase " + phase)
 			lf, err := iface.defineLockFile(ctx, phase, stack, status)
 			if err != nil {
 				errCh <- err
@@ -191,7 +209,9 @@ func (iface *Interface) LockStacks(ctx context.Context, phase string, stacks []s
 
 // UpdateStacks updates the lock status for the given phase for all stacks.
 func (iface *Interface) UpdateStacks(ctx context.Context, phase string, stacks []string, status domain.WorkflowStatus) error {
+	log.For("lock").Info("Updating lock status for stacks " + fmt.Sprint(stacks) + " and phase " + phase)
 	for _, stack := range stacks {
+		log.For("lock").Debug("Defining lock file for stack " + stack + " and phase " + phase)
 		lf, err := iface.defineLockFile(ctx, phase, stack, status)
 		if err != nil {
 			return err

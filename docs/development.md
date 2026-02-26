@@ -1,5 +1,9 @@
 # Development
 
+## End-to-end tests
+
+E2E tests run Neptune against MinIO via Docker Compose and do not require a real GitHub PR. See [e2e/README.md](../e2e/README.md) for prerequisites and how to run `./e2e/run.sh`. PR emulation is done with an isolated git repo (main + pr-1 branch with changed stacks) and `NEPTUNE_E2E=1` so GitHub checks are skipped.
+
 ## Go
 
 ```bash

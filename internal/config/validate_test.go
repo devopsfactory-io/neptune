@@ -128,3 +128,32 @@ func TestValidate_Ok(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestValidate_LogLevel_Invalid(t *testing.T) {
+	cfg := &domain.NeptuneConfig{
+		Repository: &domain.RepositoryConfig{
+			ObjectStorage:   "gs://bucket",
+			Branch:          "main",
+			AllowedWorkflow: "default",
+			GitHub:          &domain.GitHubConfig{PullRequestBranch: "feature"},
+		},
+		Workflows: &domain.Workflows{
+			Workflows: map[string]domain.WorkflowStatement{
+				"default": {
+					Phases: map[string]domain.WorkflowPhase{
+						"plan":  {Steps: []domain.WorkflowStep{{Run: "terramate run --changed -- terragrunt plan"}}},
+						"apply": {Steps: []domain.WorkflowStep{{Run: "terramate run --changed -- terragrunt apply"}}},
+					},
+				},
+			},
+		},
+		LogLevel: "TRACE",
+	}
+	err := Validate(cfg)
+	if err == nil {
+		t.Fatal("expected validation error for invalid log_level")
+	}
+	if err.Error() != "log_level must be one of: DEBUG, INFO, ERROR" {
+		t.Errorf("unexpected error: %v", err)
+	}
+}

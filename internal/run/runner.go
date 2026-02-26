@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
@@ -11,6 +12,7 @@ import (
 
 	"neptune/internal/domain"
 	"neptune/internal/lock"
+	"neptune/internal/log"
 )
 
 // Runner runs workflow phase steps and updates lock status.
@@ -25,22 +27,26 @@ type Runner struct {
 // Execute runs all steps; streams stdout/stderr to the process; updates lock to IN_PROGRESS then COMPLETED or PENDING.
 func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 	out := &domain.StepsOutput{Phase: r.Phase, OverallStatus: 0}
+	log.For("run").Info("Executing workflow phase: " + r.Phase)
 	if r.Locks != nil && len(r.Stacks) > 0 {
 		if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusInProgress); err != nil {
-			fmt.Fprintf(os.Stderr, "update stacks: %v\n", err)
+			log.For("run").Error("update stacks", "err", err)
 		}
 	}
 	for _, step := range r.Steps {
 		if step.Run == "" {
 			continue
 		}
+		log.Banner("Neptune Runner", []string{"Neptune is running the following command: " + step.Run})
+		log.For("run").Info("Running command: " + step.Run)
 		runOut := r.runCommand(ctx, step.Run)
 		out.Outputs = append(out.Outputs, runOut)
+		log.For("run").Info("Command completed with return code " + fmt.Sprint(runOut.Status))
 		if runOut.Status != 0 {
 			out.OverallStatus = 1
 			if r.Locks != nil && len(r.Stacks) > 0 {
 				if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusPending); err != nil {
-					fmt.Fprintf(os.Stderr, "update stacks: %v\n", err)
+					log.For("run").Error("update stacks", "err", err)
 				}
 			}
 			return out, nil
@@ -48,9 +54,10 @@ func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 	}
 	if r.Locks != nil && len(r.Stacks) > 0 {
 		if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusCompleted); err != nil {
-			fmt.Fprintf(os.Stderr, "update stacks: %v\n", err)
+			log.For("run").Error("update stacks", "err", err)
 		}
 	}
+	log.For("run").Info("Workflow phase completed")
 	return out, nil
 }
 
@@ -63,8 +70,8 @@ func (r *Runner) runCommand(ctx context.Context, command string) domain.RunOutpu
 		flag = "/c"
 	}
 	cmd := exec.CommandContext(ctx, shell, flag, command)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	cmd.Stdout = io.MultiWriter(&stdout, os.Stdout)
+	cmd.Stderr = io.MultiWriter(&stderr, os.Stderr)
 	err := cmd.Run()
 	status := 0
 	if err != nil {

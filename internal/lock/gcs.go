@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"cloud.google.com/go/storage"
 	"neptune/internal/domain"
+	"neptune/internal/log"
 )
 
 // Ensure GCSStorage implements ObjectStorage.
@@ -63,6 +63,7 @@ func (s *GCSStorage) objectPath(stackPath string) string {
 
 // GetLockFile returns the lock file for the given stack path, or nil if not found.
 func (s *GCSStorage) GetLockFile(ctx context.Context, stackPath string) (*domain.LockFile, error) {
+	log.For("lock").Debug("Getting lock file for stack " + stackPath)
 	obj := s.bucket.Object(s.objectPath(stackPath))
 	reader, err := obj.NewReader(ctx)
 	if err != nil {
@@ -73,7 +74,7 @@ func (s *GCSStorage) GetLockFile(ctx context.Context, stackPath string) (*domain
 	}
 	defer func() {
 		if err := reader.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "close reader: %v\n", err)
+			log.Error("close reader", "err", err)
 		}
 	}()
 	var lf domain.LockFile
@@ -85,6 +86,7 @@ func (s *GCSStorage) GetLockFile(ctx context.Context, stackPath string) (*domain
 
 // CreateOrUpdateLockFile writes the lock file for the given stack.
 func (s *GCSStorage) CreateOrUpdateLockFile(ctx context.Context, stackPath string, lockData *domain.LockFile) error {
+	log.For("lock").Debug("Creating or updating lock file for stack " + stackPath)
 	obj := s.bucket.Object(s.objectPath(stackPath))
 	data, err := json.MarshalIndent(lockData, "", "  ")
 	if err != nil {

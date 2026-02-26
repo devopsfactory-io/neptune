@@ -1,18 +1,12 @@
-# Optional: log level (DEBUG, INFO, ERROR). Default: INFO. Overridden by NEPTUNE_LOG_LEVEL env.
-# log_level: INFO
-
 repository:
-  # gs://bucket or gs://bucket/prefix (GCS); s3://bucket or s3://bucket/prefix (AWS S3 or MinIO). See docs/object-storage.md for backend-specific env vars.
-  object_storage: gs://terraform-internal-neptune-3dedd705-9275-592b-11c9-bc65c9821980
-  branch: master
+  object_storage: gs://object_storage_url
+  branch: main
   plan_requirements:
     - undiverged
-    - rebased
   apply_requirements:
     - approved
     - mergeable
     - undiverged
-    - rebased
   allowed_workflow: default
 
 workflows:

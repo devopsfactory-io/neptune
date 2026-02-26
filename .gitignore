@@ -14,9 +14,6 @@ venv.bak/
 .coverage
 .pytest_cache/
 
-# Neptune Development config file
-.neptune.yaml
-
 # Go
 /neptune
 dist/

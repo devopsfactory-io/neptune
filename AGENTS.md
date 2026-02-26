@@ -8,7 +8,7 @@ Guidance for AI coding agents working on the Neptune project.
 
 **Neptune** is a Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs plan/apply (Terraform or OpenTofu) on pull requests using [Terramate](https://github.com/terramate-io/terramate) for change detection, object storage (GCS or S3) for stack locking, and GitHub for PR requirements and comments.
 
-**Main capabilities**: Load config from `.neptune.yaml` and env; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (e.g. terramate + terragrunt); post results as PR comments.
+**Main capabilities**: Load config from `.neptune.yaml` and env; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (e.g. terramate + terragrunt); post results as PR comments. Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
 
 **Language**: Go (see `go.mod`). Legacy Python code exists under `neptune/` and `tests/`; primary codebase is Go.
 
@@ -18,13 +18,15 @@ Guidance for AI coding agents working on the Neptune project.
 
 - **`main.go`** – Entry point; version/commit/date via ldflags.
 - **`cmd/`** – CLI (Cobra): `root.go`, `version.go`, `command.go`, `unlock.go`.
-- **`internal/config`** – Load env + YAML, validate `.neptune.yaml`.
+- **`internal/config`** – Load env + YAML, validate `.neptune.yaml` (including optional `log_level`).
 - **`internal/domain`** – Config, lock, run, and GitHub domain structs.
+- **`internal/log`** – Structured logging (DEBUG, INFO, ERROR) via `log/slog`; level from `NEPTUNE_LOG_LEVEL` or config `log_level`.
 - **`internal/lock`** – Terramate changed stacks, object-storage lock files (GCS, S3), lock interface.
 - **`internal/run`** – Execute workflow phase steps (shell).
 - **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged).
 - **`internal/git`** – Rebased check (e.g. `git rev-list`).
 - **`internal/notifications/github`** – Format and post PR comments.
+- **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
 - **`Makefile`**, **`.golangci.yml`**, **`.goreleaser.yml`**, **`.github/workflows/`** – Build, test, lint, release.
 
 ---
@@ -65,12 +67,14 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 - **Location**: Place `*_test.go` next to the code under test (same package).
 - **Coverage**: Existing tests cover `internal/config`, `internal/git`, `internal/run`, `internal/notifications/github`; add tests for new behavior and keep coverage for touched code.
 - **No external services**: Unit tests should not require live GitHub or GCS; mock or stub as needed.
+- **E2E**: Run `make e2e` or `./e2e/run.sh` (requires Docker, Terramate, Terraform). Uses MinIO and `NEPTUNE_E2E=1` to skip GitHub.
 
 ---
 
 ## CI
 
 - **`.github/workflows/test.yml`** – On push to `main`/`release-*` and on PRs; path filter for Go files; runs `make test-all` and `make check-fmt`.
+- **`.github/workflows/e2e.yml`** – On push/PR when e2e-related paths change; runs `./e2e/run.sh` with MinIO (Docker Compose). See [e2e/README.md](e2e/README.md).
 - **`.github/workflows/lint.yml`** – On PRs; path filter for Go; runs golangci-lint.
 - **`.github/workflows/release.yml`** – On push of tags `v*.*.*` (and workflow_dispatch); runs GoReleaser to create GitHub Release and binaries.
 

@@ -18,7 +18,8 @@
 
 ## Resources
 
-- **Documentation**: [docs/](docs/README.md) – Configuration, object storage, installation, usage, and development
+- **Documentation**: [docs/](docs/README.md) – Configuration, object storage, installation, usage, and development. Log level can be set via `log_level` in config or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
+- **E2E tests**: [e2e/README.md](e2e/README.md) – Run against MinIO with `./e2e/run.sh` or `make e2e`
 - **Releases**: [github.com/kaio6fellipe/neptune/releases](https://github.com/kaio6fellipe/neptune/releases)
 - **Contributing**: [docs/development.md](docs/development.md) and [AGENTS.md](AGENTS.md) for AI/contributor guidance
 

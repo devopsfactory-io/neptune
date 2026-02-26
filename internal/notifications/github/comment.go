@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 
 	"neptune/internal/domain"
+	"neptune/internal/log"
 )
 
 const (
@@ -33,6 +33,7 @@ func NewNotifier(cfg *domain.NeptuneConfig) *Notifier {
 	if cfg == nil || cfg.Repository == nil || cfg.Repository.GitHub == nil {
 		return nil
 	}
+	log.For("notifications.github").Info("Initializing GitHub API")
 	repo := cfg.Repository.GitHub.Repository
 	repo = strings.TrimPrefix(repo, "https://github.com/")
 	repo = strings.TrimSuffix(repo, "/")
@@ -54,9 +55,11 @@ func (n *Notifier) CreateComment(comment *domain.PullRequestComment) error {
 	if comment == nil {
 		return nil
 	}
+	log.For("notifications.github").Info("Creating comment on PR " + n.prNum)
 	if comment.StepsOutput == nil {
 		comment.StepsOutput = &domain.StepsOutput{Phase: "custom", OverallStatus: comment.OverallStatus}
 	}
+	log.For("notifications.github").Info("Formatting plan output for PR " + n.prNum)
 	var body string
 	switch comment.StepsOutput.Phase {
 	case "plan":
@@ -80,12 +83,13 @@ func (n *Notifier) CreateComment(comment *domain.PullRequestComment) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "close response body: %v\n", err)
+			log.For("notifications.github").Error("close response body", "err", err)
 		}
 	}()
 	if resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("failed to create comment: status %d", resp.StatusCode)
 	}
+	log.For("notifications.github").Info("Comment created on PR " + n.prNum)
 	return nil
 }
 

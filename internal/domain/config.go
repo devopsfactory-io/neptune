@@ -46,4 +46,6 @@ type RepositoryConfig struct {
 type NeptuneConfig struct {
 	Repository *RepositoryConfig
 	Workflows  *Workflows
+	// LogLevel is the effective log level (DEBUG, INFO, ERROR); env NEPTUNE_LOG_LEVEL overrides config log_level.
+	LogLevel string
 }
