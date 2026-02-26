@@ -14,7 +14,7 @@ type LockWorkflowPhase struct {
 	Status WorkflowStatus `json:"status"`
 }
 
-// LockFile is the JSON structure stored in GCS per stack.
+// LockFile is the JSON structure stored in object storage per stack.
 type LockFile struct {
 	LockedByPRID   string                       `json:"locked_by_pr_id"`
 	WorkflowPhases map[string]LockWorkflowPhase `json:"workflow_phases"`

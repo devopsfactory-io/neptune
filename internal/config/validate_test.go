@@ -27,7 +27,31 @@ func TestValidate_ObjectStorage(t *testing.T) {
 	}
 	err := Validate(cfg)
 	if err == nil {
-		t.Fatal("expected validation error for non-gs URL")
+		t.Fatal("expected validation error for non-gs/non-s3 URL")
+	}
+}
+
+func TestValidate_ObjectStorageS3(t *testing.T) {
+	cfg := &domain.NeptuneConfig{
+		Repository: &domain.RepositoryConfig{
+			ObjectStorage:   "s3://my-bucket",
+			Branch:          "main",
+			AllowedWorkflow: "default",
+			GitHub:          &domain.GitHubConfig{PullRequestBranch: "feature"},
+		},
+		Workflows: &domain.Workflows{
+			Workflows: map[string]domain.WorkflowStatement{
+				"default": {
+					Phases: map[string]domain.WorkflowPhase{
+						"plan":  {Steps: []domain.WorkflowStep{{Run: "terramate run --changed -- terragrunt plan"}}},
+						"apply": {Steps: []domain.WorkflowStep{{Run: "terramate run --changed -- terragrunt apply"}}},
+					},
+				},
+			},
+		},
+	}
+	if err := Validate(cfg); err != nil {
+		t.Fatalf("s3:// URL should be valid: %v", err)
 	}
 }
 

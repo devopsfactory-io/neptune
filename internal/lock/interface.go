@@ -15,13 +15,13 @@ type IsPROpenFunc func(ctx context.Context, prNumber string) (bool, error)
 // Interface is the lock file interface: changed stacks, lock state, and lock/unlock operations.
 type Interface struct {
 	Config           *domain.NeptuneConfig
-	Storage          *GCSStorage
+	Storage          ObjectStorage
 	TerraformStacks  *domain.TerraformStacks
 	LockStackDetails []domain.LockStackDetail
 	IsPROpen         IsPROpenFunc
 }
 
-// NewInterface builds the lock interface: runs terramate, loads lock details from GCS.
+// NewInterface builds the lock interface: runs terramate, loads lock details from object storage (GCS or S3).
 func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPROpenFunc) (*Interface, error) {
 	stacks, err := ChangedStacks(ctx, cfg)
 	if err != nil {
@@ -35,7 +35,7 @@ func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPRO
 			IsPROpen:         isPROpen,
 		}, nil
 	}
-	storage, err := NewGCSStorage(ctx, cfg.Repository.ObjectStorage, cfg.Repository.GitHub.Repository)
+	storage, err := NewObjectStorage(ctx, cfg.Repository.ObjectStorage, cfg.Repository.GitHub.Repository)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPRO
 	}, nil
 }
 
-func getLockDetails(ctx context.Context, s *GCSStorage, stacks []string) ([]domain.LockStackDetail, error) {
+func getLockDetails(ctx context.Context, s ObjectStorage, stacks []string) ([]domain.LockStackDetail, error) {
 	type result struct {
 		i   int
 		lf  *domain.LockFile
@@ -213,7 +213,7 @@ func (iface *Interface) UnlockAllStacks(ctx context.Context) error {
 	return nil
 }
 
-// Close releases resources (e.g. GCS client).
+// Close releases resources (e.g. storage client).
 func (iface *Interface) Close() error {
 	if iface.Storage != nil {
 		return iface.Storage.Close()

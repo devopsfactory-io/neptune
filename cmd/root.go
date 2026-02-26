@@ -9,7 +9,7 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 	root := &cobra.Command{
 		Use:   "neptune",
 		Short: "Neptune CLI - Terraform pull request automation tool inspired by Atlantis",
-		Long:  "Neptune is a Terraform pull request automation tool. Run plans and applies on PRs with Terramate and GCS-backed locking.",
+		Long:  "Neptune is a Terraform pull request automation tool. Run plans and applies on PRs with Terramate and object-storage locking (GCS or S3).",
 	}
 	root.CompletionOptions.DisableDefaultCmd = true
 	root.AddCommand(NewVersionCmd(version, commit, date))

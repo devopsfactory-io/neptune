@@ -1,4 +1,5 @@
 repository:
+  # gs://bucket or gs://bucket/prefix (GCS); s3://bucket or s3://bucket/prefix (AWS S3 or MinIO). See docs/object-storage.md for backend-specific env vars.
   object_storage: gs://terraform-internal-neptune-3dedd705-9275-592b-11c9-bc65c9821980
   branch: master
   plan_requirements:

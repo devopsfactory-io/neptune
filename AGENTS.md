@@ -6,9 +6,9 @@ Guidance for AI coding agents working on the Neptune project.
 
 ## Project Overview
 
-**Neptune** is a Terraform pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs Terraform plan/apply on pull requests using [Terramate](https://github.com/terramate-io/terramate) for change detection, GCS for stack locking, and GitHub for PR requirements and comments.
+**Neptune** is a Terraform pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs Terraform plan/apply on pull requests using [Terramate](https://github.com/terramate-io/terramate) for change detection, object storage (GCS or S3) for stack locking, and GitHub for PR requirements and comments.
 
-**Main capabilities**: Load config from `.neptune.yaml` and env; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in GCS; run workflow steps (e.g. terramate + terragrunt); post results as PR comments.
+**Main capabilities**: Load config from `.neptune.yaml` and env; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (e.g. terramate + terragrunt); post results as PR comments.
 
 **Language**: Go (see `go.mod`). Legacy Python code exists under `neptune/` and `tests/`; primary codebase is Go.
 
@@ -20,7 +20,7 @@ Guidance for AI coding agents working on the Neptune project.
 - **`cmd/`** – CLI (Cobra): `root.go`, `version.go`, `command.go`, `unlock.go`.
 - **`internal/config`** – Load env + YAML, validate `.neptune.yaml`.
 - **`internal/domain`** – Config, lock, run, and GitHub domain structs.
-- **`internal/lock`** – Terramate changed stacks, GCS lock files, lock interface.
+- **`internal/lock`** – Terramate changed stacks, object-storage lock files (GCS, S3), lock interface.
 - **`internal/run`** – Execute workflow phase steps (shell).
 - **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged).
 - **`internal/git`** – Rebased check (e.g. `git rev-list`).
@@ -82,10 +82,10 @@ Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/d
 
 After any change that affects behavior, APIs, config, or CI:
 
-1. **Consider human docs**: Update **README.md** and **`.neptune.example.yaml`** (or comments) if install, usage, or config schema changed.
+1. **Consider human docs**: **README.md** is the high-level entry point; detailed user docs (configuration, object storage, installation, usage, development) live in **docs/** (see [docs/README.md](docs/README.md)). Update README, **docs/*.md**, and **`.neptune.example.yaml`** (or comments) if install, usage, or config schema changed.
 2. **Consider AI docs**: Update **AGENTS.md** if project structure, setup, or conventions changed. Update **`.cursor/rules/*.mdc`** if coding or workflow rules changed. Update **`.cursor/skills/*/SKILL.md`** if a documented workflow or checklist changed.
 
-If you add a feature, change a command, or modify workflows: check README and AGENTS.md; if rules or skills are affected, update the corresponding file. When in doubt, update. See the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`) for a detailed checklist.
+If you add a feature, change a command, or modify workflows: check README, docs/, and AGENTS.md; if rules or skills are affected, update the corresponding file. When in doubt, update. See the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`) for a detailed checklist.
 
 Do not edit plan files (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.plan.md`) unless the user explicitly asks.
 
@@ -97,7 +97,7 @@ Before submitting:
 
 1. Run `make test-all` and `make check-fmt`.
 2. Ensure no new linter errors (`make lint` if available).
-3. If behavior or setup changed, update README and/or AGENTS.md and rules/skills as above.
+3. If behavior or setup changed, update README, docs/, and/or AGENTS.md and rules/skills as above.
 
 PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ...`, `docs: ...`) but this is not enforced.
 
@@ -107,4 +107,4 @@ PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ..
 
 - **Cursor rules**: `.cursor/rules/` – file-specific and always-applied rules.
 - **Cursor skills**: `.cursor/skills/` – workflows for documentation maintenance, releases, and testing.
-- **Neptune config**: README and `.neptune.example.yaml` for `.neptune.yaml` schema and required env vars.
+- **Neptune config**: [docs/configuration.md](docs/configuration.md) and [.neptune.example.yaml](.neptune.example.yaml) for `.neptune.yaml` schema; [docs/object-storage.md](docs/object-storage.md) for backend env vars.

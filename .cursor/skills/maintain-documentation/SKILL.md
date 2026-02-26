@@ -16,16 +16,18 @@ Use this skill when:
 
 ## Checklist After a Change
 
-1. **README.md** – Update if install steps, usage, or config schema changed. Keep examples and env var list accurate.
-2. **AGENTS.md** – Update if project structure, setup commands, code style, testing, or CI changed. Keep repo layout and "Documentation and AI context" section accurate.
-3. **.cursor/rules/*.mdc** – Update if coding conventions, workflow rules, or file-scoped guidance changed. Match globs to the files the rule applies to.
-4. **.cursor/skills/*/SKILL.md** – Update if a documented workflow (e.g. release steps, test commands) or checklist changed.
+1. **README.md** – Update if install steps, usage, or config schema changed. Keep high-level content and links to docs accurate.
+2. **docs/*.md** – Update if install, config, object storage, usage, or development steps changed.
+3. **AGENTS.md** – Update if project structure, setup commands, code style, testing, or CI changed. Keep repo layout and "Documentation and AI context" section accurate.
+4. **.cursor/rules/*.mdc** – Update if coding conventions, workflow rules, or file-scoped guidance changed. Match globs to the files the rule applies to.
+5. **.cursor/skills/*/SKILL.md** – Update if a documented workflow (e.g. release steps, test commands) or checklist changed.
 
 ## Where Things Live
 
 | Artifact | Audience | Purpose |
 |----------|----------|---------|
-| README.md | Humans | Install, usage, config overview, development commands |
+| README.md | Humans | High-level entry point; links to docs and releases |
+| docs/ | Humans | Configuration, object storage, installation, usage, development |
 | AGENTS.md | AI agents | Project overview, structure, setup, style, testing, CI, doc-update requirement |
 | .cursor/rules/*.mdc | AI agents | File-specific or always-applied rules (Go, CI, config, docs) |
 | .cursor/skills/*/SKILL.md | AI agents | Step-by-step workflows (e.g. maintain-documentation, release, testing) |
@@ -33,7 +35,7 @@ Use this skill when:
 ## When to Update AI Docs
 
 - **New commands or flags** → README and AGENTS.md (structure / usage).
-- **New env vars or config keys** → README, .neptune.example.yaml, config-and-yaml rule.
+- **New env vars or config keys** → README, docs/ (configuration.md, object-storage.md), .neptune.example.yaml, config-and-yaml rule.
 - **New Make targets or CI jobs** → AGENTS.md, ci-and-release rule, testing-and-ci skill.
 - **New patterns agents should follow** → Add or update a rule or skill; mention in AGENTS.md if central.
 

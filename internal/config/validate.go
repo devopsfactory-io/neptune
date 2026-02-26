@@ -24,8 +24,8 @@ func Validate(cfg *domain.NeptuneConfig) error {
 	if repo.ObjectStorage == "" {
 		return errors.New("repository object storage locking is required")
 	}
-	if !strings.HasPrefix(repo.ObjectStorage, "gs://") {
-		return errors.New("repository object storage must be a valid GCS URL")
+	if !strings.HasPrefix(repo.ObjectStorage, "gs://") && !strings.HasPrefix(repo.ObjectStorage, "s3://") {
+		return errors.New("repository object storage must be a valid GCS (gs://) or S3 (s3://) URL")
 	}
 	for _, r := range repo.PlanRequirements {
 		if !allowedRequirements[r] {

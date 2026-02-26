@@ -12,20 +12,32 @@ import (
 	"neptune/internal/domain"
 )
 
+// Ensure GCSStorage implements ObjectStorage.
+var _ ObjectStorage = (*GCSStorage)(nil)
+
 // GCSStorage is a GCS-backed store for lock files.
 type GCSStorage struct {
 	bucketName   string
+	prefix       string
 	parentFolder string
 	client       *storage.Client
 	bucket       *storage.BucketHandle
 }
 
-// NewGCSStorage creates a GCS storage client. bucketURL is e.g. gs://bucket-name; parentFolder is sanitized and used as prefix.
+// NewGCSStorage creates a GCS storage client. bucketURL is e.g. gs://bucket-name or gs://bucket/prefix; parentFolder is sanitized and used as path segment.
 func NewGCSStorage(ctx context.Context, bucketURL, parentFolder string) (*GCSStorage, error) {
 	if !strings.HasPrefix(bucketURL, "gs://") {
 		return nil, fmt.Errorf("bucket URL must start with gs://")
 	}
-	bucketName := strings.TrimPrefix(bucketURL, "gs://")
+	pathPart := strings.TrimPrefix(bucketURL, "gs://")
+	pathPart = strings.Trim(pathPart, "/")
+	var bucketName, prefix string
+	if idx := strings.Index(pathPart, "/"); idx >= 0 {
+		bucketName = pathPart[:idx]
+		prefix = pathPart[idx+1:]
+	} else {
+		bucketName = pathPart
+	}
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GCS client: %w", err)
@@ -35,15 +47,23 @@ func NewGCSStorage(ctx context.Context, bucketURL, parentFolder string) (*GCSSto
 	parent = strings.ReplaceAll(parent, ".", "-")
 	return &GCSStorage{
 		bucketName:   bucketName,
+		prefix:       prefix,
 		parentFolder: parent,
 		client:       client,
 		bucket:       client.Bucket(bucketName),
 	}, nil
 }
 
+func (s *GCSStorage) objectPath(stackPath string) string {
+	if s.prefix != "" {
+		return s.prefix + "/" + s.parentFolder + "/" + stackPath + "/lock.json"
+	}
+	return s.parentFolder + "/" + stackPath + "/lock.json"
+}
+
 // GetLockFile returns the lock file for the given stack path, or nil if not found.
 func (s *GCSStorage) GetLockFile(ctx context.Context, stackPath string) (*domain.LockFile, error) {
-	obj := s.bucket.Object(s.parentFolder + "/" + stackPath + "/lock.json")
+	obj := s.bucket.Object(s.objectPath(stackPath))
 	reader, err := obj.NewReader(ctx)
 	if err != nil {
 		if errors.Is(err, storage.ErrObjectNotExist) {
@@ -65,7 +85,7 @@ func (s *GCSStorage) GetLockFile(ctx context.Context, stackPath string) (*domain
 
 // CreateOrUpdateLockFile writes the lock file for the given stack.
 func (s *GCSStorage) CreateOrUpdateLockFile(ctx context.Context, stackPath string, lockData *domain.LockFile) error {
-	obj := s.bucket.Object(s.parentFolder + "/" + stackPath + "/lock.json")
+	obj := s.bucket.Object(s.objectPath(stackPath))
 	data, err := json.MarshalIndent(lockData, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal lock file: %w", err)
@@ -83,7 +103,7 @@ func (s *GCSStorage) CreateOrUpdateLockFile(ctx context.Context, stackPath strin
 
 // DeleteLockFile removes the lock file for the given stack.
 func (s *GCSStorage) DeleteLockFile(ctx context.Context, stackPath string) error {
-	obj := s.bucket.Object(s.parentFolder + "/" + stackPath + "/lock.json")
+	obj := s.bucket.Object(s.objectPath(stackPath))
 	if err := obj.Delete(ctx); err != nil {
 		if errors.Is(err, storage.ErrObjectNotExist) {
 			return nil
