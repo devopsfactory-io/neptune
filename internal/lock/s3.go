@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -83,7 +84,9 @@ func (s *S3Storage) GetLockFile(ctx context.Context, stackPath string) (*domain.
 	}
 	defer func() {
 		if out.Body != nil {
-			_ = out.Body.Close()
+			if err := out.Body.Close(); err != nil {
+				fmt.Fprintf(os.Stderr, "close S3 response body: %v\n", err)
+			}
 		}
 	}()
 	data, err := io.ReadAll(out.Body)
