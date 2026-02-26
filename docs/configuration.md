@@ -54,7 +54,7 @@ You can add custom commands before or after Terramate/Terragrunt; the example sh
 
 ## Terramate requirement
 
-The repository must use [Terramate](https://github.com/terramate-io/terramate) to orchestrate Terraform stacks and support the `--changed` flag so Neptune can run commands only for stacks changed in the PR.
+The repository must use [Terramate](https://github.com/terramate-io/terramate) to orchestrate Terraform or OpenTofu stacks and support the `--changed` flag so Neptune can run commands only for stacks changed in the PR.
 
 Example usage in steps:
 

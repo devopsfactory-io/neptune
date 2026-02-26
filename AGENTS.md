@@ -6,7 +6,7 @@ Guidance for AI coding agents working on the Neptune project.
 
 ## Project Overview
 
-**Neptune** is a Terraform pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs Terraform plan/apply on pull requests using [Terramate](https://github.com/terramate-io/terramate) for change detection, object storage (GCS or S3) for stack locking, and GitHub for PR requirements and comments.
+**Neptune** is a Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs plan/apply (Terraform or OpenTofu) on pull requests using [Terramate](https://github.com/terramate-io/terramate) for change detection, object storage (GCS or S3) for stack locking, and GitHub for PR requirements and comments.
 
 **Main capabilities**: Load config from `.neptune.yaml` and env; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (e.g. terramate + terragrunt); post results as PR comments.
 

@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <b>Terraform Pull Request Automation</b>
+  <b>Terraform and OpenTofu Pull Request Automation</b>
 </p>
 
 - [Resources](#resources)
@@ -24,15 +24,15 @@
 
 ## What is Neptune?
 
-A Terraform pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It uses [Terramate](https://github.com/terramate-io/terramate) for change detection, object storage (GCS or S3) for stack locking, and GitHub for PR requirements and comments.
+A Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It uses [Terramate](https://github.com/terramate-io/terramate) for change detection, object storage (GCS or S3) for stack locking, and GitHub for PR requirements and comments.
 
 ## What does it do?
 
-Runs Terraform plan and apply on pull requests, locks stacks in object storage, checks PR requirements (e.g. approved, mergeable, undiverged), and posts results as PR comments.
+Runs Terraform or OpenTofu plan and apply on pull requests, locks stacks in object storage, checks PR requirements (e.g. approved, mergeable, undiverged), and posts results as PR comments.
 
 ## Why should you use it?
 
-- Make Terraform changes visible to your whole team
-- Apply approved Terraform changes in a consistent way
-- Standardize Terraform workflows with configurable plan/apply steps
+- Make Terraform/OpenTofu changes visible to your whole team
+- Apply approved changes in a consistent way
+- Standardize workflows with configurable plan/apply steps
 - Type-safe CLI with auto-completion support
