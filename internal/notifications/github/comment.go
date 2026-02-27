@@ -56,19 +56,8 @@ func (n *Notifier) CreateComment(comment *domain.PullRequestComment) error {
 		return nil
 	}
 	log.For("notifications.github").Info("Creating comment on PR " + n.prNum)
-	if comment.StepsOutput == nil {
-		comment.StepsOutput = &domain.StepsOutput{Phase: "custom", OverallStatus: comment.OverallStatus}
-	}
 	log.For("notifications.github").Info("Formatting plan output for PR " + n.prNum)
-	var body string
-	switch comment.StepsOutput.Phase {
-	case "plan":
-		body = n.formatPlan(comment)
-	case "apply":
-		body = n.formatApply(comment)
-	default:
-		body = n.formatCustom(comment)
-	}
+	body := n.formatCommentBody(comment)
 	url := fmt.Sprintf("https://api.github.com/repos/%s/issues/%s/comments", n.repo, n.prNum)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBufferString(`{"body":`+escapeJSON(body)+`}`))
 	if err != nil {
@@ -91,6 +80,22 @@ func (n *Notifier) CreateComment(comment *domain.PullRequestComment) error {
 	}
 	log.For("notifications.github").Info("Comment created on PR " + n.prNum)
 	return nil
+}
+
+// formatCommentBody builds the comment body from the comment; normalizes phase so "Plan" / "APPLY" use plan/apply format.
+func (n *Notifier) formatCommentBody(comment *domain.PullRequestComment) string {
+	if comment.StepsOutput == nil {
+		comment.StepsOutput = &domain.StepsOutput{Phase: "custom", OverallStatus: comment.OverallStatus}
+	}
+	phase := strings.ToLower(strings.TrimSpace(comment.StepsOutput.Phase))
+	switch phase {
+	case "plan":
+		return n.formatPlan(comment)
+	case "apply":
+		return n.formatApply(comment)
+	default:
+		return n.formatCustom(comment)
+	}
 }
 
 func escapeJSON(s string) string {
@@ -116,8 +121,12 @@ func truncate(s string, limit int) string {
 func (n *Notifier) formatCustom(comment *domain.PullRequestComment) string {
 	var b strings.Builder
 	b.WriteString("### 🌊 Neptune Execution Results\n\n")
-	if comment.OverallStatus != 0 && comment.SimpleOutput != "" {
-		b.WriteString("An error occurred:\n- ")
+	if comment.SimpleOutput != "" {
+		if comment.OverallStatus != 0 {
+			b.WriteString("An error occurred:\n- ")
+		} else {
+			b.WriteString("**Neptune:** ")
+		}
 		b.WriteString(comment.SimpleOutput)
 		b.WriteString("\n\n")
 	}
@@ -206,7 +215,7 @@ func formatStep(b *strings.Builder, out domain.RunOutput) {
 	limit := bodyLimit / 4
 	cleanedErr := truncate(stripANSI(out.Error), limit)
 	cleanedOut := truncate(stripANSI(out.Output), limit)
-	b.WriteString("- **Command ")
+	b.WriteString("**Command ")
 	if out.Status == 0 {
 		b.WriteString("✅")
 	} else {

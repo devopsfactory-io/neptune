@@ -49,3 +49,22 @@ func TestFormatPlan(t *testing.T) {
 		t.Error("missing apply hint")
 	}
 }
+
+func TestFormatCommentBody_PhaseNormalization(t *testing.T) {
+	n := &Notifier{repo: "owner/repo", runID: "123"}
+	c := &domain.PullRequestComment{
+		Stacks:        &domain.TerraformStacks{Stacks: []string{"stack-a"}},
+		OverallStatus: 0,
+		StepsOutput: &domain.StepsOutput{
+			Phase:   "Plan",
+			Outputs: []domain.RunOutput{{Command: "terraform plan", Status: 0}},
+		},
+	}
+	body := n.formatCommentBody(c)
+	if !strings.Contains(body, "Neptune Plan Results") {
+		t.Errorf("Phase \"Plan\" should use plan format; got body (excerpt): %s", body[:min(200, len(body))])
+	}
+	if !strings.Contains(body, "stack-a") {
+		t.Error("missing stacks in plan body")
+	}
+}
