@@ -20,7 +20,7 @@ Parameters:
   GitHubAppSlug:
     Type: String
     Default: ""
-    Description: "(Optional) App slug for @-mention matching in comments (e.g. neptune-bot)."
+    Description: "(Optional) App slug for @-mention matching in comments (e.g. neptbot)."
 
 Resources:
   LambdaExecutionRole:

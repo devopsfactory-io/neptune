@@ -1,6 +1,6 @@
 # Neptune GitHub App webhook Lambda (self-hosted)
 
-This directory is for **self-hosting** the webhook handler. The default way to use Neptune with webhooks is to install the Neptune project's **neptune-bot** GitHub App; use this Lambda code and CloudFormation only if you want to run your own GitHub App and Lambda (e.g. in your AWS account).
+This directory is for **self-hosting** the webhook handler. The default way to use Neptune with webhooks is to install the Neptune project's **neptbot** GitHub App; use this Lambda code and CloudFormation only if you want to run your own GitHub App and Lambda (e.g. in your AWS account).
 
 The Lambda receives webhooks (pull request and issue comment events), verifies the signature, and triggers a GitHub Actions workflow in the target repository via `repository_dispatch` so that Neptune runs `plan` (on PR open/sync) or `apply` (when someone comments e.g. `@neptune apply`). This repo provides the Lambda code and a CloudFormation template to deploy it.
 
@@ -53,11 +53,11 @@ From the repository root you can run `make lambda.build` and `make lambda.zip`. 
        LambdaS3Key=neptune-webhook.zip \
        WebhookSecretArn=arn:aws:secretsmanager:REGION:ACCOUNT:secret:neptune-github-app/webhook-secret \
        PrivateKeySecretArn=arn:aws:secretsmanager:REGION:ACCOUNT:secret:neptune-github-app/private-key \
-       GitHubAppSlug=neptune-bot \
+       GitHubAppSlug=neptbot \
      --capabilities CAPABILITY_NAMED_IAM
    ```
 
-   Replace `YOUR_APP_ID`, `YOUR_BUCKET`, the secret ARNs, and optionally `GitHubAppSlug` (the app’s login/slug for @-mention matching; omit or leave empty to use the default `neptune`).
+   Replace `YOUR_APP_ID`, `YOUR_BUCKET`, the secret ARNs, and optionally `GitHubAppSlug` (the app’s login/slug for @-mention matching; omit or leave empty to use the default `neptbot`).
 
 4. **Get the webhook URL**:
 
@@ -77,7 +77,7 @@ The CloudFormation template sets these from parameters and secret ARNs:
 | `GITHUB_APP_ID` | Parameter | GitHub App ID (numeric). |
 | `GITHUB_APP_WEBHOOK_SECRET_ARN` | Parameter | ARN of the Secrets Manager secret with the webhook secret (plain string). |
 | `GITHUB_APP_PRIVATE_KEY_SECRET_ARN` | Parameter | ARN of the Secrets Manager secret with the App private key (PEM). |
-| `GITHUB_APP_SLUG` | Parameter (optional) | App slug for @-mention matching in comments (e.g. `neptune-bot`). Default in code: `neptune`. |
+| `GITHUB_APP_SLUG` | Parameter (optional) | App slug for @-mention matching in comments (e.g. `neptbot`). Default in code: `neptbot`. |
 
 At runtime the Lambda fetches the webhook secret and private key from Secrets Manager using these ARNs.
 
@@ -88,4 +88,4 @@ Repositories that have the Neptune GitHub App installed must add a workflow that
 ## Events handled
 
 - **pull_request** (`opened`, `reopened`, `synchronize`, `ready_for_review`): triggers `repository_dispatch` with `command: plan`.
-- **issue_comment** (created, on a PR): if the comment body mentions the app (e.g. `@neptune-bot`) and contains the word `apply` or `plan`, triggers `repository_dispatch` with that command.
+- **issue_comment** (created, on a PR): if the comment body mentions the app (e.g. `@neptbot`) and contains the word `apply` or `plan`, triggers `repository_dispatch` with that command.

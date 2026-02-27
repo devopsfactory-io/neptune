@@ -45,7 +45,7 @@ func TestFormatPlan(t *testing.T) {
 	if !strings.Contains(body, "stack1") {
 		t.Error("missing stacks")
 	}
-	if !strings.Contains(body, "@neptune-bot apply") {
+	if !strings.Contains(body, "@neptbot apply") {
 		t.Error("missing apply hint")
 	}
 }

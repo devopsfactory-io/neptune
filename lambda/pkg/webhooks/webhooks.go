@@ -86,7 +86,7 @@ func ParsePullRequest(body []byte) (*DispatchPayload, int64, error) {
 	}, instID, nil
 }
 
-// ParseIssueComment parses the issue_comment webhook body. If the comment is on a PR and mentions the app with a command, returns (dispatch payload, installation ID, true). appMention is the app login/slug (e.g. "neptune-bot").
+// ParseIssueComment parses the issue_comment webhook body. If the comment is on a PR and mentions the app with a command, returns (dispatch payload, installation ID, true). appMention is the app login/slug (e.g. "neptbot").
 func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64, bool, error) {
 	var p IssueCommentPayload
 	if err := json.Unmarshal(body, &p); err != nil {
@@ -101,7 +101,7 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 	bodyLower := strings.ToLower(strings.TrimSpace(p.Comment.Body))
 	mentionLower := strings.ToLower(strings.TrimSpace(appMention))
 	if mentionLower == "" {
-		mentionLower = "neptune"
+		mentionLower = "neptbot"
 	}
 	if !strings.Contains(bodyLower, "@"+mentionLower) {
 		return nil, 0, false, nil

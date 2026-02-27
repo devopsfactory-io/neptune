@@ -104,7 +104,7 @@ const issueCommentApply = `{
   "issue": {"number": 10, "pull_request": {}},
   "repository": {"full_name": "owner/repo"},
   "installation": {"id": 111},
-  "comment": {"body": "@neptune-bot apply"}
+  "comment": {"body": "@neptbot apply"}
 }`
 
 const issueCommentPlan = `{
@@ -112,14 +112,14 @@ const issueCommentPlan = `{
   "issue": {"number": 5, "pull_request": {}},
   "repository": {"full_name": "a/b"},
   "installation": {"id": 222},
-  "comment": {"body": "Please @neptune-bot plan"}
+  "comment": {"body": "Please @neptbot plan"}
 }`
 
 const issueCommentNotPR = `{
   "action": "created",
   "issue": {"number": 3},
   "repository": {"full_name": "x/y"},
-  "comment": {"body": "@neptune-bot apply"}
+  "comment": {"body": "@neptbot apply"}
 }`
 
 const issueCommentNoMention = `{
@@ -133,11 +133,11 @@ const issueCommentMentionNoCommand = `{
   "action": "created",
   "issue": {"number": 1, "pull_request": {}},
   "repository": {"full_name": "x/y"},
-  "comment": {"body": "@neptune-bot hello"}
+  "comment": {"body": "@neptbot hello"}
 }`
 
 func TestParseIssueComment_ValidApply(t *testing.T) {
-	payload, instID, ok, err := ParseIssueComment([]byte(issueCommentApply), "neptune-bot")
+	payload, instID, ok, err := ParseIssueComment([]byte(issueCommentApply), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestParseIssueComment_ValidApply(t *testing.T) {
 }
 
 func TestParseIssueComment_ValidPlan(t *testing.T) {
-	payload, _, ok, err := ParseIssueComment([]byte(issueCommentPlan), "neptune-bot")
+	payload, _, ok, err := ParseIssueComment([]byte(issueCommentPlan), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -178,7 +178,7 @@ func TestParseIssueComment_ValidPlan(t *testing.T) {
 }
 
 func TestParseIssueComment_NotPR(t *testing.T) {
-	payload, _, ok, err := ParseIssueComment([]byte(issueCommentNotPR), "neptune-bot")
+	payload, _, ok, err := ParseIssueComment([]byte(issueCommentNotPR), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestParseIssueComment_NotPR(t *testing.T) {
 }
 
 func TestParseIssueComment_NoMention(t *testing.T) {
-	_, _, ok, err := ParseIssueComment([]byte(issueCommentNoMention), "neptune-bot")
+	_, _, ok, err := ParseIssueComment([]byte(issueCommentNoMention), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestParseIssueComment_NoMention(t *testing.T) {
 }
 
 func TestParseIssueComment_MentionNoCommand(t *testing.T) {
-	_, _, ok, err := ParseIssueComment([]byte(issueCommentMentionNoCommand), "neptune-bot")
+	_, _, ok, err := ParseIssueComment([]byte(issueCommentMentionNoCommand), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -211,14 +211,14 @@ func TestParseIssueComment_MentionNoCommand(t *testing.T) {
 }
 
 func TestParseIssueComment_InvalidJSON(t *testing.T) {
-	_, _, _, err := ParseIssueComment([]byte(`not json`), "neptune-bot")
+	_, _, _, err := ParseIssueComment([]byte(`not json`), "neptbot")
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
 }
 
 func TestParseIssueComment_DefaultMention(t *testing.T) {
-	body := `{"action":"created","issue":{"number":2,"pull_request":{}},"repository":{"full_name":"o/r"},"installation":{"id":1},"comment":{"body":"@neptune plan"}}`
+	body := `{"action":"created","issue":{"number":2,"pull_request":{}},"repository":{"full_name":"o/r"},"installation":{"id":1},"comment":{"body":"@neptbot plan"}}`
 	payload, _, ok, err := ParseIssueComment([]byte(body), "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

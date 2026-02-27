@@ -28,4 +28,4 @@ Set the same environment variables in your workflow (`GITHUB_REPOSITORY`, `GITHU
 
 ## Triggering Neptune via GitHub App
 
-The default way to trigger Neptune from PR open and comments (e.g. `@neptune-bot apply`) is to **install the Neptune project's neptune-bot GitHub App** on your repos and add the workflow described in [GitHub App and Lambda](github-app-and-lambda.md). You can also self-host by creating your own GitHub App and deploying the [Lambda](lambda/README.md) in this repo.
+The default way to trigger Neptune from PR open and comments (e.g. `@neptbot apply`) is to **install the Neptune project's neptbot GitHub App** on your repos and add the workflow described in [GitHub App and Lambda](github-app-and-lambda.md). You can also self-host by creating your own GitHub App and deploying the [Lambda](lambda/README.md) in this repo.

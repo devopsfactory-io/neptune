@@ -1,13 +1,13 @@
 # GitHub App and Lambda (webhook trigger)
 
-You can trigger Neptune from webhooks: when a PR is opened or updated, **neptune plan** runs; when someone comments e.g. `@neptune-bot apply` on a PR, **neptune apply** runs. The default is to **install the Neptune project's neptune-bot GitHub App** on your repos—no need to create an app or run infrastructure. Alternatively, you can self-host by creating your own GitHub App and deploying the [Lambda](../lambda/) in this repo.
+You can trigger Neptune from webhooks: when a PR is opened or updated, **neptune plan** runs; when someone comments e.g. `@neptbot apply` on a PR, **neptune apply** runs. The default is to **install the Neptune project's neptbot GitHub App** on your repos—no need to create an app or run infrastructure. Alternatively, you can self-host by creating your own GitHub App and deploying the [Lambda](../lambda/) in this repo.
 
 You can also run Neptune from a workflow that triggers on `pull_request` and/or `workflow_dispatch` (see [Installation](installation.md)).
 
-## Default: Install neptune-bot
+## Default: Install neptbot
 
-1. **Install the neptune-bot GitHub App** on your organization or user account. (Install link to be added when the app is published.)
-2. **Add the workflow below** to each repository where you want Neptune to run. The app will trigger it via `repository_dispatch` when a PR is opened/updated or when someone comments `@neptune-bot apply` or `@neptune-bot plan`.
+1. **Install the neptbot GitHub App** on your organization or user account. (Install link to be added when the app is published.)
+2. **Add the workflow below** to each repository where you want Neptune to run. The app will trigger it via `repository_dispatch` when a PR is opened/updated or when someone comments `@neptbot apply` or `@neptbot plan`.
 3. Configure **object storage** (e.g. S3) and a **`.neptune.yaml`** in the repo as required by Neptune (see [Configuration](configuration.md) and [Object storage](object-storage.md)).
 4. Optionally add **branch protection** so that **neptune apply** is a required status check (see [Branch protection (recommended)](#5-branch-protection-recommended)).
 
@@ -15,7 +15,7 @@ No Lambda or AWS setup is required; the Neptune project runs the webhook endpoin
 
 ### Workflow on `repository_dispatch`
 
-Each repository that has the Neptune GitHub App installed (neptune-bot or your own) must have a workflow that listens for the dispatch event. Example:
+Each repository that has the Neptune GitHub App installed (neptbot or your own) must have a workflow that listens for the dispatch event. Example:
 
 ```yaml
 name: neptune
@@ -77,14 +77,14 @@ Notes:
 
 To run **apply** or **plan** from a PR comment, write a comment that:
 
-- Mentions the app. When using **neptune-bot**, use `@neptune-bot`. If you self-host with a different app slug, use that slug (e.g. `@your-app-slug`).
+- Mentions the app. When using **neptbot**, use `@neptbot`. If you self-host with a different app slug, use that slug (e.g. `@your-app-slug`).
 - Contains the word **apply** or **plan**.
 
 Examples:
 
-- `@neptune-bot apply`
-- `@neptune-bot plan`
-- `Please run @neptune-bot apply when ready`
+- `@neptbot apply`
+- `@neptbot plan`
+- `Please run @neptbot apply when ready`
 
 Only comments on **pull requests** (not on issues) are handled.
 
@@ -119,7 +119,7 @@ Add the same workflow shown in [Workflow on `repository_dispatch`](#workflow-on-
 
 ## Payload sent by the Lambda
 
-The webhook handler (neptune-bot or your Lambda) triggers `repository_dispatch` with:
+The webhook handler (neptbot or your Lambda) triggers `repository_dispatch` with:
 
 - **event_type**: `neptune-command`
 - **client_payload**:
