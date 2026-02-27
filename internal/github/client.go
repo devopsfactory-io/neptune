@@ -66,6 +66,47 @@ func (c *Client) GetPRInfo(ctx context.Context) (*domain.PRInfo, error) {
 	}, nil
 }
 
+// GetHeadSHA returns the head commit SHA of the current PR for use with commit statuses.
+func (c *Client) GetHeadSHA(ctx context.Context) (string, error) {
+	parts := strings.SplitN(c.repo, "/", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid repo format: %s", c.repo)
+	}
+	owner, repoName := parts[0], parts[1]
+	pr, _, err := c.client.PullRequests.Get(ctx, owner, repoName, parseInt(c.prNum))
+	if err != nil {
+		return "", err
+	}
+	if pr == nil || pr.Head == nil {
+		return "", fmt.Errorf("PR or PR head is nil")
+	}
+	sha := pr.Head.GetSHA()
+	if sha == "" {
+		return "", fmt.Errorf("PR head SHA is empty")
+	}
+	return sha, nil
+}
+
+// CreateCommitStatus sets a commit status on the given SHA (context is the status name shown in the UI).
+// targetURL may be empty; state must be pending, success, failure, or error.
+func (c *Client) CreateCommitStatus(ctx context.Context, sha, contextName, state, description, targetURL string) error {
+	parts := strings.SplitN(c.repo, "/", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid repo format: %s", c.repo)
+	}
+	owner, repoName := parts[0], parts[1]
+	status := github.RepoStatus{
+		State:       &state,
+		Context:     &contextName,
+		Description: &description,
+	}
+	if targetURL != "" {
+		status.TargetURL = &targetURL
+	}
+	_, _, err := c.client.Repositories.CreateStatus(ctx, owner, repoName, sha, &status)
+	return err
+}
+
 // IsPROpen returns true if the given PR number is open.
 func (c *Client) IsPROpen(ctx context.Context, prNumber string) (bool, error) {
 	parts := strings.SplitN(c.repo, "/", 2)

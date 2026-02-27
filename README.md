@@ -29,7 +29,7 @@ A Terraform and OpenTofu pull request automation tool inspired by [Atlantis](htt
 
 ## What does it do?
 
-Runs Terraform or OpenTofu plan and apply on pull requests, locks stacks in object storage, checks PR requirements (e.g. approved, mergeable, undiverged), and posts results as PR comments.
+Runs Terraform or OpenTofu plan and apply on pull requests, locks stacks in object storage, checks PR requirements (e.g. approved, mergeable, undiverged), posts results as PR comments, and sets GitHub commit statuses for **neptune plan** and **neptune apply** (so you can require **neptune apply** in branch protection to block merge until apply has run).
 
 ## Why should you use it?
 

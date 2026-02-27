@@ -23,7 +23,7 @@ Guidance for AI coding agents working on the Neptune project.
 - **`internal/log`** – Structured logging (DEBUG, INFO, ERROR) via `log/slog`; level from `NEPTUNE_LOG_LEVEL` or config `log_level`.
 - **`internal/lock`** – Changed stacks via Terramate SDK (list + run order), object-storage lock files (GCS, S3), lock interface.
 - **`internal/run`** – Execute workflow phase steps (shell).
-- **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged).
+- **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged), commit statuses (GetHeadSHA, CreateCommitStatus) for **neptune plan** / **neptune apply**.
 - **`internal/git`** – Rebased check (e.g. `git rev-list`).
 - **`internal/notifications/github`** – Format and post PR comments.
 - **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
@@ -65,7 +65,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 
 - **Run**: `go test ./...` or `make test-all`.
 - **Location**: Place `*_test.go` next to the code under test (same package).
-- **Coverage**: Existing tests cover `internal/config`, `internal/git`, `internal/run`, `internal/notifications/github`; add tests for new behavior and keep coverage for touched code.
+- **Coverage**: Existing tests cover `internal/config`, `internal/git`, `internal/github`, `internal/run`, `internal/notifications/github`; add tests for new behavior and keep coverage for touched code.
 - **No external services**: Unit tests should not require live GitHub or GCS; mock or stub as needed.
 - **E2E**: Run `make e2e` or `./e2e/run.sh` (requires Docker, Terraform). Uses MinIO and `NEPTUNE_E2E=1` to skip GitHub. E2E config uses steps with default `terramate: true` (Neptune runs commands per stack via SDK; Terramate CLI not required for steps).
 
@@ -75,6 +75,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 
 - **`.github/workflows/test.yml`** – On push to `main`/`release-*` and on PRs; path filter for Go files; runs `make test-all` and `make check-fmt`.
 - **`.github/workflows/e2e.yml`** – On push/PR when e2e-related paths change; runs `./e2e/run.sh` with MinIO (Docker Compose). See [e2e/README.md](e2e/README.md).
+- **`.github/workflows/integration.yml`** – On PRs when integration-relevant paths change; runs Neptune plan/apply on the same PR with real GitHub (requirements check, PR comments, commit statuses) and MinIO for locks. Needs `statuses: write` for commit status API. See [e2e/README.md](e2e/README.md#integration-tests).
 - **`.github/workflows/lint.yml`** – On PRs; path filter for Go; runs golangci-lint.
 - **`.github/workflows/release.yml`** – On push of tags `v*.*.*` (and workflow_dispatch); runs GoReleaser to create GitHub Release and binaries.
 
