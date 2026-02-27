@@ -6,8 +6,9 @@ E2E tests run Neptune against MinIO (S3-compatible) using Docker Compose. They v
 
 - **Docker** and **Docker Compose** – for MinIO
 - **Go** – to build Neptune (see `go.mod`)
-- **Terramate** – [installation](https://terramate.io/docs/cli/installation) (used by the e2e workflow steps; Neptune itself uses the Terramate Go library for listing changed stacks)
 - **Terraform** (or OpenTofu) – for the test stacks
+
+Neptune uses the Terramate Go SDK for change detection and run order; the Terramate CLI is not required for e2e or integration.
 
 ## Running e2e
 
@@ -45,7 +46,7 @@ This allows e2e to run in CI and locally without a GitHub token or real pull req
 
 ## CI
 
-The [e2e workflow](../.github/workflows/e2e.yml) runs on pushes to `main`/`release-*` and on pull requests when relevant paths change (e2e/, internal/lock, cmd/, config, compose files). It installs Terramate and Terraform, then runs `./e2e/run.sh`.
+The [e2e workflow](../.github/workflows/e2e.yml) runs on pushes to `main`/`release-*` and on pull requests when relevant paths change (e2e/, internal/lock, cmd/, config, compose files). It sets up Terraform and runs `./e2e/run.sh`.
 
 ## Integration tests
 

@@ -58,9 +58,6 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install Terramate
-        uses: terramate-io/terramate-action@v1
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
