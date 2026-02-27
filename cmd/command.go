@@ -204,6 +204,9 @@ func stepsSummaryLines(phase string, out *domain.StepsOutput) []string {
 	for _, o := range out.Outputs {
 		statusStr := fmt.Sprint(o.Status)
 		lines = append(lines, "  - Command: "+o.Command)
+		if o.Stack != "" {
+			lines = append(lines, "    - Stack: "+o.Stack)
+		}
 		lines = append(lines, "    - Status: "+statusStr)
 	}
 	return lines

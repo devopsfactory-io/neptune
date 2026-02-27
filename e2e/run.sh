@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+function compose_teardown() {
+  cd "$E2E_DIR"
+  echo "Tearing down MinIO..."
+  docker compose down
+  echo "...MinIO torn down"
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 E2E_DIR="$SCRIPT_DIR"
@@ -21,7 +28,7 @@ cd "$REPO_ROOT"
 
 # Prepare isolated git repo with main + pr-1 (changed stacks) so terramate --changed works
 E2E_TMP=$(mktemp -d)
-trap 'rm -rf "$E2E_TMP"' EXIT
+trap 'compose_teardown; rm -rf "$E2E_TMP"' EXIT
 cp -r "$E2E_DIR"/stack-a "$E2E_TMP/"
 cp -r "$E2E_DIR"/stack-b "$E2E_TMP/"
 cp -r "$E2E_DIR"/stack-c "$E2E_TMP/"
@@ -34,12 +41,16 @@ git config user.email "e2e@neptune.test"
 git config user.name "E2E Test"
 git add .
 git commit -m "main: all stacks"
+# Create origin/main so Neptune's Terramate SDK can compare against it for change detection
+git update-ref refs/remotes/origin/main HEAD
 
 git checkout -b pr-1
-# Change stack-a so terramate list --changed returns at least stack-a
+# Change all stacks so Neptune runs plan/apply on every stack (stack-a, stack-b, stack-c)
 echo "# e2e change" >> stack-a/main.tf
-git add stack-a/main.tf
-git commit -m "pr-1: change stack-a"
+echo "# e2e change" >> stack-b/main.tf
+echo "# e2e change" >> stack-c/main.tf
+git add stack-a/main.tf stack-b/main.tf stack-c/main.tf
+git commit -m "pr-1: change all stacks"
 
 # Run Neptune plan and apply against MinIO (e2e mode: no real GitHub)
 export NEPTUNE_E2E=1
@@ -57,11 +68,11 @@ export AWS_ENDPOINT_URL_S3="${AWS_ENDPOINT_URL_S3:-http://localhost:9000}"
 
 echo "Running neptune command plan..."
 neptune command plan
+echo "...Finished neptune command plan"
+echo "--------------------------------"
+
 echo "Running neptune command apply..."
 neptune command apply
-
+echo "...Finished neptune command apply"
+echo "--------------------------------"
 echo "E2E completed successfully."
-
-# Tear down MinIO so CI and repeated runs start clean
-cd "$E2E_DIR"
-docker compose down

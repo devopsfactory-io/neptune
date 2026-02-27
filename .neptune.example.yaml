@@ -19,12 +19,16 @@ workflows:
   default:
     plan:
       steps:
+        # terramate: true (default) = run once per changed stack in that stack's dir (no Terramate CLI needed)
         - run: echo "Custom command"
-        - run: terramate run --parallel $(nproc --all) --changed -- terragrunt init -upgrade
-        - run: terramate run --changed -- terragrunt plan
+          terramate: false
+        - run: terragrunt init -upgrade
+        - run: terragrunt plan
     apply:
       depends_on:
         - plan
       steps:
         - run: echo "Custom command"
-        - run: terramate run --changed -- terragrunt apply -auto-approve
+          terramate: false
+        - run: terragrunt apply -auto-approve
+        # Or use terramate: false and call CLI yourself: run: terramate run --changed -- terragrunt apply -auto-approve

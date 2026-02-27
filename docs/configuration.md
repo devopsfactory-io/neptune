@@ -60,19 +60,34 @@ workflows:
 
 Workflows define `plan` and `apply` phases. Each phase has `steps`:
 
-- **steps**: List of `run: <shell command>` steps. Neptune runs them in order.
+- **steps**: List of steps. Each step has `run: <shell command>` and optional **terramate** and **changed** (see below).
 - **apply.depends_on**: Optional list of phases that must have run first (e.g. `plan`).
 
-You can add custom commands before or after Terramate/Terragrunt; the example shows a placeholder `echo "Custom command"` and the typical `terramate run --changed -- ...` pattern.
+#### Step options: terramate and changed
+
+- **terramate** (optional, default: `true`): When `true` (or omitted), Neptune runs the step’s `run` command **once per changed stack**, with the working directory set to each stack (using the Terramate SDK; no Terramate CLI needed for this). You can write e.g. `run: terragrunt plan` and Neptune will execute it in each changed stack.
+- **terramate: false**: Run the step’s command **once** in the process current directory (e.g. repo root). Use this if you still invoke the Terramate CLI yourself, e.g. `run: terramate run --changed -- terragrunt plan`.
+- **changed** (optional): When `terramate` is true, Neptune already runs only in changed stacks. Use `changed: true` only for clarity in config; no extra logic.
+
+Example with per-stack execution (default):
+
+```yaml
+steps:
+  - run: terragrunt init -upgrade
+  - run: terragrunt plan
+  - run: terragrunt apply -auto-approve
+```
+
+Example with a single global command:
+
+```yaml
+steps:
+  - run: terramate run --changed -- some-global-script.sh
+    terramate: false
+```
+
+See [.neptune.example.yaml](../.neptune.example.yaml) in the repo root for a full example.
 
 ## Terramate requirement
 
-The repository must use [Terramate](https://github.com/terramate-io/terramate) to orchestrate Terraform or OpenTofu stacks and support the `--changed` flag so Neptune can run commands only for stacks changed in the PR.
-
-Example usage in steps:
-
-- `terramate run --parallel $(nproc --all) --changed -- terragrunt init -upgrade`
-- `terramate run --changed -- terragrunt plan`
-- `terramate run --changed -- terragrunt apply -auto-approve`
-
-See [.neptune.example.yaml](../.neptune.example.yaml) in the repo root for a full example.
+The repository must be a [Terramate](https://github.com/terramate-io/terramate) project (root and stack config) so Neptune can detect changed stacks and their run order. Neptune uses the Terramate Go SDK for this; the Terramate CLI is **not** required for listing changed stacks or for running steps when `terramate` is true (default). When a step has `terramate: false` and your `run` string invokes `terramate run ...`, the Terramate CLI must be installed in the environment where Neptune runs (e.g. CI).

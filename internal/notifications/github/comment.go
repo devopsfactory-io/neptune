@@ -214,7 +214,13 @@ func formatStep(b *strings.Builder, out domain.RunOutput) {
 	}
 	b.WriteString("** `")
 	b.WriteString(out.Command)
-	b.WriteString("`\n<details>\n<summary>Click to see the command output</summary>\n\n```\nstderr:\n")
+	b.WriteString("`")
+	if out.Stack != "" {
+		b.WriteString(" (stack: ")
+		b.WriteString(out.Stack)
+		b.WriteString(")")
+	}
+	b.WriteString("\n<details>\n<summary>Click to see the command output</summary>\n\n```\nstderr:\n")
 	b.WriteString(cleanedErr)
 	b.WriteString("\n\nstdout:\n")
 	b.WriteString(cleanedOut)

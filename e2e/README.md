@@ -6,7 +6,7 @@ E2E tests run Neptune against MinIO (S3-compatible) using Docker Compose. They v
 
 - **Docker** and **Docker Compose** – for MinIO
 - **Go** – to build Neptune (see `go.mod`)
-- **Terramate** – [installation](https://terramate.io/docs/cli/installation)
+- **Terramate** – [installation](https://terramate.io/docs/cli/installation) (used by the e2e workflow steps; Neptune itself uses the Terramate Go library for listing changed stacks)
 - **Terraform** (or OpenTofu) – for the test stacks
 
 ## Running e2e
@@ -21,7 +21,7 @@ The script will:
 
 1. Build the `neptune` binary
 2. Start MinIO with Docker Compose and create the `neptune-e2e` bucket
-3. Prepare an isolated git repo with a `main` branch and a `pr-1` branch that has changes in `stack-a` (so `terramate list --changed` returns that stack)
+3. Prepare an isolated git repo with a `main` branch and a `pr-1` branch that has changes in `stack-a` (so Neptune’s Terramate SDK reports that stack as changed)
 4. Run `neptune command plan` and `neptune command apply` with `NEPTUNE_E2E=1`
 5. Tear down MinIO
 

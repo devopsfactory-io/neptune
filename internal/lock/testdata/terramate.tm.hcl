@@ -1,6 +1,5 @@
-# Root Terramate config for e2e tests.
+# Minimal root Terramate config for unit tests.
 # required_version is required for Terramate to detect this as the root config.
-# Disable run safeguards so terraform init-generated .terraform/ and tfplan do not fail the run.
 terramate {
   required_version = ">= 0.1.0"
   config {

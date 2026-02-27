@@ -11,10 +11,10 @@ workflows:
   default:
     plan:
       steps:
-        - run: terramate run --changed -- terraform init -input=false
-        - run: terramate run --changed -- terraform plan -input=false -out=tfplan
+        - run: terraform init -input=false
+        - run: terraform plan -input=false -out=tfplan
     apply:
       depends_on:
         - plan
       steps:
-        - run: terramate run --changed -- terraform apply -input=false tfplan
+        - run: terraform apply -input=false tfplan

@@ -81,6 +81,32 @@ func TestValidate_PlanApplyPhases(t *testing.T) {
 }
 
 func TestValidate_TerragruntWithoutTerramate(t *testing.T) {
+	terramateFalse := false
+	cfg := &domain.NeptuneConfig{
+		Repository: &domain.RepositoryConfig{
+			ObjectStorage:   "gs://bucket",
+			Branch:          "main",
+			AllowedWorkflow: "default",
+			GitHub:          &domain.GitHubConfig{PullRequestBranch: "feature"},
+		},
+		Workflows: &domain.Workflows{
+			Workflows: map[string]domain.WorkflowStatement{
+				"default": {
+					Phases: map[string]domain.WorkflowPhase{
+						"plan":  {Steps: []domain.WorkflowStep{{Run: "terragrunt plan", Terramate: &terramateFalse}}},
+						"apply": {Steps: []domain.WorkflowStep{{Run: "terragrunt apply", Terramate: &terramateFalse}}},
+					},
+				},
+			},
+		},
+	}
+	err := Validate(cfg)
+	if err == nil {
+		t.Fatal("expected validation error when terramate is false and run uses terragrunt without terramate and --changed in run string")
+	}
+}
+
+func TestValidate_TerragruntWithTerramateTrue(t *testing.T) {
 	cfg := &domain.NeptuneConfig{
 		Repository: &domain.RepositoryConfig{
 			ObjectStorage:   "gs://bucket",
@@ -99,9 +125,8 @@ func TestValidate_TerragruntWithoutTerramate(t *testing.T) {
 			},
 		},
 	}
-	err := Validate(cfg)
-	if err == nil {
-		t.Fatal("expected validation error when terragrunt used without terramate and --changed")
+	if err := Validate(cfg); err != nil {
+		t.Fatalf("terragrunt with terramate default (true) should be valid: %v", err)
 	}
 }
 

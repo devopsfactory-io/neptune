@@ -78,9 +78,12 @@ func Validate(cfg *domain.NeptuneConfig) error {
 					return errors.New("at least one step is required in each phase")
 				}
 				run := step.Run
-				if strings.Contains(run, "terragrunt") || strings.Contains(run, "terraform") {
+				// When terramate is false, the run string is executed as-is; it must then use terramate CLI and --changed if it runs terraform/terragrunt.
+				// When terramate is true or nil (default), Neptune runs the command per stack; no need for "terramate" or "--changed" in run.
+				terramateEnabled := step.Terramate == nil || *step.Terramate
+				if !terramateEnabled && (strings.Contains(run, "terragrunt") || strings.Contains(run, "terraform")) {
 					if !strings.Contains(run, "terramate") || !strings.Contains(run, "--changed") {
-						return errors.New("the step run must use both the terramate command AND the --changed flag when using terragrunt or terraform")
+						return errors.New("the step run must use both the terramate command AND the --changed flag when using terragrunt or terraform (or set terramate: true so Neptune runs the command per stack)")
 					}
 				}
 			}
