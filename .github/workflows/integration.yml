@@ -74,7 +74,7 @@ jobs:
           GITHUB_PULL_REQUEST_BRANCH: ${{ github.event.pull_request.head.ref }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_PULL_REQUEST_COMMENT_ID: ""
+          GITHUB_PULL_REQUEST_COMMENT_ID: "1234"
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
           AWS_REGION: us-east-1

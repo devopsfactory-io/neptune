@@ -36,7 +36,7 @@ trap compose_teardown EXIT
 
 # Use current checkout; GitHub env is set by caller (e.g. GHA). No NEPTUNE_E2E.
 export NEPTUNE_CONFIG_PATH="e2e/.neptune.yaml"
-export GITHUB_PULL_REQUEST_COMMENT_ID="${GITHUB_PULL_REQUEST_COMMENT_ID:-}"
+export GITHUB_PULL_REQUEST_COMMENT_ID="${GITHUB_PULL_REQUEST_COMMENT_ID:-1234}"
 export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-minioadmin}"
 export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-minioadmin}"
 export AWS_REGION="${AWS_REGION:-us-east-1}"
