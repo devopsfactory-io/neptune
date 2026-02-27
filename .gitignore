@@ -18,3 +18,5 @@ venv.bak/
 /neptune
 dist/
 neptune*
+neptune-webhook.zip
+bootstrap

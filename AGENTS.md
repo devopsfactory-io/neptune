@@ -27,6 +27,8 @@ Guidance for AI coding agents working on the Neptune project.
 - **`internal/git`** – Rebased check (e.g. `git rev-list`).
 - **`internal/notifications/github`** – Format and post PR comments.
 - **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
+- **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`/`issue_comment`, trigger `repository_dispatch`). See [lambda/README.md](lambda/README.md).
+- **`lambda/cloudformation/`** – CloudFormation template to deploy the Lambda (Function URL, IAM, Secrets Manager). See [lambda/README.md](lambda/README.md#deploy-with-cloudformation).
 - **`Makefile`**, **`.golangci.yml`**, **`.goreleaser.yml`**, **`.github/workflows/`** – Build, test, lint, release.
 
 ---
@@ -37,17 +39,22 @@ Guidance for AI coding agents working on the Neptune project.
 # Build binary
 make build
 
-# Run all tests
+# Run all tests (main module)
 make test-all
 
-# Check Go formatting
+# Lambda (separate module under lambda/): build, package, test
+make lambda.build
+make lambda.zip
+make lambda.test
+
+# Check Go formatting (includes lambda/)
 make check-fmt
 
 # Lint (optional; requires golangci-lint)
 make lint
 ```
 
-Use Go version from `go.mod`. No other prerequisites for building or testing the Go CLI.
+Use Go version from `go.mod`. No other prerequisites for building or testing the Go CLI. CI runs `make test-all`, `make lambda.test`, and `make check-fmt`.
 
 ---
 

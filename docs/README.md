@@ -8,4 +8,5 @@ This folder contains detailed documentation for configuration, object storage, i
 | [Object storage](object-storage.md) | GCS, S3, and MinIO setup and environment variables |
 | [Installation](installation.md) | Go, Python (legacy), and GitHub Actions |
 | [Usage](usage.md) | CLI commands (`command plan/apply`, `unlock`) |
+| [GitHub App and Lambda](github-app-and-lambda.md) | Trigger Neptune via GitHub App webhooks and AWS Lambda (`repository_dispatch`) |
 | [Development](development.md) | Building, testing, and contributing (Go and Python legacy) |

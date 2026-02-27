@@ -51,6 +51,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: make test-all
+      - run: make lambda.test
       - run: make check-fmt
 
   skip:
