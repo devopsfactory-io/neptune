@@ -25,3 +25,7 @@ neptune --install-completion
 ## Using with GitHub Actions
 
 Set the same environment variables in your workflow (`GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_COMMENT_ID`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`), then run `neptune command plan` or `neptune command apply` as needed. See [Usage](usage.md) for CLI commands.
+
+## Triggering Neptune via GitHub App
+
+The default way to trigger Neptune from PR open and comments (e.g. `@neptbot apply`) is to **install the Neptune project's neptbot GitHub App** on your repos and add the workflow described in [GitHub App and Lambda](github-app-and-lambda.md). You can also self-host by creating your own GitHub App and deploying the [Lambda](lambda/README.md) in this repo.

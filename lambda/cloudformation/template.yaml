@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Neptune GitHub App webhook handler - Lambda and Function URL
+
+Parameters:
+  GitHubAppId:
+    Type: String
+    Description: GitHub App ID (numeric).
+  LambdaS3Bucket:
+    Type: String
+    Description: S3 bucket containing the Lambda deployment package (zip with bootstrap binary).
+  LambdaS3Key:
+    Type: String
+    Description: S3 object key of the Lambda zip (e.g. neptune-webhook.zip).
+  WebhookSecretArn:
+    Type: String
+    Description: ARN of the Secrets Manager secret containing the GitHub App webhook secret (plain string).
+  PrivateKeySecretArn:
+    Type: String
+    Description: ARN of the Secrets Manager secret containing the GitHub App private key (PEM).
+  GitHubAppSlug:
+    Type: String
+    Default: ""
+    Description: "(Optional) App slug for @-mention matching in comments (e.g. neptbot)."
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  LambdaSecretPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn: LambdaExecutionRole
+    Properties:
+      PolicyName: NeptuneWebhookSecrets
+      Roles:
+        - !Ref LambdaExecutionRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Ref WebhookSecretArn
+              - !Ref PrivateKeySecretArn
+
+  WebhookFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaExecutionRole
+      - LambdaSecretPolicy
+    Properties:
+      FunctionName: neptune-github-app-webhook
+      Description: Receives GitHub App webhooks and triggers repository_dispatch for Neptune plan/apply.
+      Runtime: provided.al2023
+      Handler: bootstrap
+      Code:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key: !Ref LambdaS3Key
+      Timeout: 25
+      MemorySize: 128
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          GITHUB_APP_ID: !Ref GitHubAppId
+          GITHUB_APP_WEBHOOK_SECRET_ARN: !Ref WebhookSecretArn
+          GITHUB_APP_PRIVATE_KEY_SECRET_ARN: !Ref PrivateKeySecretArn
+          GITHUB_APP_SLUG: !Ref GitHubAppSlug
+
+  FunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !Ref WebhookFunction
+      AuthType: NONE
+      Cors:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - POST
+        AllowHeaders:
+          - "*"
+        MaxAge: 0
+
+  FunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WebhookFunction
+      Principal: "*"
+      FunctionUrlAuthType: NONE
+      Action: lambda:InvokeFunctionUrl
+
+Outputs:
+  WebhookUrl:
+    Description: Set this as the GitHub App webhook URL (Payload URL).
+    Value: !GetAtt FunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub "${AWS::StackName}-WebhookUrl"
+  LambdaFunctionName:
+    Description: Name of the Lambda function.
+    Value: !Ref WebhookFunction
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function.
+    Value: !GetAtt WebhookFunction.Arn
