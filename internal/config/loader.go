@@ -31,7 +31,9 @@ type rawRepository struct {
 }
 
 type rawStep struct {
-	Run string `yaml:"run"`
+	Run       string `yaml:"run"`
+	Terramate *bool  `yaml:"terramate"`
+	Changed   *bool  `yaml:"changed"`
 }
 
 type rawPhase struct {
@@ -134,7 +136,11 @@ func Load(env map[string]string) (*domain.NeptuneConfig, error) {
 		for phaseName, rp := range phases {
 			steps := make([]domain.WorkflowStep, 0, len(rp.Steps))
 			for _, s := range rp.Steps {
-				steps = append(steps, domain.WorkflowStep{Run: s.Run})
+				steps = append(steps, domain.WorkflowStep{
+					Run:       s.Run,
+					Terramate: s.Terramate,
+					Changed:   s.Changed,
+				})
 			}
 			st.Phases[phaseName] = domain.WorkflowPhase{
 				Steps:     steps,

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -37,19 +38,59 @@ func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 		if step.Run == "" {
 			continue
 		}
-		log.Banner("Neptune Runner", []string{"Neptune is running the following command: " + step.Run})
-		log.For("run").Info("Running command: " + step.Run)
-		runOut := r.runCommand(ctx, step.Run)
-		out.Outputs = append(out.Outputs, runOut)
-		log.For("run").Info("Command completed with return code " + fmt.Sprint(runOut.Status))
-		if runOut.Status != 0 {
+		terramateEnabled := step.Terramate == nil || *step.Terramate
+		if !terramateEnabled {
+			log.Banner("Neptune Runner", []string{"Neptune is running the following command: " + step.Run})
+			log.For("run").Info("Running command: " + step.Run)
+			runOut := r.runCommand(ctx, step.Run)
+			out.Outputs = append(out.Outputs, runOut)
+			log.For("run").Info("Command completed with return code " + fmt.Sprint(runOut.Status))
+			if runOut.Status != 0 {
+				out.OverallStatus = 1
+				if r.Locks != nil && len(r.Stacks) > 0 {
+					if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusPending); err != nil {
+						log.For("run").Error("update stacks", "err", err)
+					}
+				}
+				return out, nil
+			}
+			continue
+		}
+		// Run step in each changed stack (terramate: true or default).
+		repoRoot, err := os.Getwd()
+		if err != nil {
+			log.For("run").Error("get working directory", "err", err)
 			out.OverallStatus = 1
-			if r.Locks != nil && len(r.Stacks) > 0 {
-				if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusPending); err != nil {
-					log.For("run").Error("update stacks", "err", err)
+			return out, nil
+		}
+		if len(r.Stacks) == 0 {
+			log.For("run").Info("No changed stacks, skipping step: " + step.Run)
+			continue
+		}
+		for _, stack := range r.Stacks {
+			stackDir := filepath.Join(repoRoot, stack)
+			log.Banner("Neptune Runner", []string{"Stack " + stack + ": " + step.Run})
+			log.For("run").Info("Running command in stack", "stack", stack, "command", step.Run)
+			runOut := r.runCommandInDir(ctx, stackDir, step.Run)
+			runOut.Command = step.Run
+			runOut.Stack = stack
+			if runOut.Output != "" || runOut.Error != "" {
+				runOut.Output = "[" + stack + "] " + runOut.Output
+				if runOut.Error != "" {
+					runOut.Error = "[" + stack + "] " + runOut.Error
 				}
 			}
-			return out, nil
+			out.Outputs = append(out.Outputs, runOut)
+			log.For("run").Info("Command completed", "stack", stack, "status", runOut.Status)
+			if runOut.Status != 0 {
+				out.OverallStatus = 1
+				if r.Locks != nil && len(r.Stacks) > 0 {
+					if err := r.Locks.UpdateStacks(ctx, r.Phase, r.Stacks, domain.WorkflowStatusPending); err != nil {
+						log.For("run").Error("update stacks", "err", err)
+					}
+				}
+				return out, nil
+			}
 		}
 	}
 	if r.Locks != nil && len(r.Stacks) > 0 {
@@ -62,6 +103,10 @@ func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 }
 
 func (r *Runner) runCommand(ctx context.Context, command string) domain.RunOutput {
+	return r.runCommandInDir(ctx, "", command)
+}
+
+func (r *Runner) runCommandInDir(ctx context.Context, dir, command string) domain.RunOutput {
 	var stdout, stderr bytes.Buffer
 	shell := "sh"
 	flag := "-c"
@@ -70,6 +115,9 @@ func (r *Runner) runCommand(ctx context.Context, command string) domain.RunOutpu
 		flag = "/c"
 	}
 	cmd := exec.CommandContext(ctx, shell, flag, command)
+	if dir != "" {
+		cmd.Dir = dir
+	}
 	cmd.Stdout = io.MultiWriter(&stdout, os.Stdout)
 	cmd.Stderr = io.MultiWriter(&stderr, os.Stderr)
 	err := cmd.Run()

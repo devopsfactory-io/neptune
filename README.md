@@ -25,7 +25,7 @@
 
 ## What is Neptune?
 
-A Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It uses [Terramate](https://github.com/terramate-io/terramate) for change detection, object storage (GCS or S3) for stack locking, and GitHub for PR requirements and comments.
+A Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It uses the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order. By default, workflow steps run in each changed stack (no Terramate CLI required for that); object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments.
 
 ## What does it do?
 

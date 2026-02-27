@@ -1,8 +1,12 @@
 package domain
 
 // WorkflowStep is a single step in a workflow phase.
+// When Terramate is true or nil (default), Neptune runs the command once per changed stack (in run order) with CWD set to each stack.
+// When Terramate is false, the command runs once in the process CWD.
 type WorkflowStep struct {
-	Run string `yaml:"run"`
+	Run       string `yaml:"run"`
+	Terramate *bool  `yaml:"terramate"` // default true: run in each changed stack
+	Changed   *bool  `yaml:"changed"`   // optional; when terramate true, we already run only in changed stacks
 }
 
 // WorkflowPhase is a phase in a workflow (e.g. plan or apply).
