@@ -45,7 +45,7 @@ jobs:
       - name: Install Neptune
         run: |
           NEPTUNE_VERSION="v0.2.0"
-          curl -sSL "https://github.com/kaio6fellipe/neptune/releases/download/${NEPTUNE_VERSION}/neptune_${NEPTUNE_VERSION}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin neptune
+          curl -sSL "https://github.com/devopsfactory-io/neptune/releases/download/${NEPTUNE_VERSION}/neptune_${NEPTUNE_VERSION}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin neptune
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

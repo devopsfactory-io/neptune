@@ -1,10 +1,10 @@
 # Neptune
 
 <p align="center">
-  <a href="https://github.com/kaio6fellipe/neptune/releases"><img src="https://img.shields.io/github/v/release/kaio6fellipe/neptune?color=%239F50DA&display_name=tag&label=Version" alt="Latest Release" /></a>
-  <a href="https://pkg.go.dev/github.com/kaio6fellipe/neptune"><img src="https://pkg.go.dev/badge/github.com/kaio6fellipe/neptune" alt="Go Docs" /></a>
-  <a href="https://goreportcard.com/report/github.com/kaio6fellipe/neptune"><img src="https://goreportcard.com/badge/github.com/kaio6fellipe/neptune" alt="Go Report Card" /></a>
-  <a href="https://github.com/kaio6fellipe/neptune/actions?query=branch%3Amain"><img src="https://github.com/kaio6fellipe/neptune/actions/workflows/test.yml/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/devopsfactory-io/neptune/releases"><img src="https://img.shields.io/github/v/release/devopsfactory-io/neptune?color=%239F50DA&display_name=tag&label=Version" alt="Latest Release" /></a>
+  <a href="https://pkg.go.dev/github.com/devopsfactory-io/neptune"><img src="https://pkg.go.dev/badge/github.com/devopsfactory-io/neptune" alt="Go Docs" /></a>
+  <a href="https://goreportcard.com/report/github.com/devopsfactory-io/neptune"><img src="https://goreportcard.com/badge/github.com/devopsfactory-io/neptune" alt="Go Report Card" /></a>
+  <a href="https://github.com/devopsfactory-io/neptune/actions?query=branch%3Amain"><img src="https://github.com/devopsfactory-io/neptune/actions/workflows/test.yml/badge.svg" alt="CI Status" /></a>
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
 
 - **Documentation**: [docs/](docs/README.md) – Configuration, object storage, installation, usage, and development. Log level can be set via `log_level` in config or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
 - **E2E tests**: [e2e/README.md](e2e/README.md) – Run against MinIO with `./e2e/run.sh` or `make e2e`
-- **Releases**: [github.com/kaio6fellipe/neptune/releases](https://github.com/kaio6fellipe/neptune/releases)
+- **Releases**: [github.com/devopsfactory-io/neptune/releases](https://github.com/devopsfactory-io/neptune/releases)
 - **neptbot**: Trigger Neptune from PR open and @-mention comments by [installing the neptbot GitHub App](docs/github-app-and-lambda.md) and adding the workflow (recommended). To self-host, see [lambda/](lambda/) and [lambda/README.md](lambda/README.md).
 - **Contributing**: [docs/development.md](docs/development.md) and [AGENTS.md](AGENTS.md) for AI/contributor guidance
 
