@@ -75,6 +75,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 
 - **`.github/workflows/test.yml`** – On push to `main`/`release-*` and on PRs; path filter for Go files; runs `make test-all` and `make check-fmt`.
 - **`.github/workflows/e2e.yml`** – On push/PR when e2e-related paths change; runs `./e2e/run.sh` with MinIO (Docker Compose). See [e2e/README.md](e2e/README.md).
+- **`.github/workflows/integration.yml`** – On PRs when integration-relevant paths change; runs Neptune plan/apply on the same PR with real GitHub (requirements check, PR comments) and MinIO for locks. See [e2e/README.md](e2e/README.md#integration-tests).
 - **`.github/workflows/lint.yml`** – On PRs; path filter for Go; runs golangci-lint.
 - **`.github/workflows/release.yml`** – On push of tags `v*.*.*` (and workflow_dispatch); runs GoReleaser to create GitHub Release and binaries.
 
