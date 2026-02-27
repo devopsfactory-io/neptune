@@ -68,11 +68,12 @@ func runCommand(_ *cobra.Command, args []string) error {
 	}
 
 	e2eMode := os.Getenv("NEPTUNE_E2E") == "1"
+	var ghClient *github.Client
 	var isPROpen func(context.Context, string) (bool, error)
 	if e2eMode {
 		isPROpen = func(_ context.Context, _ string) (bool, error) { return true, nil }
 	} else {
-		ghClient := github.NewClient(cfg)
+		ghClient = github.NewClient(cfg)
 		if ghClient == nil {
 			notifyAndExit(cfg, "GITHUB_TOKEN, GITHUB_REPOSITORY, and GITHUB_PULL_REQUEST_NUMBER are required", 1)
 		}
@@ -122,6 +123,25 @@ func runCommand(_ *cobra.Command, args []string) error {
 		notifyAndExit(cfg, "Failed to lock stacks: "+err.Error(), 1)
 	}
 
+	runURL := buildRunURL(cfg)
+	var headSHA string
+	if ghClient != nil {
+		sha, err := ghClient.GetHeadSHA(ctx)
+		if err != nil {
+			log.For("cli").Error("failed to get PR head SHA for status", "err", err)
+		} else {
+			headSHA = sha
+			ctxName := "neptune " + workflow
+			pendingDesc := "Plan in progress…"
+			if workflow == "apply" {
+				pendingDesc = "Apply in progress…"
+			}
+			if err := ghClient.CreateCommitStatus(ctx, headSHA, ctxName, "pending", pendingDesc, runURL); err != nil {
+				log.For("cli").Error("failed to set commit status", "context", ctxName, "err", err)
+			}
+		}
+	}
+
 	phase := wfs.Phases[workflow]
 	runner := &run.Runner{
 		Config: cfg,
@@ -150,6 +170,25 @@ func runCommand(_ *cobra.Command, args []string) error {
 		}
 	}
 
+	if ghClient != nil && headSHA != "" {
+		ctxName := "neptune " + workflow
+		state := "success"
+		desc := workflow + " completed successfully"
+		if stepsOut.OverallStatus != 0 {
+			state = "failure"
+			desc = workflow + " failed"
+		}
+		if err := ghClient.CreateCommitStatus(ctx, headSHA, ctxName, state, desc, runURL); err != nil {
+			log.For("cli").Error("failed to set commit status", "context", ctxName, "err", err)
+		}
+		if workflow == "plan" && stepsOut.OverallStatus == 0 {
+			applyPendingDesc := "Waiting for status to be reported — The PR cannot be merged because the apply command was not executed with success"
+			if err := ghClient.CreateCommitStatus(ctx, headSHA, "neptune apply", "pending", applyPendingDesc, runURL); err != nil {
+				log.For("cli").Error("failed to set neptune apply pending status", "err", err)
+			}
+		}
+	}
+
 	msg := fmt.Sprintf("Workflow %s completed with status %d", workflow, stepsOut.OverallStatus)
 	if stepsOut.OverallStatus != 0 {
 		log.For("cli").Error("workflow failed", "msg", msg)
@@ -163,6 +202,18 @@ func runCommand(_ *cobra.Command, args []string) error {
 	}
 	log.For("cli").Info("Success", "msg", msg)
 	return nil
+}
+
+func buildRunURL(cfg *domain.NeptuneConfig) string {
+	if cfg == nil || cfg.Repository == nil || cfg.Repository.GitHub == nil {
+		return ""
+	}
+	repo := strings.TrimPrefix(cfg.Repository.GitHub.Repository, "https://github.com/")
+	repo = strings.TrimSuffix(repo, "/")
+	if cfg.Repository.GitHub.RunID == "" {
+		return ""
+	}
+	return "https://github.com/" + repo + "/actions/runs/" + cfg.Repository.GitHub.RunID
 }
 
 func configSummaryLines(cfg *domain.NeptuneConfig) []string {
