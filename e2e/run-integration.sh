@@ -35,12 +35,25 @@ cd "$REPO_ROOT"
 trap compose_teardown EXIT
 
 # Use current checkout; GitHub env is set by caller (e.g. GHA). No NEPTUNE_E2E.
-export NEPTUNE_CONFIG_PATH="e2e/.neptune.yaml"
 export GITHUB_PULL_REQUEST_COMMENT_ID="${GITHUB_PULL_REQUEST_COMMENT_ID:-1234}"
 export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-minioadmin}"
 export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-minioadmin}"
 export AWS_REGION="${AWS_REGION:-us-east-1}"
 export AWS_ENDPOINT_URL_S3="${AWS_ENDPOINT_URL_S3:-http://localhost:9000}"
+
+# Ensure at least one stack is "changed" so Terramate ListChanged (HEAD vs origin/main) finds it.
+# Otherwise integration runs that don't touch e2e/ would see no stacks and skip plan/apply.
+echo "Injecting trivial change in e2e/stack-a and stack-b for change detection..."
+git config user.email "neptune@integration.test"
+git config user.name "Neptune Integration"
+echo "# integration: ensure changed stack for Terramate" >> "$E2E_DIR/stack-a/main.tf"
+echo "# integration: ensure changed stack for Terramate" >> "$E2E_DIR/stack-b/main.tf"
+git add "$E2E_DIR/stack-a/main.tf" "$E2E_DIR/stack-b/main.tf"
+git commit -m "chore(e2e): trigger integration changed stacks"
+
+# Run Neptune from e2e/ so the runner's cwd matches the Terramate root (stack paths resolve correctly).
+cd "$E2E_DIR"
+export NEPTUNE_CONFIG_PATH=".neptune.yaml"
 
 echo "Running neptune command plan..."
 neptune command plan
