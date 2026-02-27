@@ -26,7 +26,7 @@ on:
 
 concurrency:
   group: neptune-${{ github.event.client_payload.pull_request_number }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -69,7 +69,7 @@ jobs:
 
 Notes:
 
-- **concurrency**: Cancels in-progress runs for the same PR when a new event arrives (e.g. new push or comment).
+- **concurrency**: For Terraform/Neptune workflows, use `cancel-in-progress: false` so in-progress runs are never cancelled when a new event arrives.
 - **checkout**: Uses `refs/pull/<number>/head` so the job runs on the PR branch; the payload's `pull_request_branch` and `pull_request_sha` are available if you need them.
 - **Neptune env**: `GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`, and `GITHUB_PULL_REQUEST_COMMENT_ID` (can be empty) are required by Neptune.
 
