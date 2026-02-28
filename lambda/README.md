@@ -113,6 +113,7 @@ Repositories that have the Neptune GitHub App installed must add a workflow that
 ## Events handled
 
 - **pull_request** (`opened`, `reopened`, `synchronize`, `ready_for_review`): triggers `repository_dispatch` with `command: plan`, and adds a 👀 reaction to the PR.
+- **pull_request** (`labeled`): when the label that was added equals **NEPTUNE_PR_LABEL**, triggers plan (same as opened) and adds a 👀 reaction to the PR. When **NEPTUNE_PR_LABEL** is not set, `labeled` events are ignored (no dispatch).
 - **issue_comment** (created, on a PR): if the comment body mentions the app (e.g. `@neptbot`) and contains the word `apply` or `plan`, triggers `repository_dispatch` with that command, and adds a 👀 reaction to the comment.
 
-If **NEPTUNE_PR_LABEL** is set, only PRs that have that label (e.g. `neptune`) trigger the workflow and get the eyes reaction; other PRs receive a silent `200 OK` with no dispatch and no reaction.
+If **NEPTUNE_PR_LABEL** is set, only PRs that have that label (e.g. `neptune`) trigger the workflow and get the eyes reaction; other PRs receive a silent `200 OK` with no dispatch and no reaction. For `labeled`, only the event where the added label equals **NEPTUNE_PR_LABEL** triggers.

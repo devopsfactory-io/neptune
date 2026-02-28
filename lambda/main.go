@@ -64,7 +64,7 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 
 	switch eventType {
 	case "pull_request":
-		payload, instID, labels, err := webhooks.ParsePullRequest([]byte(body))
+		payload, instID, labels, addedLabel, err := webhooks.ParsePullRequest([]byte(body))
 		if err != nil {
 			log.Printf("parse pull_request: %v", err)
 			return response(400, "Bad payload"), nil
@@ -72,7 +72,12 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 		if payload == nil {
 			return response(200, "OK"), nil // unsupported action
 		}
-		if cfg.PrLabel != "" && !hasLabel(labels, cfg.PrLabel) {
+		if addedLabel != "" {
+			// labeled event: only trigger when PrLabel is set and the added label matches
+			if cfg.PrLabel == "" || addedLabel != cfg.PrLabel {
+				return response(200, "OK"), nil
+			}
+		} else if cfg.PrLabel != "" && !hasLabel(labels, cfg.PrLabel) {
 			return response(200, "OK"), nil
 		}
 		token, err := github.InstallationToken(ctx, cfg.AppID, cfg.PrivateKey, instID)
