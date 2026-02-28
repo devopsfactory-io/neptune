@@ -7,6 +7,18 @@ import (
 	"strings"
 )
 
+// RepoRoot returns the absolute path of the git repository root (where .git is).
+// workDir is any directory inside the repo.
+func RepoRoot(workDir string) (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	cmd.Dir = workDir
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("git rev-parse --show-toplevel: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 // DefaultBranch returns the repository's default branch name using git CLI only.
 // workDir is the repository working directory (e.g. from lock's repoRoot).
 // It tries local origin/HEAD first, then git ls-remote --symref origin HEAD if needed.
@@ -70,7 +82,7 @@ func parseLsRemoteSymref(out string) (string, error) {
 }
 
 // ShowFileFromRef runs "git show <ref>:<path>" in workDir and returns the file content.
-// path is relative to workDir (e.g. ".neptune.yaml").
+// path must be relative to the git repository root (e.g. ".neptune.yaml" or "e2e/.neptune.yaml").
 func ShowFileFromRef(workDir, ref, path string) ([]byte, error) {
 	cmd := exec.Command("git", "show", ref+":"+path)
 	cmd.Dir = workDir

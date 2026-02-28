@@ -71,6 +71,33 @@ func TestShowFileFromRef_NoRepo(t *testing.T) {
 	}
 }
 
+func TestRepoRoot(t *testing.T) {
+	dir := t.TempDir()
+	runGit(t, dir, "init", "-b", "main")
+	root, err := RepoRoot(dir)
+	if err != nil {
+		t.Fatalf("RepoRoot: %v", err)
+	}
+	// Git may return canonical path (e.g. /private/var/... on macOS)
+	dirCanon, _ := filepath.EvalSymlinks(dir)
+	rootCanon, _ := filepath.EvalSymlinks(root)
+	if rootCanon != dirCanon {
+		t.Errorf("RepoRoot = %q (canon %q), dir canon %q", root, rootCanon, dirCanon)
+	}
+	subdir := filepath.Join(dir, "e2e")
+	if err := os.Mkdir(subdir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	root2, err := RepoRoot(subdir)
+	if err != nil {
+		t.Fatalf("RepoRoot from subdir: %v", err)
+	}
+	root2Canon, _ := filepath.EvalSymlinks(root2)
+	if root2Canon != dirCanon {
+		t.Errorf("RepoRoot from subdir = %q (canon %q), want canon %q", root2, root2Canon, dirCanon)
+	}
+}
+
 func TestDefaultBranch_Local(t *testing.T) {
 	dir := t.TempDir()
 	runGit(t, dir, "init", "-b", "main")

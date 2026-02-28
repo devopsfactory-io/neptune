@@ -58,28 +58,41 @@ func loadConfig(env map[string]string) (*domain.NeptuneConfig, error) {
 	if configPath == "" {
 		configPath = ".neptune.yaml"
 	}
-	pathForGit := filepath.Base(configPath)
-	if pathForGit == "" || pathForGit == "." {
-		pathForGit = ".neptune.yaml"
-	}
-	repoRoot, err := repoRootFromEnv(env)
+	configDir, err := repoRootFromEnv(env)
 	if err != nil {
 		log.For("cli").Info("Config loaded from local file (could not resolve repo root)", "err", err)
 		return config.Load(env)
 	}
-	defaultBranch, err := git.DefaultBranch(repoRoot)
+	// Path for "git show ref:path" must be relative to the git repository root (not the config directory).
+	gitRepoRoot, err := git.RepoRoot(configDir)
+	if err != nil {
+		log.For("cli").Info("Config loaded from local file (could not get git repo root)", "err", err)
+		return config.Load(env)
+	}
+	configFileName := filepath.Base(configPath)
+	if configFileName == "" || configFileName == "." {
+		configFileName = ".neptune.yaml"
+	}
+	fullConfigPath := filepath.Join(configDir, configFileName)
+	pathForGit, err := filepath.Rel(gitRepoRoot, fullConfigPath)
+	if err != nil {
+		log.For("cli").Info("Config loaded from local file (could not resolve config path)", "err", err)
+		return config.Load(env)
+	}
+	pathForGit = filepath.ToSlash(pathForGit) // git expects forward slashes
+	defaultBranch, err := git.DefaultBranch(configDir)
 	if err != nil {
 		log.For("cli").Info("Config loaded from local file (could not get default branch)", "err", err)
 		return config.Load(env)
 	}
-	_ = git.FetchBranch(repoRoot, defaultBranch) // best-effort; ShowFileFromRef may still work if ref exists
+	_ = git.FetchBranch(configDir, defaultBranch) // best-effort; ShowFileFromRef may still work if ref exists
 	refDefault := "origin/" + defaultBranch
-	content, err := git.ShowFileFromRef(repoRoot, refDefault, pathForGit)
+	content, err := git.ShowFileFromRef(configDir, refDefault, pathForGit)
 	if err == nil {
 		log.For("cli").Info("Config loaded from default branch", "branch", defaultBranch)
 		return config.LoadWithContent(env, content)
 	}
-	content, err = git.ShowFileFromRef(repoRoot, "HEAD", pathForGit)
+	content, err = git.ShowFileFromRef(configDir, "HEAD", pathForGit)
 	if err == nil {
 		log.For("cli").Info("Config loaded from PR branch")
 		return config.LoadWithContent(env, content)
