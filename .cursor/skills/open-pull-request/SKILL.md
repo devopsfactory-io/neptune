@@ -30,27 +30,26 @@ Use this skill **only** when the user explicitly requests to open a pull request
 ### 3. Push and create PR
 
 - Push: `git push -u origin <branch-name>`
-- Create PR: `gh pr create` with:
-  - **Title**: Human-readable, concise; conventional style preferred (e.g. `feat(lock): integrate Terramate SDK for change detection`).
-  - **Body**: Use the dual-purpose template below (human summary + AI block).
+- Create PR: `gh pr create` using the repository’s [pull request template](.github/pull_request_template.md). Populate all sections (see **PR body** below). The `neptune` label is applied automatically; do not add it manually.
 
 ### 4. Safety
 
 - Do not run `git push`, `git commit`, or `gh pr create` unless the user has explicitly requested to open a pull request.
 - If the repo is in an unexpected state (e.g. already on a feature branch with unpushed commits, or detached HEAD), ask the user before creating a new branch or pushing.
 
-## PR body template
+## PR body (repo template)
 
-Use this structure so the PR is readable by both humans and AI:
+The repo uses [.github/pull_request_template.md](.github/pull_request_template.md). When creating the PR (e.g. `gh pr create --body-file -` or by filling the template), populate:
 
-```markdown
-## Summary
-[One or two sentences for humans: what this PR does.]
+- **What is this feature?** – Short description; correlates with issues.
+- **Why do we need this feature?** – Problem or context (from commit/conversation).
+- **Who is this feature for?** – Target user or use case.
+- **Related issues** – e.g. `Fixes #123` or `Relates to #456` if applicable.
+- **Notes for reviewers** – Optional; call out design decisions or areas to focus on.
+- **Checklist** – Mark as appropriate: breaking changes (Yes/No/N/A), docs updated, tests added/updated.
+- **AI Summary** – For AI reviewers; fill from changed files and context:
+  - **Scope:** e.g. `lambda (config, webhooks, main)`, `docs`, `AGENTS.md`
+  - **Type:** `feat` | `fix` | `docs` | `refactor`
+  - **Key files/areas:** paths from `git diff --name-only` or conversation (e.g. `lambda/pkg/config/config.go`, `docs/github-app-and-lambda.md`)
 
-## Summary for AI
-- **Scope**: [e.g. config, lock, run]
-- **Type**: feat | fix | docs | refactor
-- **Key files/areas**: [paths or areas]
-```
-
-Fill the placeholders from the commit message and the changed files (e.g. from `git diff --name-only` or the conversation context).
+Generate the body from the commit message and `git diff --name-only` (or equivalent) so the template sections are filled accurately.

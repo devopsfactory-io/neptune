@@ -18,9 +18,11 @@ Use this skill when:
 
 1. **README.md** – Update if install steps, usage, or config schema changed. Keep high-level content and links to docs accurate.
 2. **docs/*.md** – Update if install, config, object storage, usage, or development steps changed.
-3. **AGENTS.md** – Update if project structure, setup commands, code style, testing, or CI changed. Keep repo layout and "Documentation and AI context" section accurate.
-4. **.cursor/rules/*.mdc** – Update if coding conventions, workflow rules, or file-scoped guidance changed. Match globs to the files the rule applies to.
-5. **.cursor/skills/*/SKILL.md** – Update if a documented workflow (e.g. release steps, test commands) or checklist changed.
+3. **CONTRIBUTING.md** – Update if contributing workflow, issue/PR process, or checklist for contributors changed.
+4. **AGENTS.md** – Update if project structure, setup commands, code style, testing, or CI changed. Keep repo layout and "Documentation and AI context" section accurate.
+5. **.github/** – Update [pull_request_template.md](.github/pull_request_template.md) or [ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) if PR/issue structure or required sections change.
+6. **.cursor/rules/*.mdc** – Update if coding conventions, workflow rules, or file-scoped guidance changed. Match globs to the files the rule applies to.
+7. **.cursor/skills/*/SKILL.md** – Update if a documented workflow (e.g. release steps, test commands, open-pull-request) or checklist changed.
 
 ## Where Things Live
 
@@ -28,9 +30,12 @@ Use this skill when:
 |----------|----------|---------|
 | README.md | Humans | High-level entry point; links to docs and releases |
 | docs/ | Humans | Configuration, object storage, installation, usage, development |
+| CONTRIBUTING.md | Humans | How to contribute; issue/PR templates, checklist, CI |
+| .github/pull_request_template.md | Humans + AI | PR description structure; includes AI Summary for reviewers |
+| .github/ISSUE_TEMPLATE/ | Humans | Bug report, feature request, staff issue templates |
 | AGENTS.md | AI agents | Project overview, structure, setup, style, testing, CI, doc-update requirement |
 | .cursor/rules/*.mdc | AI agents | File-specific or always-applied rules (Go, CI, config, docs) |
-| .cursor/skills/*/SKILL.md | AI agents | Step-by-step workflows (e.g. maintain-documentation, release, testing) |
+| .cursor/skills/*/SKILL.md | AI agents | Step-by-step workflows (e.g. maintain-documentation, release, open-pull-request) |
 
 ## When to Update AI Docs
 

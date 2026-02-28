@@ -1,0 +1,3 @@
+# Apply "neptune" label to every PR (any changed file matches).
+neptune:
+  - '**'

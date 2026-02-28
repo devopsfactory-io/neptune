@@ -10,7 +10,7 @@ Guidance for AI coding agents working on the Neptune project.
 
 **Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once when `terramate: false`); post results as PR comments. Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
 
-**Language**: Go (see `go.mod`). Legacy Python code exists under `neptune/` and `tests/`; primary codebase is Go.
+**Language**: Go (see `go.mod`).
 
 ---
 
@@ -117,6 +117,7 @@ PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ..
 
 ## References
 
+- **Contributing (human)**: [CONTRIBUTING.md](CONTRIBUTING.md) – main entry for contributors; issue and PR templates live in [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) and [.github/pull_request_template.md](.github/pull_request_template.md).
 - **Cursor rules**: `.cursor/rules/` – file-specific and always-applied rules.
 - **Cursor skills**: `.cursor/skills/` – workflows for documentation maintenance, releases, testing, and open-pull-request (open a PR from current changes via gh CLI).
 - **Neptune config**: [docs/configuration.md](docs/configuration.md) and [.neptune.example.yaml](.neptune.example.yaml) for `.neptune.yaml` schema; [docs/object-storage.md](docs/object-storage.md) for backend env vars.

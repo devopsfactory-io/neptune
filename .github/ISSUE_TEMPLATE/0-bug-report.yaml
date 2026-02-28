@@ -1,0 +1,74 @@
+name: Bug report
+description: File a bug report
+title: "Area: Short description of bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        Please try to give your issue a good title. Try using the area where you are having an issue and a brief description. For example:
+        - `Lock: GCS lock fails when bucket is in another project` or
+        - `GitHub: PR comment not posted when plan fails`
+
+  - type: markdown
+    attributes:
+      value: |
+        **Hint:** Have you tried [searching](https://github.com/devopsfactory-io/neptune/issues) for similar issues? Duplicate issues are common.
+
+        **Are you reporting a security vulnerability?** Please report it responsibly (e.g. via GitHub Security Advisories or private contact per the repository's security policy).
+
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you observed.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Did this work before?
+      description: "If this worked before, what Neptune version (or commit) worked correctly?"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: How do we reproduce it?
+      placeholder: "Steps to reproduce..."
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Environment (versions)?
+      description: Neptune, Terraform/OpenTofu, Terramate, OS, and runner environment if relevant.
+      placeholder: "Neptune version, OS, Terraform/OpenTofu, runner..."
+      value: |
+        Neptune:
+        Terraform/OpenTofu:
+        OS:
+    validations:
+      required: false
+
+  - type: dropdown
+    attributes:
+      label: Neptune platform?
+      description: How are you running Neptune?
+      options:
+        - GitHub Actions
+        - Self-hosted runner
+        - Other
+        - I don't know
+    validations:
+      required: false
