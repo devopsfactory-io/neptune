@@ -33,9 +33,9 @@ jobs:
           filters: |
             e2e:
               - 'e2e/**'
-              - 'internal/lock/**'
+              - 'internal/**'
+              - 'lambda/**'
               - 'cmd/**'
-              - 'internal/config/**'
               - 'docker-compose*.yaml'
               - 'docker-compose*.yml'
               - '.github/workflows/e2e.yml'

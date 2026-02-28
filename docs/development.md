@@ -45,7 +45,6 @@ To set up for development:
    GITHUB_REPOSITORY=https://github.com/example/infrastructure           # Update this with the repository url that you are testing
    GITHUB_PULL_REQUEST_BRANCH=feat/add-pull-request-automation-framework # Update this with the pull request branch that you are testing
    GITHUB_PULL_REQUEST_NUMBER=281                                        # Update this with the pull request number that you are testing
-   GITHUB_PULL_REQUEST_COMMENT_ID=2945607606                             # Update this with the pull request comment id that you are testing
    GITHUB_RUN_ID=1234567890                                              # Update this with the GitHub Actions run id that you are emulating
    ```
 

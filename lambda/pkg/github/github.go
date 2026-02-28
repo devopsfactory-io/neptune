@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -139,6 +140,11 @@ func (c *Client) RepositoryDispatch(ctx context.Context, ownerRepo string, paylo
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		const maxBody = 500
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxBody))
+		if len(body) > 0 {
+			return fmt.Errorf("repository_dispatch: status %d: %s", resp.StatusCode, bytes.TrimSpace(body))
+		}
 		return fmt.Errorf("repository_dispatch: status %d", resp.StatusCode)
 	}
 	return nil

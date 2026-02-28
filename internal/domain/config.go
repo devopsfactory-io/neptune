@@ -28,12 +28,11 @@ type Workflows struct {
 
 // GitHubConfig holds GitHub-related config from env.
 type GitHubConfig struct {
-	Repository           string
-	PullRequestBranch    string
-	PullRequestNumber    string
-	PullRequestCommentID string
-	RunID                string
-	Token                string
+	Repository        string
+	PullRequestBranch string
+	PullRequestNumber string
+	RunID             string
+	Token             string
 }
 
 // RepositoryConfig is the repository section of .neptune.yaml.

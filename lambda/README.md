@@ -13,7 +13,7 @@ If you are self-hosting, you need:
 - A [GitHub App](https://docs.github.com/en/apps/creating-github-apps) with:
   - Webhook URL set to your Lambda Function URL (after deploy)
   - Webhook secret (stored in AWS Secrets Manager)
-  - Permissions: Repository permissions → **Contents** (read), **Pull requests** (read), **Metadata** (read)
+  - Permissions: Repository permissions → **Contents** (read and write), **Pull requests** (read), **Metadata** (read). The `repository_dispatch` API requires write access to the repository.
   - Subscribe to events: **Pull requests**, **Issue comments**
   - Private key (stored in AWS Secrets Manager)
 
@@ -67,6 +67,27 @@ From the repository root you can run `make lambda.build` and `make lambda.zip`. 
    ```
 
    Set this URL as the **Payload URL** in your GitHub App’s webhook settings.
+
+## Verify deployment
+
+After deploying, confirm the Lambda is reachable and the handler runs:
+
+1. **Smoke tests** (replace `YOUR_FUNCTION_URL` with the URL from the stack output):
+
+   - **GET** (expect **405** Method Not Allowed):
+     ```bash
+     curl -s -o /dev/null -w "%{http_code}" YOUR_FUNCTION_URL
+     ```
+   - **POST without signature** (expect **401** Invalid signature):
+     ```bash
+     curl -s -o /dev/null -w "%{http_code}" -X POST YOUR_FUNCTION_URL -d '{}'
+     ```
+
+   If you see **403 Forbidden**, either (1) the Function URL is using IAM auth — set **Auth type** to **NONE** in the Lambda console under **Configuration** → **Function URL** — or (2) the console reports that Auth is NONE but "permissions for public access" are missing. For (2), redeploy the stack so the template’s resource-based permission (`lambda:InvokeFunctionUrl` for principal `*`) is applied, or in the Lambda console go to **Configuration** → **Permissions** and add a resource-based policy that allows public invocation of the Function URL (e.g. use the console’s option to add permissions for **Function URL** when Auth type is NONE).
+
+2. **Full verification**: Set the GitHub App **Payload URL** to this Lambda URL, then open **Settings → Developer settings → GitHub Apps → your app → Advanced → Recent Deliveries**. Use **Redeliver** on the initial **ping**. A **200** response means the Lambda accepted GitHub’s signed payload and is working end-to-end.
+
+3. **Logs**: If you get **500** or unexpected behavior, check CloudWatch logs for the function (Lambda → Monitor → View CloudWatch logs) for messages like `load config: ...`, `verify signature: ...`, or `repository_dispatch: ...`. A 500 with body "Dispatch error" often means GitHub returned 403 (e.g. "Resource not accessible by integration"); ensure the App has **Contents: Read and write** so `repository_dispatch` is allowed.
 
 ## Environment variables (Lambda)
 

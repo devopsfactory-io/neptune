@@ -34,16 +34,13 @@ jobs:
           filters: |
             integration:
               - 'e2e/**'
-              - 'internal/github/**'
-              - 'internal/notifications/github/**'
               - 'cmd/**'
-              - 'internal/config/**'
-              - 'internal/lock/**'
-              - 'internal/run/**'
-              - 'internal/domain/**'
+              - 'internal/**'
+              - 'lambda/**'
               - 'docker-compose*.yaml'
               - 'docker-compose*.yml'
               - '.github/workflows/integration.yml'
+              - '.github/workflows/neptune.yml'
 
   integration:
     needs: [changes]
@@ -72,11 +69,19 @@ jobs:
           GITHUB_PULL_REQUEST_BRANCH: ${{ github.event.pull_request.head.ref }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_PULL_REQUEST_COMMENT_ID: "1234"
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
           AWS_REGION: us-east-1
           AWS_ENDPOINT_URL_S3: http://localhost:9000
+
+      - name: Comment on PR to trigger Lambda integration test
+        run: |
+          curl -sS -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            -d '{"body":"End-to-end integration was executed with success, @neptbot plan to start the lambda integration..."}'
 
   skip:
     needs: [changes]
