@@ -2,7 +2,7 @@
 
 This directory is for **self-hosting** the webhook handler. The default way to use Neptune with webhooks is to install the Neptune project's **neptbot** GitHub App; use this Lambda code and CloudFormation only if you want to run your own GitHub App and Lambda (e.g. in your AWS account).
 
-The Lambda receives webhooks (pull request and issue comment events), verifies the signature, and triggers a GitHub Actions workflow in the target repository via `repository_dispatch` so that Neptune runs `plan` (on PR open/sync) or `apply` (when someone comments e.g. `@neptune apply`). This repo provides the Lambda code and a CloudFormation template to deploy it.
+The Lambda receives webhooks (pull request and issue comment events), verifies the signature, and triggers a GitHub Actions workflow in the target repository via `repository_dispatch` so that Neptune runs `plan` (on PR open/sync) or `apply` (when someone comments e.g. `@neptune apply`). It also adds a 👀 (eyes) reaction to the PR and to the comment that triggered the command for visibility. This repo provides the Lambda code and a CloudFormation template to deploy it.
 
 ## Prerequisites (if self-hosting)
 
@@ -13,7 +13,7 @@ If you are self-hosting, you need:
 - A [GitHub App](https://docs.github.com/en/apps/creating-github-apps) with:
   - Webhook URL set to your Lambda Function URL (after deploy)
   - Webhook secret (stored in AWS Secrets Manager)
-  - Permissions: Repository permissions → **Contents** (read and write), **Pull requests** (read), **Metadata** (read). The `repository_dispatch` API requires write access to the repository.
+  - Permissions: Repository permissions → **Contents** (read and write), **Pull requests** (read), **Issues** (read and write), **Metadata** (read). The `repository_dispatch` API requires write access to the repository. **Issues** (read and write) is required so the Lambda can add a 👀 reaction to the PR and to the comment that triggered the command.
   - Subscribe to events: **Pull requests**, **Issue comments**
   - Private key (stored in AWS Secrets Manager)
 
@@ -108,5 +108,5 @@ Repositories that have the Neptune GitHub App installed must add a workflow that
 
 ## Events handled
 
-- **pull_request** (`opened`, `reopened`, `synchronize`, `ready_for_review`): triggers `repository_dispatch` with `command: plan`.
-- **issue_comment** (created, on a PR): if the comment body mentions the app (e.g. `@neptbot`) and contains the word `apply` or `plan`, triggers `repository_dispatch` with that command.
+- **pull_request** (`opened`, `reopened`, `synchronize`, `ready_for_review`): triggers `repository_dispatch` with `command: plan`, and adds a 👀 reaction to the PR.
+- **issue_comment** (created, on a PR): if the comment body mentions the app (e.g. `@neptbot`) and contains the word `apply` or `plan`, triggers `repository_dispatch` with that command, and adds a 👀 reaction to the comment.

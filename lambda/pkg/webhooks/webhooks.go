@@ -47,6 +47,7 @@ type IssueCommentPayload struct {
 	Repository   Repo          `json:"repository"`
 	Installation *Installation `json:"installation"`
 	Comment      struct {
+		ID   int64  `json:"id"`
 		Body string `json:"body"`
 	} `json:"comment"`
 }
@@ -86,17 +87,17 @@ func ParsePullRequest(body []byte) (*DispatchPayload, int64, error) {
 	}, instID, nil
 }
 
-// ParseIssueComment parses the issue_comment webhook body. If the comment is on a PR and mentions the app with a command, returns (dispatch payload, installation ID, true). appMention is the app login/slug (e.g. "neptbot").
-func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64, bool, error) {
+// ParseIssueComment parses the issue_comment webhook body. If the comment is on a PR and mentions the app with a command, returns (dispatch payload, installation ID, comment ID, true). appMention is the app login/slug (e.g. "neptbot").
+func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64, int64, bool, error) {
 	var p IssueCommentPayload
 	if err := json.Unmarshal(body, &p); err != nil {
-		return nil, 0, false, err
+		return nil, 0, 0, false, err
 	}
 	if p.Action != "created" {
-		return nil, 0, false, nil
+		return nil, 0, 0, false, nil
 	}
 	if p.Issue.PullRequest == nil {
-		return nil, 0, false, nil
+		return nil, 0, 0, false, nil
 	}
 	bodyLower := strings.ToLower(strings.TrimSpace(p.Comment.Body))
 	mentionLower := strings.ToLower(strings.TrimSpace(appMention))
@@ -104,7 +105,7 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 		mentionLower = "neptbot"
 	}
 	if !strings.Contains(bodyLower, "@"+mentionLower) {
-		return nil, 0, false, nil
+		return nil, 0, 0, false, nil
 	}
 	var cmd Command
 	if matchApply.MatchString(bodyLower) {
@@ -112,17 +113,18 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 	} else if matchPlan.MatchString(bodyLower) {
 		cmd = CommandPlan
 	} else {
-		return nil, 0, false, nil
+		return nil, 0, 0, false, nil
 	}
 	var instID int64
 	if p.Installation != nil {
 		instID = p.Installation.ID
 	}
+	commentID := p.Comment.ID
 	return &DispatchPayload{
 		Command:             string(cmd),
 		PullRequestNumber:   p.Issue.Number,
 		PullRequestRepoFull: p.Repository.FullName,
-	}, instID, true, nil
+	}, instID, commentID, true, nil
 }
 
 var (
