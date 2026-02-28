@@ -33,7 +33,7 @@ const pullRequestClosed = `{
 }`
 
 func TestParsePullRequest_ValidOpened(t *testing.T) {
-	payload, instID, err := ParsePullRequest([]byte(pullRequestOpened))
+	payload, instID, labels, err := ParsePullRequest([]byte(pullRequestOpened))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -58,10 +58,13 @@ func TestParsePullRequest_ValidOpened(t *testing.T) {
 	if instID != 12345 {
 		t.Errorf("installation ID: got %d", instID)
 	}
+	if len(labels) != 0 {
+		t.Errorf("labels: expected empty, got %v", labels)
+	}
 }
 
 func TestParsePullRequest_ValidSynchronize(t *testing.T) {
-	payload, instID, err := ParsePullRequest([]byte(pullRequestSynchronize))
+	payload, instID, labels, err := ParsePullRequest([]byte(pullRequestSynchronize))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -77,10 +80,13 @@ func TestParsePullRequest_ValidSynchronize(t *testing.T) {
 	if instID != 999 {
 		t.Errorf("installation ID: got %d", instID)
 	}
+	if len(labels) != 0 {
+		t.Errorf("labels: expected empty, got %v", labels)
+	}
 }
 
 func TestParsePullRequest_UnsupportedAction(t *testing.T) {
-	payload, instID, err := ParsePullRequest([]byte(pullRequestClosed))
+	payload, instID, labels, err := ParsePullRequest([]byte(pullRequestClosed))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -90,12 +96,68 @@ func TestParsePullRequest_UnsupportedAction(t *testing.T) {
 	if instID != 0 {
 		t.Errorf("expected zero instID when skipping, got %d", instID)
 	}
+	if labels != nil {
+		t.Errorf("expected nil labels when skipping, got %v", labels)
+	}
 }
 
 func TestParsePullRequest_InvalidJSON(t *testing.T) {
-	_, _, err := ParsePullRequest([]byte(`{`))
+	_, _, _, err := ParsePullRequest([]byte(`{`))
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
+	}
+}
+
+const pullRequestWithNeptuneLabel = `{
+  "action": "opened",
+  "number": 1,
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 1},
+  "pull_request": {
+    "head": {"ref": "branch", "sha": "sha1"},
+    "labels": [{"name": "neptune"}, {"name": "infra"}]
+  }
+}`
+
+const pullRequestWithOtherLabel = `{
+  "action": "opened",
+  "number": 2,
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 1},
+  "pull_request": {
+    "head": {"ref": "branch", "sha": "sha1"},
+    "labels": [{"name": "other"}]
+  }
+}`
+
+func TestParsePullRequest_Labels(t *testing.T) {
+	payload, _, labels, err := ParsePullRequest([]byte(pullRequestWithNeptuneLabel))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if payload == nil {
+		t.Fatal("expected non-nil payload")
+	}
+	if len(labels) != 2 {
+		t.Fatalf("labels: expected 2, got %v", labels)
+	}
+	hasNeptune := false
+	for _, name := range labels {
+		if name == "neptune" {
+			hasNeptune = true
+			break
+		}
+	}
+	if !hasNeptune {
+		t.Errorf("labels: expected to contain neptune, got %v", labels)
+	}
+
+	_, _, labelsOther, err := ParsePullRequest([]byte(pullRequestWithOtherLabel))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(labelsOther) != 1 || labelsOther[0] != "other" {
+		t.Errorf("labels: expected [other], got %v", labelsOther)
 	}
 }
 
@@ -145,7 +207,7 @@ const issueCommentBotAuthor = `{
 }`
 
 func TestParseIssueComment_ValidApply(t *testing.T) {
-	payload, instID, commentID, ok, err := ParseIssueComment([]byte(issueCommentApply), "neptbot")
+	payload, instID, commentID, labels, ok, err := ParseIssueComment([]byte(issueCommentApply), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -170,10 +232,13 @@ func TestParseIssueComment_ValidApply(t *testing.T) {
 	if commentID != 1001 {
 		t.Errorf("comment ID: got %d", commentID)
 	}
+	if len(labels) != 0 {
+		t.Errorf("labels: expected empty, got %v", labels)
+	}
 }
 
 func TestParseIssueComment_ValidPlan(t *testing.T) {
-	payload, _, commentID, ok, err := ParseIssueComment([]byte(issueCommentPlan), "neptbot")
+	payload, _, commentID, _, ok, err := ParseIssueComment([]byte(issueCommentPlan), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -192,7 +257,7 @@ func TestParseIssueComment_ValidPlan(t *testing.T) {
 }
 
 func TestParseIssueComment_NotPR(t *testing.T) {
-	payload, _, _, ok, err := ParseIssueComment([]byte(issueCommentNotPR), "neptbot")
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentNotPR), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -205,7 +270,7 @@ func TestParseIssueComment_NotPR(t *testing.T) {
 }
 
 func TestParseIssueComment_NoMention(t *testing.T) {
-	_, _, _, ok, err := ParseIssueComment([]byte(issueCommentNoMention), "neptbot")
+	_, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentNoMention), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -215,7 +280,7 @@ func TestParseIssueComment_NoMention(t *testing.T) {
 }
 
 func TestParseIssueComment_MentionNoCommand(t *testing.T) {
-	_, _, _, ok, err := ParseIssueComment([]byte(issueCommentMentionNoCommand), "neptbot")
+	_, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentMentionNoCommand), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -225,7 +290,7 @@ func TestParseIssueComment_MentionNoCommand(t *testing.T) {
 }
 
 func TestParseIssueComment_BotAuthorDoesNotTrigger(t *testing.T) {
-	payload, _, _, ok, err := ParseIssueComment([]byte(issueCommentBotAuthor), "neptbot")
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentBotAuthor), "neptbot")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -238,7 +303,7 @@ func TestParseIssueComment_BotAuthorDoesNotTrigger(t *testing.T) {
 }
 
 func TestParseIssueComment_InvalidJSON(t *testing.T) {
-	_, _, _, _, err := ParseIssueComment([]byte(`not json`), "neptbot")
+	_, _, _, _, _, err := ParseIssueComment([]byte(`not json`), "neptbot")
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
@@ -246,7 +311,7 @@ func TestParseIssueComment_InvalidJSON(t *testing.T) {
 
 func TestParseIssueComment_DefaultMention(t *testing.T) {
 	body := `{"action":"created","issue":{"number":2,"pull_request":{}},"repository":{"full_name":"o/r"},"installation":{"id":1},"comment":{"id":99,"body":"@neptbot plan"}}`
-	payload, _, commentID, ok, err := ParseIssueComment([]byte(body), "")
+	payload, _, commentID, _, ok, err := ParseIssueComment([]byte(body), "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -258,5 +323,48 @@ func TestParseIssueComment_DefaultMention(t *testing.T) {
 	}
 	if commentID != 99 {
 		t.Errorf("comment ID: got %d", commentID)
+	}
+}
+
+const issueCommentWithNeptuneLabel = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}, "labels": [{"name": "neptune"}]},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 1001, "body": "@neptbot apply"}
+}`
+
+const issueCommentWithOtherLabel = `{
+  "action": "created",
+  "issue": {"number": 11, "pull_request": {}, "labels": [{"name": "other"}]},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 1002, "body": "@neptbot plan"}
+}`
+
+func TestParseIssueComment_Labels(t *testing.T) {
+	payload, _, _, labels, ok, err := ParseIssueComment([]byte(issueCommentWithNeptuneLabel), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected ok true")
+	}
+	if payload == nil {
+		t.Fatal("expected non-nil payload")
+	}
+	if len(labels) != 1 || labels[0] != "neptune" {
+		t.Errorf("labels: expected [neptune], got %v", labels)
+	}
+
+	_, _, _, labelsOther, ok, err := ParseIssueComment([]byte(issueCommentWithOtherLabel), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected ok true")
+	}
+	if len(labelsOther) != 1 || labelsOther[0] != "other" {
+		t.Errorf("labels: expected [other], got %v", labelsOther)
 	}
 }

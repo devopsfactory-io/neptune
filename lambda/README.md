@@ -16,6 +16,7 @@ If you are self-hosting, you need:
   - Permissions: Repository permissions → **Contents** (read and write), **Pull requests** (read and write), **Issues** (read and write), **Metadata** (read). The `repository_dispatch` API requires write access to the repository. **Issues** (read and write) is required for the Lambda to add a 👀 reaction to the PR and to the comment; **Pull requests** (read and write) is also recommended for reactions on pull requests—see [GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps#repository-permissions-for-pull-requests).
   - Subscribe to events: **Pull requests**, **Issue comments**
   - Private key (stored in AWS Secrets Manager)
+- Optionally set **NEPTUNE_PR_LABEL** (e.g. `neptune`) so that only PRs with that label trigger the workflow and get the eyes reaction; add that label to infrastructure-related PRs.
 
 ## Build
 
@@ -101,6 +102,7 @@ The CloudFormation template sets these from parameters and secret ARNs:
 | `GITHUB_APP_WEBHOOK_SECRET_ARN` | Parameter | ARN of the Secrets Manager secret with the webhook secret (plain string). |
 | `GITHUB_APP_PRIVATE_KEY_SECRET_ARN` | Parameter | ARN of the Secrets Manager secret with the App private key (PEM). |
 | `GITHUB_APP_SLUG` | Parameter (optional) | App slug for @-mention matching in comments (e.g. `neptbot`). Default in code: `neptbot`. |
+| `NEPTUNE_PR_LABEL` | Parameter (optional) | When set, only PRs with this label trigger dispatch and eyes (e.g. `neptune`). Leave empty to trigger on all PRs. |
 
 At runtime the Lambda fetches the webhook secret and private key from Secrets Manager using these ARNs.
 
@@ -112,3 +114,5 @@ Repositories that have the Neptune GitHub App installed must add a workflow that
 
 - **pull_request** (`opened`, `reopened`, `synchronize`, `ready_for_review`): triggers `repository_dispatch` with `command: plan`, and adds a 👀 reaction to the PR.
 - **issue_comment** (created, on a PR): if the comment body mentions the app (e.g. `@neptbot`) and contains the word `apply` or `plan`, triggers `repository_dispatch` with that command, and adds a 👀 reaction to the comment.
+
+If **NEPTUNE_PR_LABEL** is set, only PRs that have that label (e.g. `neptune`) trigger the workflow and get the eyes reaction; other PRs receive a silent `200 OK` with no dispatch and no reaction.

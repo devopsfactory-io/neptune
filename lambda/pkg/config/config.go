@@ -17,6 +17,7 @@ type Config struct {
 	PrivateKey    string
 	WebhookSecret string
 	AppSlug       string // optional, for comment @-mention matching
+	PrLabel       string // optional; when set, only PRs with this label trigger dispatch and eyes
 }
 
 // Load reads config from environment and optionally Secrets Manager.
@@ -27,6 +28,7 @@ func Load(ctx context.Context) (*Config, error) {
 	cfg := &Config{
 		AppID:   os.Getenv("GITHUB_APP_ID"),
 		AppSlug: os.Getenv("GITHUB_APP_SLUG"),
+		PrLabel: os.Getenv("NEPTUNE_PR_LABEL"),
 	}
 	if cfg.AppID == "" {
 		return nil, fmt.Errorf("GITHUB_APP_ID is required")
