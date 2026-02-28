@@ -116,6 +116,10 @@ If you want to run your own GitHub App and Lambda (e.g. in your AWS account), us
 
 Add the same workflow shown in [Workflow on `repository_dispatch`](#workflow-on-repository_dispatch) above to each repo that has your App installed.
 
+### 4. Optional: Require a PR label
+
+To run Neptune only on infrastructure-related PRs, set the **NEPTUNE_PR_LABEL** parameter when deploying the CloudFormation stack (e.g. `NeptunePrLabel=neptune`). The Lambda will then trigger `repository_dispatch` and add the eyes reaction only when the PR has that label. Add the label (e.g. `neptune`) to PRs that should run Neptune; leave it unset or use a different label for other PRs. If you omit this parameter (or leave it empty), all matching PRs trigger the workflow as before.
+
 ## Payload sent by the Lambda
 
 The webhook handler (neptbot or your Lambda) triggers `repository_dispatch` with:

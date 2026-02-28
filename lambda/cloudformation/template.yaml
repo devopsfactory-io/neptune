@@ -21,6 +21,10 @@ Parameters:
     Type: String
     Default: ""
     Description: "(Optional) App slug for @-mention matching in comments (e.g. neptbot)."
+  NeptunePrLabel:
+    Type: String
+    Default: ""
+    Description: "(Optional) Only trigger and add eyes when the PR has this label (e.g. neptune). Leave empty to trigger on all PRs."
 
 Resources:
   LambdaExecutionRole:
@@ -75,6 +79,7 @@ Resources:
           GITHUB_APP_WEBHOOK_SECRET_ARN: !Ref WebhookSecretArn
           GITHUB_APP_PRIVATE_KEY_SECRET_ARN: !Ref PrivateKeySecretArn
           GITHUB_APP_SLUG: !Ref GitHubAppSlug
+          NEPTUNE_PR_LABEL: !Ref NeptunePrLabel
 
   FunctionUrl:
     Type: AWS::Lambda::Url

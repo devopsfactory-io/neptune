@@ -34,6 +34,7 @@ type PullRequestPayload struct {
 			Ref string `json:"ref"`
 			SHA string `json:"sha"`
 		} `json:"head"`
+		Labels []struct{ Name string } `json:"labels"`
 	} `json:"pull_request"`
 }
 
@@ -41,8 +42,9 @@ type PullRequestPayload struct {
 type IssueCommentPayload struct {
 	Action string `json:"action"`
 	Issue  struct {
-		Number      int       `json:"number"`
-		PullRequest *struct{} `json:"pull_request,omitempty"`
+		Number      int                     `json:"number"`
+		PullRequest *struct{}               `json:"pull_request,omitempty"`
+		Labels      []struct{ Name string } `json:"labels"`
 	} `json:"issue"`
 	Repository   Repo          `json:"repository"`
 	Installation *Installation `json:"installation"`
@@ -65,21 +67,27 @@ type Installation struct {
 	ID int64 `json:"id"`
 }
 
-// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported.
-func ParsePullRequest(body []byte) (*DispatchPayload, int64, error) {
+// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported, plus label names from pull_request.labels.
+func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, error) {
 	var p PullRequestPayload
 	if err := json.Unmarshal(body, &p); err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	allowed := map[string]bool{
 		"opened": true, "reopened": true, "synchronize": true, "ready_for_review": true,
 	}
 	if !allowed[p.Action] {
-		return nil, 0, nil
+		return nil, 0, nil, nil
 	}
 	var instID int64
 	if p.Installation != nil {
 		instID = p.Installation.ID
+	}
+	labels := make([]string, 0, len(p.PullRequest.Labels))
+	for _, l := range p.PullRequest.Labels {
+		if l.Name != "" {
+			labels = append(labels, l.Name)
+		}
 	}
 	return &DispatchPayload{
 		Command:             string(CommandPlan),
@@ -87,20 +95,20 @@ func ParsePullRequest(body []byte) (*DispatchPayload, int64, error) {
 		PullRequestBranch:   p.PullRequest.Head.Ref,
 		PullRequestSHA:      p.PullRequest.Head.SHA,
 		PullRequestRepoFull: p.Repository.FullName,
-	}, instID, nil
+	}, instID, labels, nil
 }
 
-// ParseIssueComment parses the issue_comment webhook body. If the comment is on a PR and mentions the app with a command, returns (dispatch payload, installation ID, comment ID, true). appMention is the app login/slug (e.g. "neptbot").
-func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64, int64, bool, error) {
+// ParseIssueComment parses the issue_comment webhook body. If the comment is on a PR and mentions the app with a command, returns (dispatch payload, installation ID, comment ID, label names from issue.labels, true). appMention is the app login/slug (e.g. "neptbot").
+func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64, int64, []string, bool, error) {
 	var p IssueCommentPayload
 	if err := json.Unmarshal(body, &p); err != nil {
-		return nil, 0, 0, false, err
+		return nil, 0, 0, nil, false, err
 	}
 	if p.Action != "created" {
-		return nil, 0, 0, false, nil
+		return nil, 0, 0, nil, false, nil
 	}
 	if p.Issue.PullRequest == nil {
-		return nil, 0, 0, false, nil
+		return nil, 0, 0, nil, false, nil
 	}
 	bodyLower := strings.ToLower(strings.TrimSpace(p.Comment.Body))
 	mentionLower := strings.ToLower(strings.TrimSpace(appMention))
@@ -108,7 +116,7 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 		mentionLower = "neptbot"
 	}
 	if !strings.Contains(bodyLower, "@"+mentionLower) {
-		return nil, 0, 0, false, nil
+		return nil, 0, 0, nil, false, nil
 	}
 	var cmd Command
 	if matchApply.MatchString(bodyLower) {
@@ -116,21 +124,27 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 	} else if matchPlan.MatchString(bodyLower) {
 		cmd = CommandPlan
 	} else {
-		return nil, 0, 0, false, nil
+		return nil, 0, 0, nil, false, nil
 	}
 	if p.Comment.User.Type == "Bot" {
-		return nil, 0, 0, false, nil
+		return nil, 0, 0, nil, false, nil
 	}
 	var instID int64
 	if p.Installation != nil {
 		instID = p.Installation.ID
 	}
 	commentID := p.Comment.ID
+	labels := make([]string, 0, len(p.Issue.Labels))
+	for _, l := range p.Issue.Labels {
+		if l.Name != "" {
+			labels = append(labels, l.Name)
+		}
+	}
 	return &DispatchPayload{
 		Command:             string(cmd),
 		PullRequestNumber:   p.Issue.Number,
 		PullRequestRepoFull: p.Repository.FullName,
-	}, instID, commentID, true, nil
+	}, instID, commentID, labels, true, nil
 }
 
 var (

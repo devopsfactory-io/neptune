@@ -64,13 +64,16 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 
 	switch eventType {
 	case "pull_request":
-		payload, instID, err := webhooks.ParsePullRequest([]byte(body))
+		payload, instID, labels, err := webhooks.ParsePullRequest([]byte(body))
 		if err != nil {
 			log.Printf("parse pull_request: %v", err)
 			return response(400, "Bad payload"), nil
 		}
 		if payload == nil {
 			return response(200, "OK"), nil // unsupported action
+		}
+		if cfg.PrLabel != "" && !hasLabel(labels, cfg.PrLabel) {
+			return response(200, "OK"), nil
 		}
 		token, err := github.InstallationToken(ctx, cfg.AppID, cfg.PrivateKey, instID)
 		if err != nil {
@@ -88,12 +91,15 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 		return response(200, "OK"), nil
 
 	case "issue_comment":
-		payload, instID, commentID, ok, err := webhooks.ParseIssueComment([]byte(body), appSlug)
+		payload, instID, commentID, labels, ok, err := webhooks.ParseIssueComment([]byte(body), appSlug)
 		if err != nil {
 			log.Printf("parse issue_comment: %v", err)
 			return response(400, "Bad payload"), nil
 		}
 		if !ok || payload == nil {
+			return response(200, "OK"), nil
+		}
+		if cfg.PrLabel != "" && !hasLabel(labels, cfg.PrLabel) {
 			return response(200, "OK"), nil
 		}
 		token, err := github.InstallationToken(ctx, cfg.AppID, cfg.PrivateKey, instID)
@@ -153,6 +159,16 @@ func getHeader(h map[string]string, key string) string {
 		}
 	}
 	return ""
+}
+
+// hasLabel returns true if want is in labels (case-sensitive).
+func hasLabel(labels []string, want string) bool {
+	for _, name := range labels {
+		if name == want {
+			return true
+		}
+	}
+	return false
 }
 
 func init() {
