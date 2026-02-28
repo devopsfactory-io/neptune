@@ -23,7 +23,7 @@
 - **E2E tests**: [e2e/README.md](e2e/README.md) – Run against MinIO with `./e2e/run.sh` or `make e2e`
 - **Releases**: [github.com/devopsfactory-io/neptune/releases](https://github.com/devopsfactory-io/neptune/releases)
 - **neptbot**: Trigger Neptune from PR open and @-mention comments by [installing the neptbot GitHub App](docs/github-app-and-lambda.md) and adding the workflow (recommended). To self-host, see [lambda/](lambda/) and [lambda/README.md](lambda/README.md).
-- **Contributing**: [docs/development.md](docs/development.md) and [AGENTS.md](AGENTS.md) for AI/contributor guidance
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) – how to contribute; [docs/development.md](docs/development.md) and [AGENTS.md](AGENTS.md) for setup and AI/contributor guidance
 
 ## What is Neptune?
 

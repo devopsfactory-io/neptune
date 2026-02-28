@@ -1,0 +1,5 @@
+# Apply "neptune" label to every PR (any changed file matches).
+# v5+ requires each label to be an array of config options (changed-files, etc.).
+neptune:
+  - changed-files:
+    - any-glob-to-any-file: '**'

@@ -1,6 +1,6 @@
 # Installation
 
-## Go (recommended)
+## Go
 
 ```bash
 # Build from source
@@ -11,16 +11,6 @@ go install .
 ```
 
 Binaries for Linux, macOS, and Windows are published to the [GitHub Releases](https://github.com/devopsfactory-io/neptune/releases) page when you push a version tag (e.g. `v0.2.0`) via GoReleaser.
-
-## Python (legacy)
-
-```bash
-# From the repository root
-pip install -e .
-
-# Enable shell completion (optional)
-neptune --install-completion
-```
 
 ## Using with GitHub Actions
 
