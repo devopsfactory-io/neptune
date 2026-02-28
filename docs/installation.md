@@ -24,7 +24,7 @@ neptune --install-completion
 
 ## Using with GitHub Actions
 
-Set the same environment variables in your workflow (`GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_COMMENT_ID`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`), then run `neptune command plan` or `neptune command apply` as needed. See [Usage](usage.md) for CLI commands.
+Set the same environment variables in your workflow (`GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`), then run `neptune command plan` or `neptune command apply` as needed. See [Usage](usage.md) for CLI commands.
 
 ## Triggering Neptune via GitHub App
 

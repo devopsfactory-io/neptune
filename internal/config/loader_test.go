@@ -26,7 +26,6 @@ func TestLoadEnv_E2EMode_AllowsEmptyToken(t *testing.T) {
 	os.Unsetenv("GITHUB_REPOSITORY")
 	os.Unsetenv("GITHUB_PULL_REQUEST_BRANCH")
 	os.Unsetenv("GITHUB_PULL_REQUEST_NUMBER")
-	os.Unsetenv("GITHUB_PULL_REQUEST_COMMENT_ID")
 	os.Unsetenv("GITHUB_RUN_ID")
 	defer func() {
 		os.Unsetenv("NEPTUNE_E2E")
@@ -51,14 +50,12 @@ func TestLoadEnv_Success(t *testing.T) {
 	os.Setenv("GITHUB_REPOSITORY", "owner/repo")
 	os.Setenv("GITHUB_PULL_REQUEST_BRANCH", "feature")
 	os.Setenv("GITHUB_PULL_REQUEST_NUMBER", "1")
-	os.Setenv("GITHUB_PULL_REQUEST_COMMENT_ID", "2")
 	os.Setenv("GITHUB_RUN_ID", "3")
 	os.Setenv("GITHUB_TOKEN", "token")
 	defer func() {
 		os.Unsetenv("GITHUB_REPOSITORY")
 		os.Unsetenv("GITHUB_PULL_REQUEST_BRANCH")
 		os.Unsetenv("GITHUB_PULL_REQUEST_NUMBER")
-		os.Unsetenv("GITHUB_PULL_REQUEST_COMMENT_ID")
 		os.Unsetenv("GITHUB_RUN_ID")
 		os.Unsetenv("GITHUB_TOKEN")
 	}()
@@ -73,13 +70,12 @@ func TestLoadEnv_Success(t *testing.T) {
 
 func TestLoad_FileNotFound(t *testing.T) {
 	env := map[string]string{
-		"NEPTUNE_CONFIG_PATH":            "/nonexistent/.neptune.yaml",
-		"GITHUB_REPOSITORY":              "o/r",
-		"GITHUB_PULL_REQUEST_BRANCH":     "b",
-		"GITHUB_PULL_REQUEST_NUMBER":     "1",
-		"GITHUB_PULL_REQUEST_COMMENT_ID": "2",
-		"GITHUB_RUN_ID":                  "3",
-		"GITHUB_TOKEN":                   "t",
+		"NEPTUNE_CONFIG_PATH":        "/nonexistent/.neptune.yaml",
+		"GITHUB_REPOSITORY":          "o/r",
+		"GITHUB_PULL_REQUEST_BRANCH": "b",
+		"GITHUB_PULL_REQUEST_NUMBER": "1",
+		"GITHUB_RUN_ID":              "3",
+		"GITHUB_TOKEN":               "t",
 	}
 	_, err := Load(env)
 	if err == nil {
@@ -111,13 +107,12 @@ workflows:
 		t.Fatal(err)
 	}
 	env := map[string]string{
-		"NEPTUNE_CONFIG_PATH":            path,
-		"GITHUB_REPOSITORY":              "owner/repo",
-		"GITHUB_PULL_REQUEST_BRANCH":     "feature",
-		"GITHUB_PULL_REQUEST_NUMBER":     "1",
-		"GITHUB_PULL_REQUEST_COMMENT_ID": "2",
-		"GITHUB_RUN_ID":                  "3",
-		"GITHUB_TOKEN":                   "token",
+		"NEPTUNE_CONFIG_PATH":        path,
+		"GITHUB_REPOSITORY":          "owner/repo",
+		"GITHUB_PULL_REQUEST_BRANCH": "feature",
+		"GITHUB_PULL_REQUEST_NUMBER": "1",
+		"GITHUB_RUN_ID":              "3",
+		"GITHUB_TOKEN":               "token",
 	}
 	cfg, err := Load(env)
 	if err != nil {
@@ -166,13 +161,12 @@ workflows:
 		t.Fatal(err)
 	}
 	env := map[string]string{
-		"NEPTUNE_CONFIG_PATH":            path,
-		"GITHUB_REPOSITORY":              "owner/repo",
-		"GITHUB_PULL_REQUEST_BRANCH":     "feature",
-		"GITHUB_PULL_REQUEST_NUMBER":     "1",
-		"GITHUB_PULL_REQUEST_COMMENT_ID": "2",
-		"GITHUB_RUN_ID":                  "3",
-		"GITHUB_TOKEN":                   "token",
+		"NEPTUNE_CONFIG_PATH":        path,
+		"GITHUB_REPOSITORY":          "owner/repo",
+		"GITHUB_PULL_REQUEST_BRANCH": "feature",
+		"GITHUB_PULL_REQUEST_NUMBER": "1",
+		"GITHUB_RUN_ID":              "3",
+		"GITHUB_TOKEN":               "token",
 	}
 	os.Unsetenv("NEPTUNE_LOG_LEVEL")
 	t.Cleanup(func() { os.Unsetenv("NEPTUNE_LOG_LEVEL") })

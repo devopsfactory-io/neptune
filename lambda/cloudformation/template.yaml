@@ -90,6 +90,7 @@ Resources:
           - "*"
         MaxAge: 0
 
+  # Allows unauthenticated invocation of the Function URL (required for AuthType NONE).
   FunctionUrlPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -97,6 +98,15 @@ Resources:
       Principal: "*"
       FunctionUrlAuthType: NONE
       Action: lambda:InvokeFunctionUrl
+
+  # As of late 2025, AWS also requires lambda:InvokeFunction for public Function URL access.
+  # FunctionUrlAuthType cannot be used with this action, so it is omitted here.
+  FunctionUrlPublicInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WebhookFunction
+      Principal: "*"
+      Action: lambda:InvokeFunction
 
 Outputs:
   WebhookUrl:

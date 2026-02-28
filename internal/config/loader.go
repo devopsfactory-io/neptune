@@ -17,7 +17,6 @@ var requiredEnvVars = []string{
 	"GITHUB_REPOSITORY",
 	"GITHUB_PULL_REQUEST_BRANCH",
 	"GITHUB_PULL_REQUEST_NUMBER",
-	"GITHUB_PULL_REQUEST_COMMENT_ID",
 	"GITHUB_RUN_ID",
 	"GITHUB_TOKEN",
 }
@@ -58,7 +57,6 @@ func LoadEnv() (map[string]string, error) {
 	env["GITHUB_REPOSITORY"] = getEnv("GITHUB_REPOSITORY", "e2e/neptune-test")
 	env["GITHUB_PULL_REQUEST_BRANCH"] = getEnv("GITHUB_PULL_REQUEST_BRANCH", "pr-1")
 	env["GITHUB_PULL_REQUEST_NUMBER"] = getEnv("GITHUB_PULL_REQUEST_NUMBER", "1")
-	env["GITHUB_PULL_REQUEST_COMMENT_ID"] = getEnv("GITHUB_PULL_REQUEST_COMMENT_ID", "")
 	env["GITHUB_RUN_ID"] = getEnv("GITHUB_RUN_ID", "1")
 	env["GITHUB_TOKEN"] = os.Getenv("GITHUB_TOKEN")
 
@@ -104,12 +102,11 @@ func Load(env map[string]string) (*domain.NeptuneConfig, error) {
 	}
 
 	githubCfg := &domain.GitHubConfig{
-		Repository:           env["GITHUB_REPOSITORY"],
-		PullRequestBranch:    env["GITHUB_PULL_REQUEST_BRANCH"],
-		PullRequestNumber:    env["GITHUB_PULL_REQUEST_NUMBER"],
-		PullRequestCommentID: env["GITHUB_PULL_REQUEST_COMMENT_ID"],
-		RunID:                env["GITHUB_RUN_ID"],
-		Token:                env["GITHUB_TOKEN"],
+		Repository:        env["GITHUB_REPOSITORY"],
+		PullRequestBranch: env["GITHUB_PULL_REQUEST_BRANCH"],
+		PullRequestNumber: env["GITHUB_PULL_REQUEST_NUMBER"],
+		RunID:             env["GITHUB_RUN_ID"],
+		Token:             env["GITHUB_TOKEN"],
 	}
 
 	repo := &domain.RepositoryConfig{

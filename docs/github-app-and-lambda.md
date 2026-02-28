@@ -60,7 +60,6 @@ jobs:
           GITHUB_PULL_REQUEST_BRANCH: ${{ github.event.client_payload.pull_request_branch }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_PULL_REQUEST_COMMENT_ID: ""
           # Object storage and .neptune.yaml must be configured (see docs/object-storage.md and docs/configuration.md)
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -71,7 +70,7 @@ Notes:
 
 - **concurrency**: For Terraform/Neptune workflows, use `cancel-in-progress: false` so in-progress runs are never cancelled when a new event arrives.
 - **checkout**: Uses `refs/pull/<number>/head` so the job runs on the PR branch; the payload's `pull_request_branch` and `pull_request_sha` are available if you need them.
-- **Neptune env**: `GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`, and `GITHUB_PULL_REQUEST_COMMENT_ID` (can be empty) are required by Neptune.
+- **Neptune env**: `GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_RUN_ID`, and `GITHUB_TOKEN` are required by Neptune.
 
 ### 4. Comment format
 
@@ -101,7 +100,7 @@ If you want to run your own GitHub App and Lambda (e.g. in your AWS account), us
 - Create a [GitHub App](https://docs.github.com/en/apps/creating-github-apps) (e.g. under your user or org).
 - **Webhook**: Leave "Active" checked; set **Payload URL** to your Lambda Function URL (you get this after deploying the stack; see [lambda/README.md](../lambda/README.md)).
 - **Webhook secret**: Generate a secret and store it in AWS Secrets Manager (see below).
-- **Permissions**: Repository → **Contents** (Read), **Pull requests** (Read), **Metadata** (Read).
+- **Permissions**: Repository → **Contents** (Read and write), **Pull requests** (Read), **Metadata** (Read). The `repository_dispatch` API requires write access.
 - **Subscribe to events**: **Pull requests**, **Issue comments**.
 - **Private key**: Generate and download the PEM; store it in AWS Secrets Manager.
 - Install the App on the repositories where you want Neptune to run.

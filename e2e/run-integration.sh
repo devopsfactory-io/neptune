@@ -4,7 +4,7 @@ set -euo pipefail
 # Integration test: run Neptune plan/apply on the current checkout (real PR context)
 # with real GitHub (requirements check, PR comments). MinIO is used for locks.
 # Caller must set: GITHUB_REPOSITORY, GITHUB_PULL_REQUEST_NUMBER, GITHUB_PULL_REQUEST_BRANCH,
-# GITHUB_RUN_ID, GITHUB_TOKEN; GITHUB_PULL_REQUEST_COMMENT_ID may be empty.
+# GITHUB_RUN_ID, GITHUB_TOKEN.
 # Caller must ensure the base ref (e.g. origin/main) is available for Terramate change detection.
 
 function compose_teardown() {
@@ -35,7 +35,6 @@ cd "$REPO_ROOT"
 trap compose_teardown EXIT
 
 # Use current checkout; GitHub env is set by caller (e.g. GHA). No NEPTUNE_E2E.
-export GITHUB_PULL_REQUEST_COMMENT_ID="${GITHUB_PULL_REQUEST_COMMENT_ID:-1234}"
 export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-minioadmin}"
 export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-minioadmin}"
 export AWS_REGION="${AWS_REGION:-us-east-1}"
