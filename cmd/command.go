@@ -85,7 +85,9 @@ func loadConfig(env map[string]string) (*domain.NeptuneConfig, error) {
 		log.For("cli").Info("Config loaded from local file (could not get default branch)", "err", err)
 		return config.Load(env)
 	}
-	_ = git.FetchBranch(configDir, defaultBranch) // best-effort; ShowFileFromRef may still work if ref exists
+	if err := git.FetchBranch(configDir, defaultBranch); err != nil {
+		log.For("cli").Debug("Fetch of default branch failed (continuing)", "branch", defaultBranch, "err", err)
+	}
 	refDefault := "origin/" + defaultBranch
 	content, err := git.ShowFileFromRef(configDir, refDefault, pathForGit)
 	if err == nil {
