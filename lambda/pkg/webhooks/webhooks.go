@@ -36,6 +36,8 @@ type PullRequestPayload struct {
 		} `json:"head"`
 		Labels []struct{ Name string } `json:"labels"`
 	} `json:"pull_request"`
+	// Label is set for "labeled" / "unlabeled" actions (the label that was added or removed).
+	Label *struct{ Name string } `json:"label,omitempty"`
 }
 
 // IssueCommentPayload is the relevant part of GitHub issue_comment webhook.
@@ -67,17 +69,17 @@ type Installation struct {
 	ID int64 `json:"id"`
 }
 
-// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported, plus label names from pull_request.labels.
-func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, error) {
+// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported, label names from pull_request.labels, and for "labeled" the name of the added label (addedLabel); otherwise addedLabel is "".
+func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, string, error) {
 	var p PullRequestPayload
 	if err := json.Unmarshal(body, &p); err != nil {
-		return nil, 0, nil, err
+		return nil, 0, nil, "", err
 	}
 	allowed := map[string]bool{
-		"opened": true, "reopened": true, "synchronize": true, "ready_for_review": true,
+		"opened": true, "reopened": true, "synchronize": true, "ready_for_review": true, "labeled": true,
 	}
 	if !allowed[p.Action] {
-		return nil, 0, nil, nil
+		return nil, 0, nil, "", nil
 	}
 	var instID int64
 	if p.Installation != nil {
@@ -89,13 +91,17 @@ func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, error) {
 			labels = append(labels, l.Name)
 		}
 	}
+	var addedLabel string
+	if p.Action == "labeled" && p.Label != nil {
+		addedLabel = p.Label.Name
+	}
 	return &DispatchPayload{
 		Command:             string(CommandPlan),
 		PullRequestNumber:   p.Number,
 		PullRequestBranch:   p.PullRequest.Head.Ref,
 		PullRequestSHA:      p.PullRequest.Head.SHA,
 		PullRequestRepoFull: p.Repository.FullName,
-	}, instID, labels, nil
+	}, instID, labels, addedLabel, nil
 }
 
 // ParseIssueComment parses the issue_comment webhook body. If the comment is on a PR and mentions the app with a command, returns (dispatch payload, installation ID, comment ID, label names from issue.labels, true). appMention is the app login/slug (e.g. "neptbot").

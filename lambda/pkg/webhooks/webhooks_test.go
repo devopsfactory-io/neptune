@@ -33,7 +33,7 @@ const pullRequestClosed = `{
 }`
 
 func TestParsePullRequest_ValidOpened(t *testing.T) {
-	payload, instID, labels, err := ParsePullRequest([]byte(pullRequestOpened))
+	payload, instID, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestOpened))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -61,10 +61,13 @@ func TestParsePullRequest_ValidOpened(t *testing.T) {
 	if len(labels) != 0 {
 		t.Errorf("labels: expected empty, got %v", labels)
 	}
+	if addedLabel != "" {
+		t.Errorf("addedLabel: expected empty for opened, got %q", addedLabel)
+	}
 }
 
 func TestParsePullRequest_ValidSynchronize(t *testing.T) {
-	payload, instID, labels, err := ParsePullRequest([]byte(pullRequestSynchronize))
+	payload, instID, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestSynchronize))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -83,10 +86,13 @@ func TestParsePullRequest_ValidSynchronize(t *testing.T) {
 	if len(labels) != 0 {
 		t.Errorf("labels: expected empty, got %v", labels)
 	}
+	if addedLabel != "" {
+		t.Errorf("addedLabel: expected empty for synchronize, got %q", addedLabel)
+	}
 }
 
 func TestParsePullRequest_UnsupportedAction(t *testing.T) {
-	payload, instID, labels, err := ParsePullRequest([]byte(pullRequestClosed))
+	payload, instID, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestClosed))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -99,10 +105,13 @@ func TestParsePullRequest_UnsupportedAction(t *testing.T) {
 	if labels != nil {
 		t.Errorf("expected nil labels when skipping, got %v", labels)
 	}
+	if addedLabel != "" {
+		t.Errorf("expected empty addedLabel when skipping, got %q", addedLabel)
+	}
 }
 
 func TestParsePullRequest_InvalidJSON(t *testing.T) {
-	_, _, _, err := ParsePullRequest([]byte(`{`))
+	_, _, _, _, err := ParsePullRequest([]byte(`{`))
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
@@ -131,7 +140,7 @@ const pullRequestWithOtherLabel = `{
 }`
 
 func TestParsePullRequest_Labels(t *testing.T) {
-	payload, _, labels, err := ParsePullRequest([]byte(pullRequestWithNeptuneLabel))
+	payload, _, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestWithNeptuneLabel))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -151,13 +160,96 @@ func TestParsePullRequest_Labels(t *testing.T) {
 	if !hasNeptune {
 		t.Errorf("labels: expected to contain neptune, got %v", labels)
 	}
+	if addedLabel != "" {
+		t.Errorf("addedLabel: expected empty for opened, got %q", addedLabel)
+	}
 
-	_, _, labelsOther, err := ParsePullRequest([]byte(pullRequestWithOtherLabel))
+	_, _, labelsOther, _, err := ParsePullRequest([]byte(pullRequestWithOtherLabel))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(labelsOther) != 1 || labelsOther[0] != "other" {
 		t.Errorf("labels: expected [other], got %v", labelsOther)
+	}
+}
+
+const pullRequestLabeledNeptune = `{
+  "action": "labeled",
+  "number": 11,
+  "repository": {"full_name": "devopsfactory-io/neptune"},
+  "installation": {"id": 123},
+  "pull_request": {
+    "head": {"ref": "feat/branch", "sha": "2a2b3f35975b4a761678984cf33e3f0289f41856"},
+    "labels": [{"name": "neptune"}]
+  },
+  "label": {"name": "neptune"}
+}`
+
+const pullRequestLabeledOther = `{
+  "action": "labeled",
+  "number": 12,
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 456},
+  "pull_request": {
+    "head": {"ref": "other-branch", "sha": "abcde"},
+    "labels": [{"name": "other"}]
+  },
+  "label": {"name": "other"}
+}`
+
+func TestParsePullRequest_Labeled(t *testing.T) {
+	payload, instID, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestLabeledNeptune))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if payload == nil {
+		t.Fatal("expected non-nil payload")
+	}
+	if payload.Command != string(CommandPlan) {
+		t.Errorf("command: got %q", payload.Command)
+	}
+	if payload.PullRequestNumber != 11 {
+		t.Errorf("number: got %d", payload.PullRequestNumber)
+	}
+	if payload.PullRequestBranch != "feat/branch" {
+		t.Errorf("branch: got %q", payload.PullRequestBranch)
+	}
+	if payload.PullRequestSHA != "2a2b3f35975b4a761678984cf33e3f0289f41856" {
+		t.Errorf("sha: got %q", payload.PullRequestSHA)
+	}
+	if payload.PullRequestRepoFull != "devopsfactory-io/neptune" {
+		t.Errorf("repo: got %q", payload.PullRequestRepoFull)
+	}
+	if instID != 123 {
+		t.Errorf("installation ID: got %d", instID)
+	}
+	if len(labels) != 1 || labels[0] != "neptune" {
+		t.Errorf("labels: expected [neptune], got %v", labels)
+	}
+	if addedLabel != "neptune" {
+		t.Errorf("addedLabel: expected neptune, got %q", addedLabel)
+	}
+}
+
+func TestParsePullRequest_LabeledOtherLabel(t *testing.T) {
+	payload, instID, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestLabeledOther))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if payload == nil {
+		t.Fatal("expected non-nil payload for labeled (handler filters by PrLabel)")
+	}
+	if payload.PullRequestNumber != 12 || payload.PullRequestBranch != "other-branch" {
+		t.Errorf("unexpected payload: %+v", payload)
+	}
+	if instID != 456 {
+		t.Errorf("installation ID: got %d", instID)
+	}
+	if len(labels) != 1 || labels[0] != "other" {
+		t.Errorf("labels: expected [other], got %v", labels)
+	}
+	if addedLabel != "other" {
+		t.Errorf("addedLabel: expected other, got %q", addedLabel)
 	}
 }
 
