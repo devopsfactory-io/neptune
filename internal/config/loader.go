@@ -95,7 +95,16 @@ func Load(env map[string]string) (*domain.NeptuneConfig, error) {
 	if err != nil {
 		return nil, &LoadError{Message: "config file not found: " + configPath}
 	}
+	return parseConfig(data, env)
+}
 
+// LoadWithContent reads config from env and the given YAML content (e.g. from git show).
+// Caller should then call Validate.
+func LoadWithContent(env map[string]string, content []byte) (*domain.NeptuneConfig, error) {
+	return parseConfig(content, env)
+}
+
+func parseConfig(data []byte, env map[string]string) (*domain.NeptuneConfig, error) {
 	var raw rawConfig
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return nil, &LoadError{Message: "invalid YAML: " + err.Error()}

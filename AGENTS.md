@@ -8,7 +8,7 @@ Guidance for AI coding agents working on the Neptune project.
 
 **Neptune** is a Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs plan/apply (Terraform or OpenTofu) on pull requests using the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order. When a step has `terramate: true` (default), Neptune runs the step’s command in each changed stack via the SDK (no Terramate CLI needed for that step); object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments.
 
-**Main capabilities**: Load config from `.neptune.yaml` and env; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once when `terramate: false`); post results as PR comments. Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
+**Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once when `terramate: false`); post results as PR comments. Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
 
 **Language**: Go (see `go.mod`). Legacy Python code exists under `neptune/` and `tests/`; primary codebase is Go.
 
@@ -24,7 +24,7 @@ Guidance for AI coding agents working on the Neptune project.
 - **`internal/lock`** – Changed stacks via Terramate SDK (list + run order), object-storage lock files (GCS, S3), lock interface.
 - **`internal/run`** – Execute workflow phase steps (shell).
 - **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged), commit statuses (GetHeadSHA, CreateCommitStatus) for **neptune plan** / **neptune apply**.
-- **`internal/git`** – Rebased check (e.g. `git rev-list`).
+- **`internal/git`** – Rebased check; DefaultBranch (git CLI), ShowFileFromRef, FetchBranch for loading config from default branch.
 - **`internal/notifications/github`** – Format and post PR comments.
 - **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
 - **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`/`issue_comment`, trigger `repository_dispatch`). See [lambda/README.md](lambda/README.md).

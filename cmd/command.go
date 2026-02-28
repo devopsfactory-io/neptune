@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"neptune/internal/config"
 	"neptune/internal/domain"
+	"neptune/internal/git"
 	"neptune/internal/github"
 	"neptune/internal/lock"
 	"neptune/internal/log"
@@ -28,6 +30,63 @@ func NewCommandCmd() *cobra.Command {
 	return c
 }
 
+// repoRootFromEnv returns the directory containing the config file (same logic as lock's repoRoot).
+func repoRootFromEnv(env map[string]string) (string, error) {
+	configPath := env["NEPTUNE_CONFIG_PATH"]
+	if configPath == "" {
+		configPath = ".neptune.yaml"
+	}
+	path := filepath.Clean(configPath)
+	if filepath.IsAbs(path) {
+		return filepath.Dir(path), nil
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("getting working directory: %w", err)
+	}
+	return filepath.Join(wd, filepath.Dir(path)), nil
+}
+
+// loadConfig loads .neptune.yaml from the default branch when not in E2E mode (for security),
+// falling back to PR branch or local file. When NEPTUNE_E2E=1, reads from the local file only.
+func loadConfig(env map[string]string) (*domain.NeptuneConfig, error) {
+	if os.Getenv("NEPTUNE_E2E") == "1" {
+		log.For("cli").Info("Config loaded from local file (E2E mode)")
+		return config.Load(env)
+	}
+	configPath := env["NEPTUNE_CONFIG_PATH"]
+	if configPath == "" {
+		configPath = ".neptune.yaml"
+	}
+	pathForGit := filepath.Base(configPath)
+	if pathForGit == "" || pathForGit == "." {
+		pathForGit = ".neptune.yaml"
+	}
+	repoRoot, err := repoRootFromEnv(env)
+	if err != nil {
+		log.For("cli").Info("Config loaded from local file (could not resolve repo root)", "err", err)
+		return config.Load(env)
+	}
+	defaultBranch, err := git.DefaultBranch(repoRoot)
+	if err != nil {
+		log.For("cli").Info("Config loaded from local file (could not get default branch)", "err", err)
+		return config.Load(env)
+	}
+	_ = git.FetchBranch(repoRoot, defaultBranch) // best-effort; ShowFileFromRef may still work if ref exists
+	refDefault := "origin/" + defaultBranch
+	content, err := git.ShowFileFromRef(repoRoot, refDefault, pathForGit)
+	if err == nil {
+		log.For("cli").Info("Config loaded from default branch", "branch", defaultBranch)
+		return config.LoadWithContent(env, content)
+	}
+	content, err = git.ShowFileFromRef(repoRoot, "HEAD", pathForGit)
+	if err == nil {
+		log.For("cli").Info("Config loaded from PR branch")
+		return config.LoadWithContent(env, content)
+	}
+	return nil, fmt.Errorf(".neptune.yaml not found on default branch (%s) or PR branch (HEAD), and refusing to use local file: %w", defaultBranch, err)
+}
+
 func runCommand(_ *cobra.Command, args []string) error {
 	workflow := args[0]
 	ctx := context.Background()
@@ -37,7 +96,7 @@ func runCommand(_ *cobra.Command, args []string) error {
 		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
-	cfg, err := config.Load(env)
+	cfg, err := loadConfig(env)
 	if err != nil {
 		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
