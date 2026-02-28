@@ -187,6 +187,68 @@ workflows:
 	}
 }
 
+func TestLoadWithContent_Success(t *testing.T) {
+	content := []byte(`
+repository:
+  object_storage: gs://bucket
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+workflows:
+  default:
+    plan:
+      steps:
+        - run: terramate run --changed -- terragrunt plan
+    apply:
+      depends_on: [plan]
+      steps:
+        - run: terramate run --changed -- terragrunt apply -auto-approve
+`)
+	env := map[string]string{
+		"NEPTUNE_CONFIG_PATH":        ".neptune.yaml",
+		"GITHUB_REPOSITORY":          "owner/repo",
+		"GITHUB_PULL_REQUEST_BRANCH": "feature",
+		"GITHUB_PULL_REQUEST_NUMBER": "1",
+		"GITHUB_RUN_ID":              "3",
+		"GITHUB_TOKEN":               "token",
+	}
+	cfg, err := LoadWithContent(env, content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Repository.ObjectStorage != "gs://bucket" {
+		t.Errorf("got object_storage %q", cfg.Repository.ObjectStorage)
+	}
+	if cfg.Repository.Branch != "main" {
+		t.Errorf("got branch %q", cfg.Repository.Branch)
+	}
+	wf, ok := cfg.Workflows.Workflows["default"]
+	if !ok {
+		t.Fatal("workflow default not found")
+	}
+	if _, ok := wf.Phases["plan"]; !ok {
+		t.Fatal("phase plan not found")
+	}
+	if cfg.LogLevel != "INFO" {
+		t.Errorf("default log_level should be INFO, got %q", cfg.LogLevel)
+	}
+}
+
+func TestLoadWithContent_InvalidYAML(t *testing.T) {
+	env := map[string]string{
+		"GITHUB_REPOSITORY": "o/r",
+		"GITHUB_TOKEN":      "t",
+	}
+	_, err := LoadWithContent(env, []byte("not: yaml: ["))
+	if err == nil {
+		t.Fatal("expected error for invalid YAML")
+	}
+	if !isLoadError(err) {
+		t.Errorf("expected LoadError, got %T", err)
+	}
+}
+
 func isLoadError(err error) bool {
 	_, ok := err.(*LoadError)
 	return ok

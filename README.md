@@ -1,4 +1,4 @@
-# Neptune
+# Neptune 🌊
 
 <p align="center">
   <a href="https://github.com/devopsfactory-io/neptune/releases"><img src="https://img.shields.io/github/v/release/devopsfactory-io/neptune?color=%239F50DA&display_name=tag&label=Version" alt="Latest Release" /></a>
@@ -8,13 +8,14 @@
 </p>
 
 <p align="center">
-  <b>Terraform and OpenTofu Pull Request Automation</b>
+  <b>Terraform and OpenTofu Pull Request Automation with Github Actions</b>
 </p>
 
-- [Resources](#resources)
-- [What is Neptune?](#what-is-neptune)
-- [What does it do?](#what-does-it-do)
-- [Why should you use it?](#why-should-you-use-it)
+- [Neptune 🌊](#neptune-)
+  - [Resources](#resources)
+  - [What is Neptune?](#what-is-neptune)
+  - [What does it do?](#what-does-it-do)
+  - [Why should you use it?](#why-should-you-use-it)
 
 ## Resources
 
@@ -30,11 +31,10 @@ A Terraform and OpenTofu pull request automation tool inspired by [Atlantis](htt
 
 ## What does it do?
 
-Runs Terraform or OpenTofu plan and apply on pull requests, locks stacks in object storage, checks PR requirements (e.g. approved, mergeable, undiverged), posts results as PR comments, and sets GitHub commit statuses for **neptune plan** and **neptune apply** (so you can require **neptune apply** in branch protection to block merge until apply has run).
+Runs Terraform or OpenTofu plan and apply on pull requests safely with github actions. Locks stacks in object storage, checks PR requirements (e.g. approved, mergeable, undiverged), posts results as PR comments, and sets GitHub commit statuses for **neptune plan** and **neptune apply** (so you can require **neptune apply** in branch protection to block merge until apply has run).
 
 ## Why should you use it?
 
 - Make Terraform/OpenTofu changes visible to your whole team
 - Apply approved changes in a consistent way
 - Standardize workflows with configurable plan/apply steps
-- Type-safe CLI with auto-completion support

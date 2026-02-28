@@ -2,6 +2,10 @@
 
 Neptune reads repository configuration from a `.neptune.yaml` file in the root of your Infrastructure as Code repository.
 
+## Where Neptune loads the config (security)
+
+In CI (when not in E2E mode), Neptune loads `.neptune.yaml` from the **default branch** of the repository using git (e.g. `git show origin/main:.neptune.yaml`). If the file is not present on the default branch (e.g. first-time setup), Neptune tries the **PR branch** (HEAD). This ensures that workflow steps cannot be changed by a PR author: only the version of the config on the default branch (or, as fallback, on the PR branch) is used. In **E2E mode** (`NEPTUNE_E2E=1`) or when the repo is not a git repository, Neptune reads the config from the local filesystem.
+
 ## Log level
 
 You can control how verbose Neptune's logs are:
