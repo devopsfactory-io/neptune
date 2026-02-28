@@ -49,6 +49,9 @@ type IssueCommentPayload struct {
 	Comment      struct {
 		ID   int64  `json:"id"`
 		Body string `json:"body"`
+		User struct {
+			Type string `json:"type"`
+		} `json:"user"`
 	} `json:"comment"`
 }
 
@@ -113,6 +116,9 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 	} else if matchPlan.MatchString(bodyLower) {
 		cmd = CommandPlan
 	} else {
+		return nil, 0, 0, false, nil
+	}
+	if p.Comment.User.Type == "Bot" {
 		return nil, 0, 0, false, nil
 	}
 	var instID int64

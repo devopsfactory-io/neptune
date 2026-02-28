@@ -136,6 +136,14 @@ const issueCommentMentionNoCommand = `{
   "comment": {"body": "@neptbot hello"}
 }`
 
+const issueCommentBotAuthor = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 3003, "body": "To apply these changes, comment:\n@neptbot apply", "user": {"type": "Bot", "login": "github-actions[bot]"}}
+}`
+
 func TestParseIssueComment_ValidApply(t *testing.T) {
 	payload, instID, commentID, ok, err := ParseIssueComment([]byte(issueCommentApply), "neptbot")
 	if err != nil {
@@ -213,6 +221,19 @@ func TestParseIssueComment_MentionNoCommand(t *testing.T) {
 	}
 	if ok {
 		t.Fatal("expected ok false when body has mention but no apply/plan")
+	}
+}
+
+func TestParseIssueComment_BotAuthorDoesNotTrigger(t *testing.T) {
+	payload, _, _, ok, err := ParseIssueComment([]byte(issueCommentBotAuthor), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatal("expected ok false when comment author is a bot")
+	}
+	if payload != nil {
+		t.Errorf("expected nil payload for bot comment, got %+v", payload)
 	}
 }
 

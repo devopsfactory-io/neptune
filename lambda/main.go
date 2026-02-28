@@ -83,7 +83,7 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 			return response(500, "Dispatch error"), nil
 		}
 		if err := client.CreateReactionForIssue(ctx, payload.PullRequestRepoFull, payload.PullRequestNumber, "eyes"); err != nil {
-			log.Printf("create reaction on PR: %v", err)
+			log.Printf("eyes reaction on PR #%d failed (dispatch succeeded): %v", payload.PullRequestNumber, err)
 		}
 		return response(200, "OK"), nil
 
@@ -116,7 +116,7 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 		}
 		if commentID != 0 {
 			if err := client.CreateReactionForIssueComment(ctx, payload.PullRequestRepoFull, commentID, "eyes"); err != nil {
-				log.Printf("create reaction on comment: %v", err)
+				log.Printf("eyes reaction on comment %d failed (dispatch succeeded): %v", commentID, err)
 			}
 		}
 		return response(200, "OK"), nil

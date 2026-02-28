@@ -89,6 +89,8 @@ After deploying, confirm the Lambda is reachable and the handler runs:
 
 3. **Logs**: If you get **500** or unexpected behavior, check CloudWatch logs for the function (Lambda → Monitor → View CloudWatch logs) for messages like `load config: ...`, `verify signature: ...`, or `repository_dispatch: ...`. A 500 with body "Dispatch error" often means GitHub returned 403 (e.g. "Resource not accessible by integration"); ensure the App has **Contents: Read and write** so `repository_dispatch` is allowed.
 
+4. **Eyes reaction not appearing on PR or comment**: The Lambda adds a 👀 reaction after a successful dispatch. If dispatch works but no reaction appears, check CloudWatch for `eyes reaction on PR` or `eyes reaction on comment` — a failure there (e.g. status 403) usually means the App lacks **Issues: Read and write**. In GitHub, go to the App → **Permissions and events** → set **Issues** to **Read and write**, save, and have the installation accept the new permissions if prompted. You can verify reactions with the [check-reactions script](scripts/check-reactions.sh): `./lambda/scripts/check-reactions.sh PR_NUMBER` (requires `gh` and `jq`).
+
 ## Environment variables (Lambda)
 
 The CloudFormation template sets these from parameters and secret ARNs:
