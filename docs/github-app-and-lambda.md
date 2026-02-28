@@ -100,7 +100,7 @@ If you want to run your own GitHub App and Lambda (e.g. in your AWS account), us
 - Create a [GitHub App](https://docs.github.com/en/apps/creating-github-apps) (e.g. under your user or org).
 - **Webhook**: Leave "Active" checked; set **Payload URL** to your Lambda Function URL (you get this after deploying the stack; see [lambda/README.md](../lambda/README.md)).
 - **Webhook secret**: Generate a secret and store it in AWS Secrets Manager (see below).
-- **Permissions**: Repository → **Contents** (Read and write), **Pull requests** (Read), **Issues** (Read and write), **Metadata** (Read). The `repository_dispatch` API requires write access. **Issues** (Read and write) is required so the Lambda can add a 👀 reaction to the PR and to the comment that triggered the command.
+- **Permissions**: Repository → **Contents** (Read and write), **Pull requests** (Read and write), **Issues** (Read and write), **Metadata** (Read). The `repository_dispatch` API requires write access. **Issues** (Read and write) is required for the Lambda to add a 👀 reaction to the PR and to the comment; **Pull requests** (Read and write) is also recommended for reactions on pull requests—see [GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps#repository-permissions-for-pull-requests).
 - **Subscribe to events**: **Pull requests**, **Issue comments**.
 - **Private key**: Generate and download the PEM; store it in AWS Secrets Manager.
 - Install the App on the repositories where you want Neptune to run.

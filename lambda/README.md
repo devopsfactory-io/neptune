@@ -13,7 +13,7 @@ If you are self-hosting, you need:
 - A [GitHub App](https://docs.github.com/en/apps/creating-github-apps) with:
   - Webhook URL set to your Lambda Function URL (after deploy)
   - Webhook secret (stored in AWS Secrets Manager)
-  - Permissions: Repository permissions → **Contents** (read and write), **Pull requests** (read), **Issues** (read and write), **Metadata** (read). The `repository_dispatch` API requires write access to the repository. **Issues** (read and write) is required so the Lambda can add a 👀 reaction to the PR and to the comment that triggered the command.
+  - Permissions: Repository permissions → **Contents** (read and write), **Pull requests** (read and write), **Issues** (read and write), **Metadata** (read). The `repository_dispatch` API requires write access to the repository. **Issues** (read and write) is required for the Lambda to add a 👀 reaction to the PR and to the comment; **Pull requests** (read and write) is also recommended for reactions on pull requests—see [GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps#repository-permissions-for-pull-requests).
   - Subscribe to events: **Pull requests**, **Issue comments**
   - Private key (stored in AWS Secrets Manager)
 
@@ -89,7 +89,7 @@ After deploying, confirm the Lambda is reachable and the handler runs:
 
 3. **Logs**: If you get **500** or unexpected behavior, check CloudWatch logs for the function (Lambda → Monitor → View CloudWatch logs) for messages like `load config: ...`, `verify signature: ...`, or `repository_dispatch: ...`. A 500 with body "Dispatch error" often means GitHub returned 403 (e.g. "Resource not accessible by integration"); ensure the App has **Contents: Read and write** so `repository_dispatch` is allowed.
 
-4. **Eyes reaction not appearing on PR or comment**: The Lambda adds a 👀 reaction after a successful dispatch. If dispatch works but no reaction appears, check CloudWatch for `eyes reaction on PR` or `eyes reaction on comment` — a failure there (e.g. status 403) usually means the App lacks **Issues: Read and write**. In GitHub, go to the App → **Permissions and events** → set **Issues** to **Read and write**, save, and have the installation accept the new permissions if prompted. You can verify reactions with the [check-reactions script](scripts/check-reactions.sh): `./lambda/scripts/check-reactions.sh PR_NUMBER` (requires `gh` and `jq`).
+4. **Eyes reaction not appearing on PR or comment**: The Lambda adds a 👀 reaction after a successful dispatch. If dispatch works but no reaction appears, check CloudWatch for `eyes reaction on PR` or `eyes reaction on comment` — a failure there (e.g. status 403) usually means the App lacks the right permissions. In GitHub, go to the App → **Permissions and events** → set **Issues** to **Read and write** and **Pull requests** to **Read and write** (reactions on PRs can require both; see [GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps#repository-permissions-for-pull-requests)), save, and have the installation accept the new permissions if prompted. You can verify reactions with the [check-reactions script](scripts/check-reactions.sh): `./lambda/scripts/check-reactions.sh PR_NUMBER` (requires `gh` and `jq`).
 
 ## Environment variables (Lambda)
 
