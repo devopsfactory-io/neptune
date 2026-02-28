@@ -149,3 +149,49 @@ func (c *Client) RepositoryDispatch(ctx context.Context, ownerRepo string, paylo
 	}
 	return nil
 }
+
+// CreateReactionForIssue adds a reaction to an issue (or PR, which is an issue in the API). content is e.g. "eyes".
+func (c *Client) CreateReactionForIssue(ctx context.Context, ownerRepo string, issueNumber int, content string) error {
+	url := fmt.Sprintf("%s/repos/%s/issues/%d/reactions", githubAPI, ownerRepo, issueNumber)
+	return c.createReaction(ctx, url, content)
+}
+
+// CreateReactionForIssueComment adds a reaction to an issue comment. content is e.g. "eyes".
+func (c *Client) CreateReactionForIssueComment(ctx context.Context, ownerRepo string, commentID int64, content string) error {
+	url := fmt.Sprintf("%s/repos/%s/issues/comments/%d/reactions", githubAPI, ownerRepo, commentID)
+	return c.createReaction(ctx, url, content)
+}
+
+func (c *Client) createReaction(ctx context.Context, url, content string) error {
+	body := struct {
+		Content string `json:"content"`
+	}{Content: content}
+	raw, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(raw))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	// 200 = reaction already exists, 201 = created
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		const maxBody = 500
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, maxBody))
+		if len(b) > 0 {
+			return fmt.Errorf("create reaction: status %d: %s", resp.StatusCode, bytes.TrimSpace(b))
+		}
+		return fmt.Errorf("create reaction: status %d", resp.StatusCode)
+	}
+	return nil
+}

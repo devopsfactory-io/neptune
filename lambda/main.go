@@ -82,10 +82,13 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 			log.Printf("repository_dispatch: %v", err)
 			return response(500, "Dispatch error"), nil
 		}
+		if err := client.CreateReactionForIssue(ctx, payload.PullRequestRepoFull, payload.PullRequestNumber, "eyes"); err != nil {
+			log.Printf("eyes reaction on PR #%d failed (dispatch succeeded): %v", payload.PullRequestNumber, err)
+		}
 		return response(200, "OK"), nil
 
 	case "issue_comment":
-		payload, instID, ok, err := webhooks.ParseIssueComment([]byte(body), appSlug)
+		payload, instID, commentID, ok, err := webhooks.ParseIssueComment([]byte(body), appSlug)
 		if err != nil {
 			log.Printf("parse issue_comment: %v", err)
 			return response(400, "Bad payload"), nil
@@ -110,6 +113,11 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 		if err := client.RepositoryDispatch(ctx, payload.PullRequestRepoFull, payload); err != nil {
 			log.Printf("repository_dispatch: %v", err)
 			return response(500, "Dispatch error"), nil
+		}
+		if commentID != 0 {
+			if err := client.CreateReactionForIssueComment(ctx, payload.PullRequestRepoFull, commentID, "eyes"); err != nil {
+				log.Printf("eyes reaction on comment %d failed (dispatch succeeded): %v", commentID, err)
+			}
 		}
 		return response(200, "OK"), nil
 
