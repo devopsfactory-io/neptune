@@ -1,4 +1,4 @@
-.PHONY: build test-all check-fmt e2e lambda.build lambda.zip lambda.test
+.PHONY: build test-all check-fmt fmt e2e lambda.build lambda.zip lambda.test
 BINARY := neptune
 
 build:
@@ -9,6 +9,9 @@ test-all:
 
 check-fmt:
 	@test -z "$$(gofmt -s -l .)" || (echo "Run: gofmt -s -w ."; gofmt -s -l .; exit 1)
+
+fmt:
+	gofmt -s -w .
 
 lint:
 	golangci-lint run ./...

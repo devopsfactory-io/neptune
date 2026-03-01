@@ -32,6 +32,7 @@ repository:
     - mergeable
     - undiverged
   allowed_workflow: default
+  # automerge: false  # optional; when true, enable PR auto-merge after successful apply
 
 workflows:
   default:
@@ -55,6 +56,7 @@ workflows:
 - **plan_requirements**: Requirements that must be met before running plan (e.g. `undiverged`, `rebased`).
 - **apply_requirements**: Requirements that must be met before apply (e.g. `approved`, `mergeable`, `undiverged`, `rebased`).
 - **allowed_workflow**: Name of the workflow to run (e.g. `default`).
+- **automerge** (optional, default: `false`): When `true`, after a successful apply Neptune adds a comment that the PR will be auto-merged and calls GitHub to enable auto-merge on the PR (the PR will merge when all required checks pass). The GitHub token must have permission to enable auto-merge (e.g. `pull_requests: write`). Auto-merge is only triggered on successful **apply**, not on plan.
 
 ### Top-level optional fields
 

@@ -27,6 +27,7 @@ type rawRepository struct {
 	PlanRequirements  []string `yaml:"plan_requirements"`
 	ApplyRequirements []string `yaml:"apply_requirements"`
 	AllowedWorkflow   string   `yaml:"allowed_workflow"`
+	Automerge         bool     `yaml:"automerge"`
 }
 
 type rawStep struct {
@@ -124,6 +125,7 @@ func parseConfig(data []byte, env map[string]string) (*domain.NeptuneConfig, err
 		PlanRequirements:  raw.Repository.PlanRequirements,
 		ApplyRequirements: raw.Repository.ApplyRequirements,
 		AllowedWorkflow:   raw.Repository.AllowedWorkflow,
+		Automerge:         raw.Repository.Automerge,
 		GitHub:            githubCfg,
 	}
 	if repo.Branch == "" {

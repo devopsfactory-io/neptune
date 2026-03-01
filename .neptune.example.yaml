@@ -14,6 +14,7 @@ repository:
     - undiverged
     - rebased
   allowed_workflow: default
+  # automerge: false  # when true, enable PR auto-merge after successful apply (GitHub token needs pull_requests: write)
 
 workflows:
   default:
