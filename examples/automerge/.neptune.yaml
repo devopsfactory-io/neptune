@@ -1,5 +1,6 @@
 repository:
   object_storage: s3://your-bucket
+  stacks_management: terramate
   branch: main
   plan_requirements:
     - undiverged

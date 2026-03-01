@@ -6,9 +6,9 @@ Guidance for AI coding agents working on the Neptune project.
 
 ## Project Overview
 
-**Neptune** is a Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs plan/apply (Terraform or OpenTofu) on pull requests using the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order. When a step has `terramate: true` (default), Neptune runs the step’s command in each changed stack via the SDK (no Terramate CLI needed for that step); object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments.
+**Neptune** is a Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs plan/apply (Terraform or OpenTofu) on pull requests using the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order. When a step has `once` false or unset (default), Neptune runs the step’s command in each changed stack (Terramate SDK or local stacks; no Terramate CLI needed when using Terramate); object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments.
 
-**Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once when `terramate: false`); post results as PR comments. Optional `repository.automerge: true` enables PR auto-merge after a successful apply (GitHub GraphQL). Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
+**Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once in root when `once: true`); for stacks_management: local, **neptune stacks** provides list (--changed) and create; post results as PR comments. Optional `repository.automerge: true` enables PR auto-merge after a successful apply (GitHub GraphQL). Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
 
 **Language**: Go (see `go.mod`).
 
@@ -17,18 +17,19 @@ Guidance for AI coding agents working on the Neptune project.
 ## Repository Structure
 
 - **`main.go`** – Entry point; version/commit/date via ldflags.
-- **`cmd/`** – CLI (Cobra): `root.go`, `version.go`, `command.go`, `unlock.go`.
-- **`internal/config`** – Load env + YAML, validate `.neptune.yaml` (including optional `log_level`).
-- **`internal/domain`** – Config, lock, run, and GitHub domain structs.
+- **`cmd/`** – CLI (Cobra): `root.go`, `version.go`, `command.go`, `unlock.go`, `stacks.go` (stacks list, create).
+- **`internal/config`** – Load env + YAML, validate `.neptune.yaml` (including optional `log_level`, `stacks_management`, root-level `local_stacks`).
+- **`internal/domain`** – Config, lock, run, and GitHub domain structs (WorkflowStep uses `once`; RepositoryConfig has `StacksManagement`, `LocalStacks`).
 - **`internal/log`** – Structured logging (DEBUG, INFO, ERROR) via `log/slog`; level from `NEPTUNE_LOG_LEVEL` or config `log_level`.
-- **`internal/lock`** – Changed stacks via Terramate SDK (list + run order), object-storage lock files (GCS, S3), lock interface.
+- **`internal/stacks`** – Stacks provider interface (terramate, local); list/changed stacks for locking and runner.
+- **`internal/lock`** – Lock interface: gets stack list from stacks provider, object-storage lock files (GCS, S3).
 - **`internal/run`** – Execute workflow phase steps (shell).
 - **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged), commit statuses (GetHeadSHA, CreateCommitStatus) for **neptune plan** / **neptune apply**; GraphQL EnablePullRequestAutoMerge when `repository.automerge` is true.
 - **`internal/git`** – Rebased check; DefaultBranch (git CLI), ShowFileFromRef, FetchBranch for loading config from default branch.
 - **`internal/notifications/github`** – Format and post PR comments.
 - **`examples/`** – Infra examples (S3/GCS backend, automerge, Terramate stacks, Terragrunt).
 - **`scripts/`** – Maintainer scripts (if any).
-- **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
+- **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `scripts/run-terramate.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
 - **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`—including `labeled` when the added label is `NEPTUNE_PR_LABEL`—and `issue_comment`, trigger `repository_dispatch`; optional `NEPTUNE_PR_LABEL` gates on PR label). See [lambda/README.md](lambda/README.md).
 - **`lambda/cloudformation/`** – CloudFormation template to deploy the Lambda (Function URL, IAM, Secrets Manager). See [lambda/README.md](lambda/README.md#deploy-with-cloudformation).
 - **`Makefile`**, **`.golangci.yml`**, **`.goreleaser.yml`**, **`.github/workflows/`** – Build, test, lint, release.
@@ -77,7 +78,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 - **Location**: Place `*_test.go` next to the code under test (same package).
 - **Coverage**: Existing tests cover `internal/config`, `internal/git`, `internal/github`, `internal/run`, `internal/notifications/github`; add tests for new behavior and keep coverage for touched code.
 - **No external services**: Unit tests should not require live GitHub or GCS; mock or stub as needed.
-- **E2E**: Run `make e2e` or `./e2e/run.sh` (requires Docker, Terraform). Uses MinIO and `NEPTUNE_E2E=1` to skip GitHub. E2E config uses steps with default `terramate: true` (Neptune runs commands per stack via SDK; Terramate CLI not required for steps).
+- **E2E**: Run `make e2e` or `./e2e/scripts/run-terramate.sh` (requires Docker, Terraform). Uses MinIO and `NEPTUNE_E2E=1` to skip GitHub. For **stacks_management: local**, run `./e2e/scripts/run-local-stacks-files.sh` or `./e2e/scripts/run-local-declared-stacks.sh`. E2E config uses steps with default `once: false` (Neptune runs commands per stack).
 - **Automerge**: E2E and integration tests in this repo do not exercise the automerge feature. A separate repository (e.g. a fork or copy of [examples/](examples/)) can be used to test automerge end-to-end (e.g. open a PR with changes in two stacks, comment `@neptbot apply`, then verify the apply comment and that the PR is set to auto-merge after checks pass).
 
 ---
@@ -85,7 +86,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 ## CI
 
 - **`.github/workflows/test.yml`** – On push to `main`/`release-*` and on PRs; path filter for Go files; runs `make test-all` and `make check-fmt`.
-- **`.github/workflows/e2e.yml`** – On push/PR when e2e-related paths change; runs `./e2e/run.sh` with MinIO (Docker Compose). See [e2e/README.md](e2e/README.md).
+- **`.github/workflows/e2e.yml`** – On push/PR when e2e-related paths change; runs `./e2e/scripts/run-terramate.sh` with MinIO (Docker Compose). See [e2e/README.md](e2e/README.md).
 - **`.github/workflows/integration.yml`** – On PRs when integration-relevant paths change; runs Neptune plan/apply on the same PR with real GitHub (requirements check, PR comments, commit statuses) and MinIO for locks. Needs `statuses: write` for commit status API. See [e2e/README.md](e2e/README.md#integration-tests).
 - **`.github/workflows/lint.yml`** – On PRs; path filter for Go; runs golangci-lint.
 - **`.github/workflows/release.yml`** – On push of tags `v*.*.*` (and workflow_dispatch); runs GoReleaser to create GitHub Release and binaries.

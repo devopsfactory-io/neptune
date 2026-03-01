@@ -62,7 +62,7 @@ jobs:
           terraform_version: "1.5.0"
 
       - name: Run integration
-        run: ./e2e/run-integration.sh
+        run: ./e2e/scripts/run-integration.sh
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}

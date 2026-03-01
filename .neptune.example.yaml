@@ -4,6 +4,7 @@
 repository:
   # gs://bucket or gs://bucket/prefix (GCS); s3://bucket or s3://bucket/prefix (AWS S3 or MinIO). See docs/object-storage.md for backend-specific env vars.
   object_storage: gs://terraform-internal-neptune-3dedd705-9275-592b-11c9-bc65c9821980
+  stacks_management: terramate  # terramate or local
   branch: master
   plan_requirements:
     - undiverged
@@ -20,9 +21,9 @@ workflows:
   default:
     plan:
       steps:
-        # terramate: true (default) = run once per changed stack in that stack's dir (no Terramate CLI needed)
+        # once: false (default) = run once per changed stack in that stack's dir (no Terramate CLI needed)
         - run: echo "Custom command"
-          terramate: false
+          once: true
         - run: terragrunt init -upgrade
         - run: terragrunt plan
     apply:
@@ -30,6 +31,6 @@ workflows:
         - plan
       steps:
         - run: echo "Custom command"
-          terramate: false
+          once: true
         - run: terragrunt apply -auto-approve
-        # Or use terramate: false and call CLI yourself: run: terramate run --changed -- terragrunt apply -auto-approve
+        # Or use once: true and call CLI yourself: run: terramate run --changed -- terragrunt apply -auto-approve

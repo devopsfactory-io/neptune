@@ -102,3 +102,23 @@ func FetchBranch(workDir, branch string) error {
 	}
 	return nil
 }
+
+// ChangedPaths returns the relative paths of files changed between baseRef and HEAD.
+// baseRef is e.g. "origin/main". Paths are relative to the repository root.
+func ChangedPaths(workDir, baseRef string) ([]string, error) {
+	cmd := exec.Command("git", "diff", "--name-only", baseRef+"...HEAD")
+	cmd.Dir = workDir
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("git diff --name-only %s...HEAD: %w", baseRef, err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	var paths []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			paths = append(paths, line)
+		}
+	}
+	return paths, nil
+}

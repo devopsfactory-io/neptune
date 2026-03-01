@@ -15,10 +15,21 @@ Neptune uses the Terramate Go SDK for change detection and run order; the Terram
 From the repository root:
 
 ```bash
-./e2e/run.sh
+make e2e                      # run all: Terramate, local (discovery), local (declared stacks)
+make e2e.terramate            # Terramate stacks only (./e2e/scripts/run-terramate.sh)
+make e2e.localstacksfiles     # stacks_management: local, stack.hcl discovery (./e2e/scripts/run-local-stacks-files.sh)
+make e2e.localdeclaredstacks  # stacks_management: local, root-level local_stacks config (./e2e/scripts/run-local-declared-stacks.sh)
 ```
 
-The script will:
+Or run the scripts directly:
+
+```bash
+./e2e/scripts/run-terramate.sh            # Terramate
+./e2e/scripts/run-local-stacks-files.sh   # stacks_management: local (stack.hcl discovery)
+./e2e/scripts/run-local-declared-stacks.sh # stacks_management: local (root-level local_stacks)
+```
+
+The main script will:
 
 1. Build the `neptune` binary
 2. Start MinIO with Docker Compose and create the `neptune-e2e` bucket
@@ -39,19 +50,23 @@ This allows e2e to run in CI and locally without a GitHub token or real pull req
 ## Structure
 
 - **stack-a**, **stack-b**, **stack-c** – Terramate stacks with Terraform `null_resource` and `local_file` (no cloud providers).
-- **.neptune.yaml** – E2E config pointing at `s3://neptune-e2e` and minimal plan/apply requirements.
+- **.neptune.yaml** – E2E config (Terramate) pointing at `s3://neptune-e2e` and minimal plan/apply requirements.
+- **.neptune.localstacksfiles.yaml** – E2E config with `stacks_management: local` (stack.hcl discovery) for `scripts/run-local-stacks-files.sh`.
+- **.neptune.localdeclaredstacks.yaml** – E2E config with `stacks_management: local` and root-level **local_stacks** (source: config) for `scripts/run-local-declared-stacks.sh`.
 - **docker-compose.yaml** – MinIO plus an init container that creates the bucket.
-- **run.sh** – Orchestrates MinIO, git fixture, and Neptune plan/apply.
-- **run-integration.sh** – Orchestrates MinIO and Neptune plan/apply with real GitHub (used by the integration workflow).
+- **scripts/run-terramate.sh** – Orchestrates MinIO, git fixture, and Neptune plan/apply (Terramate).
+- **scripts/run-local-stacks-files.sh** – Same flow as run-terramate.sh but with `stacks_management: local` (stack.hcl discovery).
+- **scripts/run-local-declared-stacks.sh** – Same flow as run-local-stacks-files.sh but uses root-level `local_stacks` (source: config) for stack list and run order.
+- **scripts/run-integration.sh** – Orchestrates MinIO and Neptune plan/apply with real GitHub (used by the integration workflow).
 
 ## CI
 
-The [e2e workflow](../.github/workflows/e2e.yml) runs on pushes to `main`/`release-*` and on pull requests when relevant paths change (e2e/, internal/lock, cmd/, config, compose files). It sets up Terraform and runs `./e2e/run.sh`.
+The [e2e workflow](../.github/workflows/e2e.yml) runs on pushes to `main`/`release-*` and on pull requests when relevant paths change (e2e/, internal/lock, cmd/, config, compose files). It sets up Terraform and runs `./e2e/scripts/run-terramate.sh`.
 
 ## Integration tests
 
 Integration tests run Neptune (plan/apply) on a **real pull request** with a **real GitHub connection**: PR requirement checks and comment posting. Lock storage still uses MinIO in the same job (no real GCS/S3).
 
 - **When they run**: The [integration workflow](../.github/workflows/integration.yml) runs only on **pull requests** when integration-relevant paths change (e2e/, internal/github/, internal/notifications/github/, cmd/, internal/config/, internal/lock/, internal/run/, internal/domain/, compose files, and the workflow file).
-- **What they do**: Checkout (with full history so the base ref exists for Terramate), start MinIO and create the bucket, then run `./e2e/run-integration.sh`. The script injects a trivial change in `e2e/stack-a/main.tf` and `e2e/stack-b/main.tf` and commits it locally so Terramate always sees changed stacks (HEAD vs `origin/main`), then runs `neptune command plan` and `neptune command apply` from the `e2e/` directory with `NEPTUNE_CONFIG_PATH=.neptune.yaml`. GitHub env is set from the workflow so Neptune posts result comments on the PR.
+- **What they do**: Checkout (with full history so the base ref exists for Terramate), start MinIO and create the bucket, then run `./e2e/scripts/run-integration.sh`. The script injects a trivial change in `e2e/stack-a/main.tf` and `e2e/stack-b/main.tf` and commits it locally so Terramate always sees changed stacks (HEAD vs `origin/main`), then runs `neptune command plan` and `neptune command apply` from the `e2e/` directory with `NEPTUNE_CONFIG_PATH=.neptune.yaml`. GitHub env is set from the workflow so Neptune posts result comments on the PR.
 - **Full plan/apply**: Because the script commits a change under `e2e/`, Terramate reports changed stacks and plan/apply run on them every time; PR comments show the full plan/apply format with stacks and command output.

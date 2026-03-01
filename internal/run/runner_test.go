@@ -15,14 +15,14 @@ func TestRunner_Execute_SimpleStep(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		cmd = "echo hello"
 	}
-	terramateFalse := false
+	onceTrue := true
 	cfg := &domain.NeptuneConfig{}
 	runner := &Runner{
 		Config: cfg,
 		Phase:  "plan",
 		Locks:  nil,
 		Stacks: nil,
-		Steps:  []domain.WorkflowStep{{Run: cmd, Terramate: &terramateFalse}},
+		Steps:  []domain.WorkflowStep{{Run: cmd, Once: &onceTrue}},
 	}
 	out, err := runner.Execute(context.Background())
 	if err != nil {
@@ -44,11 +44,11 @@ func TestRunner_Execute_FailingStep(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		cmd = "exit /b 2"
 	}
-	terramateFalse := false
+	onceTrue := true
 	runner := &Runner{
 		Config: &domain.NeptuneConfig{},
 		Phase:  "plan",
-		Steps:  []domain.WorkflowStep{{Run: cmd, Terramate: &terramateFalse}},
+		Steps:  []domain.WorkflowStep{{Run: cmd, Once: &onceTrue}},
 	}
 	out, err := runner.Execute(context.Background())
 	if err != nil {
@@ -59,13 +59,13 @@ func TestRunner_Execute_FailingStep(t *testing.T) {
 	}
 }
 
-func TestRunner_Execute_TerramateTrue_PerStack(t *testing.T) {
+func TestRunner_Execute_OnceUnset_PerStack(t *testing.T) {
 	dir := t.TempDir()
 	stackDir := filepath.Join(dir, "stack-a")
 	if err := os.MkdirAll(stackDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	// Run a step with terramate true; command writes a file so we can assert it ran in the stack dir.
+	// Run a step with once unset (default per-stack); command writes a file so we can assert it ran in the stack dir.
 	writeCmd := "echo done > neptune_test_out.txt"
 	if runtime.GOOS == "windows" {
 		writeCmd = "echo done > neptune_test_out.txt"

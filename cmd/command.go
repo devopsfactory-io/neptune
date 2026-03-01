@@ -308,9 +308,14 @@ func configSummaryLines(cfg *domain.NeptuneConfig) []string {
 			"- Pull request number: "+repo.GitHub.PullRequestNumber,
 		)
 	}
+	stacksMgmt := repo.StacksManagement
+	if stacksMgmt == "" {
+		stacksMgmt = "terramate"
+	}
 	lines = append(lines,
 		"- Object storage:",
 		"  "+repo.ObjectStorage,
+		"- Stacks management: "+stacksMgmt,
 		"- Plan requirements: "+strings.Join(repo.PlanRequirements, ", "),
 		"- Apply requirements: "+strings.Join(repo.ApplyRequirements, ", "),
 		"- Allowed workflow: "+repo.AllowedWorkflow,

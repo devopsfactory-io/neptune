@@ -1,4 +1,4 @@
-.PHONY: build test-all check-fmt fmt e2e lambda.build lambda.zip lambda.test
+.PHONY: build test-all check-fmt fmt e2e e2e.terramate e2e.localstacksfiles e2e.localdeclaredstacks lambda.build lambda.zip lambda.test
 BINARY := neptune
 
 build:
@@ -16,8 +16,16 @@ fmt:
 lint:
 	golangci-lint run ./...
 
-e2e:
-	./e2e/run.sh
+e2e: e2e.terramate e2e.localstacksfiles e2e.localdeclaredstacks
+
+e2e.terramate:
+	./e2e/scripts/run-terramate.sh
+
+e2e.localstacksfiles:
+	./e2e/scripts/run-local-stacks-files.sh
+
+e2e.localdeclaredstacks:
+	./e2e/scripts/run-local-declared-stacks.sh
 
 # Lambda (separate Go module under lambda/). Binary name bootstrap is for provided.al2023 runtime.
 lambda.build:

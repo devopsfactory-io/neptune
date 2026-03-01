@@ -1,5 +1,6 @@
 repository:
   object_storage: s3://your-bucket
+  stacks_management: terramate
   branch: main
   plan_requirements:
     - undiverged
@@ -13,7 +14,7 @@ workflows:
   default:
     plan:
       steps:
-        # terramate: true (default) = Neptune runs each step once per changed stack in that stack's dir
+        # once: false (default) = Neptune runs each step once per changed stack in that stack's dir
         - run: terraform init -input=false
         - run: terraform plan -input=false -out=tfplan
     apply:

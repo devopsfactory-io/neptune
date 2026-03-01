@@ -52,6 +52,7 @@ workflows:
 ### Repository fields
 
 - **object_storage**: URL for stack lock files. Use `gs://bucket` or `gs://bucket/prefix` for GCS, `s3://bucket` or `s3://bucket/prefix` for AWS S3 or S3-compatible storage (e.g. MinIO). See [Object storage](object-storage.md) for credentials and env vars.
+- **stacks_management** (optional, default: `terramate`): How Neptune discovers stacks. Use **`terramate`** to use the Terramate SDK (repository must be a Terramate project). Use **`local`** to discover stacks via the root-level **local_stacks** key (config or discovery) and git-based change detection; then use **neptune stacks list** (with optional **--changed**) and **neptune stacks create**.
 - **branch**: Base branch (e.g. `master` or `main`).
 - **plan_requirements**: Requirements that must be met before running plan (e.g. `undiverged`, `rebased`).
 - **apply_requirements**: Requirements that must be met before apply (e.g. `approved`, `mergeable`, `undiverged`, `rebased`).
@@ -61,19 +62,18 @@ workflows:
 ### Top-level optional fields
 
 - **log_level**: One of `DEBUG`, `INFO`, or `ERROR`. Default `INFO`. Overridden by the `NEPTUNE_LOG_LEVEL` environment variable.
+- **local_stacks** (optional, only when `stacks_management: local`): Root-level key (sibling of `repository` and `workflows`) for local stack discovery. **source**: `config` (use the **stacks** list) or `discovery` (scan the repo for directories containing **stack.hcl**). **stacks**: list of `{ path: "<dir>", depends_on: ["<dir>"] }` for run order; used when source is `config`.
 
 ### Workflows
 
 Workflows define `plan` and `apply` phases. Each phase has `steps`:
 
-- **steps**: List of steps. Each step has `run: <shell command>` and optional **terramate** and **changed** (see below).
+- **steps**: List of steps. Each step has `run: <shell command>` and optional **once** (see below).
 - **apply.depends_on**: Optional list of phases that must have run first (e.g. `plan`).
 
-#### Step options: terramate and changed
+#### Step options: once
 
-- **terramate** (optional, default: `true`): When `true` (or omitted), Neptune runs the step’s `run` command **once per changed stack**, with the working directory set to each stack (using the Terramate SDK; no Terramate CLI needed for this). You can write e.g. `run: terragrunt plan` and Neptune will execute it in each changed stack.
-- **terramate: false**: Run the step’s command **once** in the process current directory (e.g. repo root). Use this if you still invoke the Terramate CLI yourself, e.g. `run: terramate run --changed -- terragrunt plan`.
-- **changed** (optional): When `terramate` is true, Neptune already runs only in changed stacks. Use `changed: true` only for clarity in config; no extra logic.
+- **once** (optional, default: `false`): When `false` (or omitted), Neptune runs the step’s `run` command **once per changed stack**, with the working directory set to each stack. When `true`, Neptune runs the command **once** in the repo root. Use `once: true` if you invoke the Terramate CLI yourself, e.g. `run: terramate run --changed -- terragrunt plan`.
 
 Example with per-stack execution (default):
 
@@ -89,11 +89,12 @@ Example with a single global command:
 ```yaml
 steps:
   - run: terramate run --changed -- some-global-script.sh
-    terramate: false
+    once: true
 ```
 
 See [.neptune.example.yaml](../.neptune.example.yaml) in the repo root for a full example.
 
-## Terramate requirement
+## Stacks management: terramate vs local
 
-The repository must be a [Terramate](https://github.com/terramate-io/terramate) project (root and stack config) so Neptune can detect changed stacks and their run order. Neptune uses the Terramate Go SDK for this; the Terramate CLI is **not** required for listing changed stacks or for running steps when `terramate` is true (default). When a step has `terramate: false` and your `run` string invokes `terramate run ...`, the Terramate CLI must be installed in the environment where Neptune runs (e.g. CI).
+- **terramate** (default): The repository must be a [Terramate](https://github.com/terramate-io/terramate) project (root and stack config) so Neptune can detect changed stacks and their run order. Neptune uses the Terramate Go SDK for this; the Terramate CLI is **not** required for listing changed stacks or for running steps when `once` is false. When a step has `once: true` and your `run` string invokes `terramate run ...`, the Terramate CLI must be installed (e.g. in CI).
+- **local**: Set `stacks_management: local` and optionally `local_stacks` (source **config** or **discovery**). Neptune discovers stacks and filters by git changes. Use **neptune stacks list** and **neptune stacks list --changed**; use **neptune stacks create &lt;name&gt;** to scaffold a new stack with **stack.hcl**.

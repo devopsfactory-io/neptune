@@ -38,8 +38,8 @@ func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 		if step.Run == "" {
 			continue
 		}
-		terramateEnabled := step.Terramate == nil || *step.Terramate
-		if !terramateEnabled {
+		runOnceInRoot := step.Once != nil && *step.Once
+		if runOnceInRoot {
 			log.Banner("Neptune Runner", []string{"Neptune is running the following command: " + step.Run})
 			log.For("run").Info("Running command: " + step.Run)
 			runOut := r.runCommand(ctx, step.Run)
@@ -56,7 +56,7 @@ func (r *Runner) Execute(ctx context.Context) (*domain.StepsOutput, error) {
 			}
 			continue
 		}
-		// Run step in each changed stack (terramate: true or default).
+		// Run step in each changed stack (once: false or unset).
 		repoRoot, err := os.Getwd()
 		if err != nil {
 			log.For("run").Error("get working directory", "err", err)

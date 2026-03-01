@@ -58,7 +58,7 @@ jobs:
           terraform_version: "1.5.0"
 
       - name: Run e2e
-        run: ./e2e/run.sh
+        run: ./e2e/scripts/run-terramate.sh
         env:
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
