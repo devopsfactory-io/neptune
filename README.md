@@ -27,6 +27,7 @@
 - **Infra examples**: [examples/](examples/) – S3/GCS backend, automerge, Terramate stacks, Terragrunt.
 - **neptbot**: Trigger Neptune from PR open and @-mention comments by [installing the neptbot GitHub App](docs/github-app-and-lambda.md) and adding the workflow (recommended). To self-host, see [lambda/](lambda/) and [lambda/README.md](lambda/README.md).
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) – how to contribute; [docs/development.md](docs/development.md) and [AGENTS.md](AGENTS.md) for setup and AI/contributor guidance
+- **Dependencies**: [Renovate](https://docs.renovatebot.com/) opens PRs for Go modules and GitHub Actions updates (see [.github/renovate.json5](.github/renovate.json5)).
 
 ## What is Neptune?
 

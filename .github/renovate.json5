@@ -1,0 +1,46 @@
+{
+  extends: [
+    'config:best-practices',
+    ':separateMultipleMajorReleases',
+    'schedule:daily',
+    'security:openssf-scorecard',
+  ],
+  commitMessageSuffix: ' in {{packageFile}}',
+  dependencyDashboardAutoclose: true,
+  automerge: true,
+  baseBranchPatterns: ['main', '/^release-.*/'],
+  platformAutomerge: true,
+  labels: ['dependencies'],
+  postUpdateOptions: ['gomodTidy', 'gomodUpdateImportPaths'],
+  prHourlyLimit: 1,
+  minimumReleaseAge: '5 days',
+  osvVulnerabilityAlerts: true,
+  vulnerabilityAlerts: {
+    enabled: true,
+    labels: ['security'],
+  },
+  packageRules: [
+    // Enable release branches for security updates only
+    {
+      matchBaseBranches: ['/^release-.*/'],
+      matchUpdateTypes: ['security'],
+      enabled: true,
+    },
+    // Disable release branches for non-security updates
+    {
+      matchBaseBranches: ['/^release-.*/'],
+      enabled: false,
+    },
+    // Go version (actions/setup-go, go.mod)
+    {
+      matchPackageNames: ['go', 'golang'],
+      versioning: 'go',
+      groupName: 'go',
+    },
+    // GitHub Actions
+    {
+      matchPackageNames: ['/github-actions/'],
+      groupName: 'github-',
+    },
+  ],
+}
