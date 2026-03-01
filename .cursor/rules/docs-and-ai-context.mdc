@@ -7,9 +7,10 @@ alwaysApply: true
 
 After making changes to code, config, or CI:
 
-1. **Ask**: "Do README, AGENTS.md, or any .cursor rule or skill need an update?"
+1. **Ask**: "Do README, AGENTS.md, examples/, or any .cursor rule or skill need an update?"
 2. **New behavior or CLI flags** → Update README and/or AGENTS.md (install, usage, structure).
-3. **New conventions or workflows** → Update the relevant `.cursor/rules/*.mdc` or `.cursor/skills/*/SKILL.md`.
-4. **Do not edit plan files** (e.g. `neptune_go_rewrite*.plan.md`, `ai_agent_config*.plan.md`) unless the user explicitly asks.
+3. **New config or usage that users can try** → Consider adding or updating an example in **examples/** (examples are part of the documentation).
+4. **New conventions or workflows** → Update the relevant `.cursor/rules/*.mdc` or `.cursor/skills/*/SKILL.md`.
+5. **Do not edit plan files** (e.g. `neptune_go_rewrite*.plan.md`, `ai_agent_config*.plan.md`) unless the user explicitly asks.
 
 Use the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`) for the full checklist and when to update each artifact.
