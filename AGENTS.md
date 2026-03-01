@@ -26,6 +26,7 @@ Guidance for AI coding agents working on the Neptune project.
 - **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged), commit statuses (GetHeadSHA, CreateCommitStatus) for **neptune plan** / **neptune apply**; GraphQL EnablePullRequestAutoMerge when `repository.automerge` is true.
 - **`internal/git`** – Rebased check; DefaultBranch (git CLI), ShowFileFromRef, FetchBranch for loading config from default branch.
 - **`internal/notifications/github`** – Format and post PR comments.
+- **`examples/`** – Infra examples submodule ([neptune-infra-examples](https://github.com/devopsfactory-io/neptune-infra-examples)): S3/GCS backend, automerge, Terramate stacks, Terragrunt. Run `git submodule update --init --recursive` to fetch.
 - **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
 - **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`—including `labeled` when the added label is `NEPTUNE_PR_LABEL`—and `issue_comment`, trigger `repository_dispatch`; optional `NEPTUNE_PR_LABEL` gates on PR label). See [lambda/README.md](lambda/README.md).
 - **`lambda/cloudformation/`** – CloudFormation template to deploy the Lambda (Function URL, IAM, Secrets Manager). See [lambda/README.md](lambda/README.md#deploy-with-cloudformation).
@@ -75,7 +76,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 - **Coverage**: Existing tests cover `internal/config`, `internal/git`, `internal/github`, `internal/run`, `internal/notifications/github`; add tests for new behavior and keep coverage for touched code.
 - **No external services**: Unit tests should not require live GitHub or GCS; mock or stub as needed.
 - **E2E**: Run `make e2e` or `./e2e/run.sh` (requires Docker, Terraform). Uses MinIO and `NEPTUNE_E2E=1` to skip GitHub. E2E config uses steps with default `terramate: true` (Neptune runs commands per stack via SDK; Terramate CLI not required for steps).
-- **Automerge**: E2E and integration tests in this repo do not exercise the automerge feature. A separate repository (e.g. devopsfactory-io/neptune-infra-example) can be used to test automerge end-to-end (e.g. open a PR with changes in two stacks, comment `@neptbot apply`, then verify the apply comment and that the PR is set to auto-merge after checks pass).
+- **Automerge**: E2E and integration tests in this repo do not exercise the automerge feature. A separate repository (e.g. [devopsfactory-io/neptune-infra-examples](https://github.com/devopsfactory-io/neptune-infra-examples)) can be used to test automerge end-to-end (e.g. open a PR with changes in two stacks, comment `@neptbot apply`, then verify the apply comment and that the PR is set to auto-merge after checks pass). That repo is available in-repo at [examples/](examples/) when the submodule is initialized (`git submodule update --init --recursive`).
 
 ---
 
