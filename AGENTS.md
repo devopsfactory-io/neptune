@@ -26,7 +26,8 @@ Guidance for AI coding agents working on the Neptune project.
 - **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged), commit statuses (GetHeadSHA, CreateCommitStatus) for **neptune plan** / **neptune apply**; GraphQL EnablePullRequestAutoMerge when `repository.automerge` is true.
 - **`internal/git`** – Rebased check; DefaultBranch (git CLI), ShowFileFromRef, FetchBranch for loading config from default branch.
 - **`internal/notifications/github`** – Format and post PR comments.
-- **`examples/`** – Infra examples submodule ([neptune-infra-examples](https://github.com/devopsfactory-io/neptune-infra-examples)): S3/GCS backend, automerge, Terramate stacks, Terragrunt. Run `git submodule update --init --recursive` to fetch.
+- **`examples/`** – Infra examples (S3/GCS backend, automerge, Terramate stacks, Terragrunt).
+- **`scripts/`** – Maintainer scripts (if any).
 - **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
 - **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`—including `labeled` when the added label is `NEPTUNE_PR_LABEL`—and `issue_comment`, trigger `repository_dispatch`; optional `NEPTUNE_PR_LABEL` gates on PR label). See [lambda/README.md](lambda/README.md).
 - **`lambda/cloudformation/`** – CloudFormation template to deploy the Lambda (Function URL, IAM, Secrets Manager). See [lambda/README.md](lambda/README.md#deploy-with-cloudformation).
@@ -76,7 +77,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 - **Coverage**: Existing tests cover `internal/config`, `internal/git`, `internal/github`, `internal/run`, `internal/notifications/github`; add tests for new behavior and keep coverage for touched code.
 - **No external services**: Unit tests should not require live GitHub or GCS; mock or stub as needed.
 - **E2E**: Run `make e2e` or `./e2e/run.sh` (requires Docker, Terraform). Uses MinIO and `NEPTUNE_E2E=1` to skip GitHub. E2E config uses steps with default `terramate: true` (Neptune runs commands per stack via SDK; Terramate CLI not required for steps).
-- **Automerge**: E2E and integration tests in this repo do not exercise the automerge feature. A separate repository (e.g. [devopsfactory-io/neptune-infra-examples](https://github.com/devopsfactory-io/neptune-infra-examples)) can be used to test automerge end-to-end (e.g. open a PR with changes in two stacks, comment `@neptbot apply`, then verify the apply comment and that the PR is set to auto-merge after checks pass). That repo is available in-repo at [examples/](examples/) when the submodule is initialized (`git submodule update --init --recursive`).
+- **Automerge**: E2E and integration tests in this repo do not exercise the automerge feature. A separate repository (e.g. a fork or copy of [examples/](examples/)) can be used to test automerge end-to-end (e.g. open a PR with changes in two stacks, comment `@neptbot apply`, then verify the apply comment and that the PR is set to auto-merge after checks pass).
 
 ---
 
@@ -96,10 +97,10 @@ Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/d
 
 After any change that affects behavior, APIs, config, or CI:
 
-1. **Consider human docs**: **README.md** is the high-level entry point; detailed user docs (configuration, object storage, installation, usage, development) live in **docs/** (see [docs/README.md](docs/README.md)). Update README, **docs/*.md**, and **`.neptune.example.yaml`** (or comments) if install, usage, or config schema changed.
+1. **Consider human docs**: **README.md** is the high-level entry point; detailed user docs (configuration, object storage, installation, usage, development) live in **docs/** (see [docs/README.md](docs/README.md)); **examples/** is part of the documentation (copy-pasteable usage examples). Update README, **docs/*.md**, **examples/** (add or update examples when behavior or config changes), and **`.neptune.example.yaml`** (or comments) if install, usage, or config schema changed.
 2. **Consider AI docs**: Update **AGENTS.md** if project structure, setup, or conventions changed. Update **`.cursor/rules/*.mdc`** if coding or workflow rules changed. Update **`.cursor/skills/*/SKILL.md`** if a documented workflow or checklist changed.
 
-If you add a feature, change a command, or modify workflows: check README, docs/, and AGENTS.md; if rules or skills are affected, update the corresponding file. When in doubt, update. See the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`) for a detailed checklist.
+If you add a feature, change a command, or modify workflows: check README, docs/, examples/, and AGENTS.md; if rules or skills are affected, update the corresponding file. When in doubt, update. See the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`) for a detailed checklist.
 
 Do not edit plan files (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.plan.md`) unless the user explicitly asks.
 
@@ -111,7 +112,7 @@ Before submitting:
 
 1. Run `make test-all` and `make check-fmt`.
 2. Ensure no new linter errors (`make lint` if available).
-3. If behavior or setup changed, update README, docs/, and/or AGENTS.md and rules/skills as above.
+3. If behavior or setup changed, update README, docs/, examples/, and/or AGENTS.md and rules/skills as above.
 
 PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ...`, `docs: ...`) but this is not enforced.
 
