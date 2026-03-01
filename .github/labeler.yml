@@ -3,3 +3,12 @@
 neptune:
   - changed-files:
     - any-glob-to-any-file: '**'
+# Apply "dependencies" when dependency-related files change (Renovate PRs).
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+        - 'go.mod'
+        - 'go.sum'
+        - 'lambda/go.mod'
+        - 'lambda/go.sum'
+        - '.github/workflows/**/*.yml'
