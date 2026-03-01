@@ -34,7 +34,7 @@ Use this skill when:
 | examples/ | Humans | Copy-pasteable infra examples (S3/GCS, automerge, Terramate, Terragrunt); part of docs |
 | CONTRIBUTING.md | Humans | How to contribute; issue/PR templates, checklist, CI |
 | .github/pull_request_template.md | Humans + AI | PR description structure; includes AI Summary for reviewers |
-| .github/ISSUE_TEMPLATE/ | Humans | Bug report, feature request, staff issue templates |
+| .github/ISSUE_TEMPLATE/ | Humans | Bug report, feature request templates |
 | AGENTS.md | AI agents | Project overview, structure, setup, style, testing, CI, doc-update requirement |
 | .cursor/rules/*.mdc | AI agents | File-specific or always-applied rules (Go, CI, config, docs) |
 | .cursor/skills/*/SKILL.md | AI agents | Step-by-step workflows (e.g. maintain-documentation, release, open-pull-request) |

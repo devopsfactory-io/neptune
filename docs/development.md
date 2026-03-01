@@ -1,6 +1,6 @@
 # Development
 
-Contributing workflow (issues, pull requests, checklist) is described in [CONTRIBUTING.md](../CONTRIBUTING.md).
+Contributing workflow (issues, pull requests, checklist) is described in [CONTRIBUTING.md](../CONTRIBUTING.md). For pull requests, ensure your commits are signed off (DCO); see the [Sign-off (DCO)](../CONTRIBUTING.md#pull-requests) section for git config and `git commit -s`.
 
 ## End-to-end tests
 

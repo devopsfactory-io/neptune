@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Go Standards
 
-- **Format**: Use `gofmt -s`. Run `make check-fmt` before committing.
+- **Format**: Use `gofmt -s`. Run `make check-fmt` before committing. Use `git commit -s` for DCO sign-off (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 - **Lint**: Follow `.golangci.yml`; do not introduce new linter violations. Run `make lint` when available.
 - **Packages**: Code in `internal/` must not be imported from outside this module.
 - **Errors**: Always handle errors; add context with `fmt.Errorf("...: %w", err)` where useful.
