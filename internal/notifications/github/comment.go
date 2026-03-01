@@ -208,6 +208,9 @@ func (n *Notifier) formatApply(comment *domain.PullRequestComment) string {
 			formatStep(&b, out)
 		}
 	}
+	if n.cfg.Repository != nil && n.cfg.Repository.Automerge && comment.OverallStatus == 0 {
+		b.WriteString("\n\nAutomatically merging because all changed stacks have been successfully applied.\n")
+	}
 	return b.String()
 }
 

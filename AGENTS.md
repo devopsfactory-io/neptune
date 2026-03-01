@@ -8,7 +8,7 @@ Guidance for AI coding agents working on the Neptune project.
 
 **Neptune** is a Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs plan/apply (Terraform or OpenTofu) on pull requests using the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order. When a step has `terramate: true` (default), Neptune runs the step’s command in each changed stack via the SDK (no Terramate CLI needed for that step); object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments.
 
-**Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once when `terramate: false`); post results as PR comments. Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
+**Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once when `terramate: false`); post results as PR comments. Optional `repository.automerge: true` enables PR auto-merge after a successful apply (GitHub GraphQL). Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
 
 **Language**: Go (see `go.mod`).
 
@@ -23,7 +23,7 @@ Guidance for AI coding agents working on the Neptune project.
 - **`internal/log`** – Structured logging (DEBUG, INFO, ERROR) via `log/slog`; level from `NEPTUNE_LOG_LEVEL` or config `log_level`.
 - **`internal/lock`** – Changed stacks via Terramate SDK (list + run order), object-storage lock files (GCS, S3), lock interface.
 - **`internal/run`** – Execute workflow phase steps (shell).
-- **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged), commit statuses (GetHeadSHA, CreateCommitStatus) for **neptune plan** / **neptune apply**.
+- **`internal/github`** – GitHub API client, PR requirements (approved, mergeable, undiverged), commit statuses (GetHeadSHA, CreateCommitStatus) for **neptune plan** / **neptune apply**; GraphQL EnablePullRequestAutoMerge when `repository.automerge` is true.
 - **`internal/git`** – Rebased check; DefaultBranch (git CLI), ShowFileFromRef, FetchBranch for loading config from default branch.
 - **`internal/notifications/github`** – Format and post PR comments.
 - **`e2e/`** – End-to-end tests: three Terramate stacks (null_resource/local_file), MinIO via Docker Compose, and `run.sh` that runs Neptune plan/apply with `NEPTUNE_E2E=1` (skips GitHub; see [e2e/README.md](e2e/README.md)).
@@ -75,6 +75,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 - **Coverage**: Existing tests cover `internal/config`, `internal/git`, `internal/github`, `internal/run`, `internal/notifications/github`; add tests for new behavior and keep coverage for touched code.
 - **No external services**: Unit tests should not require live GitHub or GCS; mock or stub as needed.
 - **E2E**: Run `make e2e` or `./e2e/run.sh` (requires Docker, Terraform). Uses MinIO and `NEPTUNE_E2E=1` to skip GitHub. E2E config uses steps with default `terramate: true` (Neptune runs commands per stack via SDK; Terramate CLI not required for steps).
+- **Automerge**: E2E and integration tests in this repo do not exercise the automerge feature. A separate repository (e.g. devopsfactory-io/neptune-infra-example) can be used to test automerge end-to-end (e.g. open a PR with changes in two stacks, comment `@neptbot apply`, then verify the apply comment and that the PR is set to auto-merge after checks pass).
 
 ---
 

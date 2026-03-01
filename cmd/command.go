@@ -261,6 +261,11 @@ func runCommand(_ *cobra.Command, args []string) error {
 				log.For("cli").Error("failed to set neptune apply pending status", "err", err)
 			}
 		}
+		if workflow == "apply" && stepsOut.OverallStatus == 0 && cfg.Repository != nil && cfg.Repository.Automerge {
+			if err := ghClient.EnablePullRequestAutoMerge(ctx); err != nil {
+				log.For("cli").Error("failed to enable auto-merge", "err", err)
+			}
+		}
 	}
 
 	msg := fmt.Sprintf("Workflow %s completed with status %d", workflow, stepsOut.OverallStatus)

@@ -15,11 +15,12 @@ import (
 
 // Client wraps GitHub API for PR checks and optional comment posting.
 type Client struct {
-	client *github.Client
-	repo   string // owner/repo
-	prNum  string
-	token  string
-	cfg    *domain.NeptuneConfig
+	client     *github.Client
+	repo       string // owner/repo
+	prNum      string
+	token      string
+	cfg        *domain.NeptuneConfig
+	graphQLURL string // if set (e.g. in tests), used for GraphQL requests instead of graphQLURL constant
 }
 
 // NewClient builds a GitHub client from config. Repo is normalized from GITHUB_REPOSITORY (may include URL).

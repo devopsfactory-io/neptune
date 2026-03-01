@@ -235,6 +235,97 @@ workflows:
 	}
 }
 
+func TestLoadWithContent_Automerge(t *testing.T) {
+	baseYAML := `
+repository:
+  object_storage: gs://bucket
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+workflows:
+  default:
+    plan:
+      steps:
+        - run: terramate run --changed -- terragrunt plan
+    apply:
+      depends_on: [plan]
+      steps:
+        - run: terramate run --changed -- terragrunt apply -auto-approve
+`
+	env := map[string]string{
+		"NEPTUNE_CONFIG_PATH":        ".neptune.yaml",
+		"GITHUB_REPOSITORY":          "owner/repo",
+		"GITHUB_PULL_REQUEST_BRANCH": "feature",
+		"GITHUB_PULL_REQUEST_NUMBER": "1",
+		"GITHUB_RUN_ID":              "3",
+		"GITHUB_TOKEN":               "token",
+	}
+
+	// omitted -> default false
+	cfg, err := LoadWithContent(env, []byte(baseYAML))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Repository.Automerge {
+		t.Error("automerge omitted should be false, got true")
+	}
+
+	// automerge: true
+	contentTrue := []byte(`
+repository:
+  object_storage: gs://bucket
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+  automerge: true
+workflows:
+  default:
+    plan:
+      steps:
+        - run: terramate run --changed -- terragrunt plan
+    apply:
+      depends_on: [plan]
+      steps:
+        - run: terramate run --changed -- terragrunt apply -auto-approve
+`)
+	cfg, err = LoadWithContent(env, contentTrue)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Repository.Automerge {
+		t.Error("automerge: true should be true, got false")
+	}
+
+	// automerge: false
+	contentFalse := []byte(`
+repository:
+  object_storage: gs://bucket
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+  automerge: false
+workflows:
+  default:
+    plan:
+      steps:
+        - run: terramate run --changed -- terragrunt plan
+    apply:
+      depends_on: [plan]
+      steps:
+        - run: terramate run --changed -- terragrunt apply -auto-approve
+`)
+	cfg, err = LoadWithContent(env, contentFalse)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Repository.Automerge {
+		t.Error("automerge: false should be false, got true")
+	}
+}
+
 func TestLoadWithContent_InvalidYAML(t *testing.T) {
 	env := map[string]string{
 		"GITHUB_REPOSITORY": "o/r",

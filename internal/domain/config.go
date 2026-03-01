@@ -42,6 +42,7 @@ type RepositoryConfig struct {
 	PlanRequirements  []string      `yaml:"plan_requirements"`
 	ApplyRequirements []string      `yaml:"apply_requirements"`
 	AllowedWorkflow   string        `yaml:"allowed_workflow"`
+	Automerge         bool          `yaml:"automerge"` // when true, enable PR auto-merge after successful apply
 	GitHub            *GitHubConfig `yaml:"-"`
 }
 
