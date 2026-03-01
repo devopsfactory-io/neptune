@@ -1,0 +1,47 @@
+# Triggered by the Neptune GitHub App (neptbot or self-hosted) via repository_dispatch.
+# Install the app on this repo and add object-storage secrets (e.g. AWS_* for S3) per this example's README.
+name: neptune
+
+on:
+  repository_dispatch:
+    types: [neptune-command]
+
+concurrency:
+  group: neptune-${{ github.event.client_payload.pull_request_number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  neptune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/pull/${{ github.event.client_payload.pull_request_number }}/head
+
+      - name: Install Neptune
+        run: |
+          NEPTUNE_VERSION="v0.2.0"
+          curl -sSL "https://github.com/devopsfactory-io/neptune/releases/download/${NEPTUNE_VERSION}/neptune_${NEPTUNE_VERSION}_linux_amd64.tar.gz" | tar -xz -C /usr/local/bin neptune
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Run Neptune
+        run: neptune command ${{ github.event.client_payload.command }}
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PULL_REQUEST_NUMBER: ${{ github.event.client_payload.pull_request_number }}
+          GITHUB_PULL_REQUEST_BRANCH: ${{ github.event.client_payload.pull_request_branch }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}

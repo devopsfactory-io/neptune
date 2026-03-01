@@ -4,7 +4,7 @@ Thank you for your interest in contributing. We welcome contributions and encour
 
 ## Getting started
 
-1. Fork the repository and clone your fork.
+1. Fork the repository and clone your fork (use `git clone --recurse-submodules` to include infra examples, or run `git submodule update --init --recursive` after a normal clone).
 2. Create a branch from `main` for your changes.
 3. Set up your environment and run the project locally. See [docs/development.md](docs/development.md) for build and test commands (e.g. `make build`, `make test-all`, `make check-fmt`). Use the Go version from [go.mod](go.mod).
 
@@ -28,6 +28,7 @@ Thank you for your interest in contributing. We welcome contributions and encour
 
 - **Code style**: Format with `gofmt -s` and run `make check-fmt` before committing. Linting follows [.golangci.yml](.golangci.yml). For more detail, see [AGENTS.md](AGENTS.md).
 - **Documentation**: When you change behavior, configuration, or setup, update the relevant docs: [README.md](README.md), [docs/](docs/), and/or [AGENTS.md](AGENTS.md) as appropriate. See the project's documentation guidelines (e.g. in [.cursor/rules](.cursor/rules) or [.cursor/skills/maintain-documentation](.cursor/skills/maintain-documentation/)).
+- **Infra examples**: Live in the `examples` submodule ([neptune-infra-examples](https://github.com/devopsfactory-io/neptune-infra-examples)); run `git submodule update --init --recursive` to fetch them.
 
 ## CI
 
