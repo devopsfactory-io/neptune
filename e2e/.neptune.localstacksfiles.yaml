@@ -1,0 +1,26 @@
+# E2E config for stacks_management: local (discovery via stack.hcl)
+log_level: DEBUG
+
+repository:
+  object_storage: s3://neptune-e2e
+  stacks_management: local
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+
+workflows:
+  default:
+    plan:
+      steps:
+        - run: echo "Example of run once command at the root $(pwd)"
+          once: true
+        - run: echo "Example of run per stack command $(pwd)"
+          once: false # default is false
+        - run: terraform init -input=false
+        - run: terraform plan -input=false -out=tfplan
+    apply:
+      depends_on:
+        - plan
+      steps:
+        - run: terraform apply -input=false tfplan

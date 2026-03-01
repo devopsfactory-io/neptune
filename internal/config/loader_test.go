@@ -121,6 +121,9 @@ workflows:
 	if cfg.Repository.ObjectStorage != "gs://bucket" {
 		t.Errorf("got object_storage %q", cfg.Repository.ObjectStorage)
 	}
+	if cfg.Repository.StacksManagement != "terramate" {
+		t.Errorf("default stacks_management should be terramate when omitted, got %q", cfg.Repository.StacksManagement)
+	}
 	if cfg.Repository.Branch != "main" {
 		t.Errorf("got branch %q", cfg.Repository.Branch)
 	}
@@ -323,6 +326,55 @@ workflows:
 	}
 	if cfg.Repository.Automerge {
 		t.Error("automerge: false should be false, got true")
+	}
+}
+
+func TestLoadWithContent_LocalStacksRootLevel(t *testing.T) {
+	env := map[string]string{
+		"NEPTUNE_CONFIG_PATH":        ".neptune.yaml",
+		"GITHUB_REPOSITORY":          "owner/repo",
+		"GITHUB_PULL_REQUEST_BRANCH": "feature",
+		"GITHUB_PULL_REQUEST_NUMBER": "1",
+		"GITHUB_RUN_ID":              "3",
+		"GITHUB_TOKEN":               "token",
+	}
+	yaml := `
+repository:
+  object_storage: gs://bucket
+  stacks_management: local
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+local_stacks:
+  source: config
+  stacks:
+    - path: stack-a
+workflows:
+  default:
+    plan:
+      steps:
+        - run: terraform plan
+    apply:
+      depends_on: [plan]
+      steps:
+        - run: terraform apply
+`
+	cfg, err := LoadWithContent(env, []byte(yaml))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Repository.LocalStacks == nil {
+		t.Fatal("expected LocalStacks to be set from root-level local_stacks")
+	}
+	if cfg.Repository.LocalStacks.Source != "config" {
+		t.Errorf("expected LocalStacks.Source config, got %q", cfg.Repository.LocalStacks.Source)
+	}
+	if len(cfg.Repository.LocalStacks.Stacks) != 1 {
+		t.Fatalf("expected 1 stack, got %d", len(cfg.Repository.LocalStacks.Stacks))
+	}
+	if cfg.Repository.LocalStacks.Stacks[0].Path != "stack-a" {
+		t.Errorf("expected stack path stack-a, got %q", cfg.Repository.LocalStacks.Stacks[0].Path)
 	}
 }
 

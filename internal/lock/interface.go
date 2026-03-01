@@ -8,6 +8,7 @@ import (
 
 	"neptune/internal/domain"
 	"neptune/internal/log"
+	"neptune/internal/stacks"
 )
 
 // IsPROpenFunc returns true if the given PR number is still open.
@@ -22,17 +23,22 @@ type Interface struct {
 	IsPROpen         IsPROpenFunc
 }
 
-// NewInterface builds the lock interface: runs terramate, loads lock details from object storage (GCS or S3).
+// NewInterface builds the lock interface: gets changed stacks from the configured provider (terramate or local), loads lock details from object storage (GCS or S3).
 func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPROpenFunc) (*Interface, error) {
-	stacks, err := ChangedStacks(ctx, cfg)
+	provider := stacks.NewProvider(cfg)
+	terraformStacks, err := provider.ChangedStacks(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
-	log.For("lock").Info("Getting changed Terraform stacks with Terramate")
-	if len(stacks.Stacks) == 0 {
+	stacksMgmt := cfg.Repository.StacksManagement
+	if stacksMgmt == "" {
+		stacksMgmt = "terramate"
+	}
+	log.For("lock").Info("Getting changed Terraform stacks", "stacks_management", stacksMgmt)
+	if len(terraformStacks.Stacks) == 0 {
 		return &Interface{
 			Config:           cfg,
-			TerraformStacks:  stacks,
+			TerraformStacks:  terraformStacks,
 			LockStackDetails: nil,
 			IsPROpen:         isPROpen,
 		}, nil
@@ -47,7 +53,7 @@ func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPRO
 		log.For("lock").Info("Initializing S3 storage client")
 	}
 	log.For("lock").Info("Getting lock details for stacks")
-	details, err := getLockDetails(ctx, storage, stacks.Stacks)
+	details, err := getLockDetails(ctx, storage, terraformStacks.Stacks)
 	if err != nil {
 		if closeErr := storage.Close(); closeErr != nil {
 			return nil, fmt.Errorf("get lock details: %w; close: %v", err, closeErr)
@@ -57,7 +63,7 @@ func NewInterface(ctx context.Context, cfg *domain.NeptuneConfig, isPROpen IsPRO
 	return &Interface{
 		Config:           cfg,
 		Storage:          storage,
-		TerraformStacks:  stacks,
+		TerraformStacks:  terraformStacks,
 		LockStackDetails: details,
 		IsPROpen:         isPROpen,
 	}, nil

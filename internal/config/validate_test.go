@@ -31,6 +31,35 @@ func TestValidate_ObjectStorage(t *testing.T) {
 	}
 }
 
+func TestValidate_StacksManagement_Invalid(t *testing.T) {
+	cfg := &domain.NeptuneConfig{
+		Repository: &domain.RepositoryConfig{
+			ObjectStorage:    "gs://bucket",
+			StacksManagement: "other",
+			Branch:           "main",
+			AllowedWorkflow:  "default",
+			GitHub:           &domain.GitHubConfig{PullRequestBranch: "feature"},
+		},
+		Workflows: &domain.Workflows{
+			Workflows: map[string]domain.WorkflowStatement{
+				"default": {
+					Phases: map[string]domain.WorkflowPhase{
+						"plan":  {Steps: []domain.WorkflowStep{{Run: "echo 1"}}},
+						"apply": {Steps: []domain.WorkflowStep{{Run: "echo 2"}}},
+					},
+				},
+			},
+		},
+	}
+	err := Validate(cfg)
+	if err == nil {
+		t.Fatal("expected validation error for invalid stacks_management")
+	}
+	if err.Error() != "repository stacks_management must be terramate or local" {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
 func TestValidate_ObjectStorageS3(t *testing.T) {
 	cfg := &domain.NeptuneConfig{
 		Repository: &domain.RepositoryConfig{
@@ -81,7 +110,7 @@ func TestValidate_PlanApplyPhases(t *testing.T) {
 }
 
 func TestValidate_TerragruntWithoutTerramate(t *testing.T) {
-	terramateFalse := false
+	onceTrue := true
 	cfg := &domain.NeptuneConfig{
 		Repository: &domain.RepositoryConfig{
 			ObjectStorage:   "gs://bucket",
@@ -93,8 +122,8 @@ func TestValidate_TerragruntWithoutTerramate(t *testing.T) {
 			Workflows: map[string]domain.WorkflowStatement{
 				"default": {
 					Phases: map[string]domain.WorkflowPhase{
-						"plan":  {Steps: []domain.WorkflowStep{{Run: "terragrunt plan", Terramate: &terramateFalse}}},
-						"apply": {Steps: []domain.WorkflowStep{{Run: "terragrunt apply", Terramate: &terramateFalse}}},
+						"plan":  {Steps: []domain.WorkflowStep{{Run: "terragrunt plan", Once: &onceTrue}}},
+						"apply": {Steps: []domain.WorkflowStep{{Run: "terragrunt apply", Once: &onceTrue}}},
 					},
 				},
 			},
@@ -102,11 +131,11 @@ func TestValidate_TerragruntWithoutTerramate(t *testing.T) {
 	}
 	err := Validate(cfg)
 	if err == nil {
-		t.Fatal("expected validation error when terramate is false and run uses terragrunt without terramate and --changed in run string")
+		t.Fatal("expected validation error when once is true and run uses terragrunt without terramate and --changed in run string")
 	}
 }
 
-func TestValidate_TerragruntWithTerramateTrue(t *testing.T) {
+func TestValidate_TerragruntWithOnceUnset(t *testing.T) {
 	cfg := &domain.NeptuneConfig{
 		Repository: &domain.RepositoryConfig{
 			ObjectStorage:   "gs://bucket",
@@ -126,7 +155,7 @@ func TestValidate_TerragruntWithTerramateTrue(t *testing.T) {
 		},
 	}
 	if err := Validate(cfg); err != nil {
-		t.Fatalf("terragrunt with terramate default (true) should be valid: %v", err)
+		t.Fatalf("terragrunt with once unset (per-stack) should be valid: %v", err)
 	}
 }
 

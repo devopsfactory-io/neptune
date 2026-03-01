@@ -1,0 +1,24 @@
+repository:
+  object_storage: s3://your-bucket
+  stacks_management: local
+  branch: main
+  plan_requirements:
+    - undiverged
+  apply_requirements:
+    - approved
+    - mergeable
+    - undiverged
+  allowed_workflow: default
+
+workflows:
+  default:
+    plan:
+      steps:
+        # once: false (default) = Neptune runs each step once per changed stack (discovered via stack.hcl)
+        - run: terraform init -input=false
+        - run: terraform plan -input=false -out=tfplan
+    apply:
+      depends_on:
+        - plan
+      steps:
+        - run: terraform apply -input=false tfplan

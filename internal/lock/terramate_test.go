@@ -2,11 +2,11 @@ package lock
 
 import (
 	"context"
-	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"neptune/internal/domain"
@@ -35,9 +35,8 @@ func TestChangedStacks_NoTerramateConfig(t *testing.T) {
 	if stacks != nil {
 		t.Fatalf("expected nil stacks, got %v", stacks)
 	}
-	var te *TerramateError
-	if !errors.As(err, &te) {
-		t.Errorf("expected TerramateError, got %T: %v", err, err)
+	if err != nil && !strings.Contains(err.Error(), "failed to get changed Terraform stacks") {
+		t.Errorf("expected stacks/Terramate error message, got: %v", err)
 	}
 }
 

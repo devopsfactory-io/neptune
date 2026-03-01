@@ -1,0 +1,33 @@
+# E2E config for stacks_management: local with root-level local_stacks (source: config)
+log_level: DEBUG
+
+repository:
+  object_storage: s3://neptune-e2e
+  stacks_management: local
+  branch: main
+  plan_requirements: []
+  apply_requirements: []
+  allowed_workflow: default
+
+local_stacks:
+  source: config
+  stacks:
+    - path: stack-a
+    - path: stack-b
+      depends_on:
+        - stack-a
+    - path: stack-c
+      depends_on:
+        - stack-b
+
+workflows:
+  default:
+    plan:
+      steps:
+        - run: terraform init -input=false
+        - run: terraform plan -input=false -out=tfplan
+    apply:
+      depends_on:
+        - plan
+      steps:
+        - run: terraform apply -input=false tfplan

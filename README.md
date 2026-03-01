@@ -21,7 +21,7 @@
 
 - **Code of Conduct**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) – we adopt the CNCF Community Code of Conduct.
 - **Documentation**: [docs/](docs/README.md) – Configuration, object storage, installation, usage, and development. Log level can be set via `log_level` in config or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
-- **E2E tests**: [e2e/README.md](e2e/README.md) – Run against MinIO with `./e2e/run.sh` or `make e2e`
+- **E2E tests**: [e2e/README.md](e2e/README.md) – Run against MinIO with `./e2e/scripts/run-terramate.sh` or `make e2e`
 - **Releases**: [github.com/devopsfactory-io/neptune/releases](https://github.com/devopsfactory-io/neptune/releases)
 - **Infra examples**: [examples/](examples/) – S3/GCS backend, automerge, Terramate stacks, Terragrunt.
 - **neptbot**: Trigger Neptune from PR open and @-mention comments by [installing the neptbot GitHub App](docs/github-app-and-lambda.md) and adding the workflow (recommended). To self-host, see [lambda/](lambda/) and [lambda/README.md](lambda/README.md).
@@ -29,7 +29,7 @@
 
 ## What is Neptune?
 
-A Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It uses the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order. By default, workflow steps run in each changed stack (no Terramate CLI required for that); object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments.
+A Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It supports two modes for stack management: **Terramate** (using the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order) or **local** (config or `stack.hcl` discovery with git-based change detection). By default, workflow steps run in each changed stack (`once: false` or omitted); use `once: true` to run a step once in the repo root. Object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments. When using local stacks, the **neptune stacks** command provides `list` (with optional `--changed`) and `create`.
 
 ## What does it do?
 

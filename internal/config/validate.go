@@ -31,6 +31,18 @@ func Validate(cfg *domain.NeptuneConfig) error {
 	if !strings.HasPrefix(repo.ObjectStorage, "gs://") && !strings.HasPrefix(repo.ObjectStorage, "s3://") {
 		return errors.New("repository object storage must be a valid GCS (gs://) or S3 (s3://) URL")
 	}
+	stacksMgmt := strings.TrimSpace(strings.ToLower(repo.StacksManagement))
+	if stacksMgmt == "" {
+		stacksMgmt = "terramate"
+	}
+	if stacksMgmt != "terramate" && stacksMgmt != "local" {
+		return errors.New("repository stacks_management must be terramate or local")
+	}
+	if stacksMgmt == "local" && repo.LocalStacks != nil && strings.TrimSpace(strings.ToLower(repo.LocalStacks.Source)) == "config" {
+		if len(repo.LocalStacks.Stacks) == 0 {
+			return errors.New("local_stacks.source is config but local_stacks.stacks is empty")
+		}
+	}
 	for _, r := range repo.PlanRequirements {
 		if !allowedRequirements[r] {
 			return fmt.Errorf("repository plan requirements must be one of: undiverged, approved, mergeable, rebased")
@@ -78,12 +90,12 @@ func Validate(cfg *domain.NeptuneConfig) error {
 					return errors.New("at least one step is required in each phase")
 				}
 				run := step.Run
-				// When terramate is false, the run string is executed as-is; it must then use terramate CLI and --changed if it runs terraform/terragrunt.
-				// When terramate is true or nil (default), Neptune runs the command per stack; no need for "terramate" or "--changed" in run.
-				terramateEnabled := step.Terramate == nil || *step.Terramate
-				if !terramateEnabled && (strings.Contains(run, "terragrunt") || strings.Contains(run, "terraform")) {
+				// When once is true, the run string is executed once in repo root; it must then use terramate CLI and --changed if it runs terraform/terragrunt.
+				// When once is false or nil (default), Neptune runs the command per stack; no need for "terramate" or "--changed" in run.
+				runOnceInRoot := step.Once != nil && *step.Once
+				if runOnceInRoot && (strings.Contains(run, "terragrunt") || strings.Contains(run, "terraform")) {
 					if !strings.Contains(run, "terramate") || !strings.Contains(run, "--changed") {
-						return errors.New("the step run must use both the terramate command AND the --changed flag when using terragrunt or terraform (or set terramate: true so Neptune runs the command per stack)")
+						return errors.New("the step run must use both the terramate command AND the --changed flag when using terragrunt or terraform with once: true (or set once: false so Neptune runs the command per stack)")
 					}
 				}
 			}

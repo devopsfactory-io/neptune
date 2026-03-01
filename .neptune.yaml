@@ -1,5 +1,6 @@
 repository:
   object_storage: gs://object_storage_url
+  stacks_management: terramate
   branch: main
   plan_requirements:
     - undiverged
@@ -14,14 +15,16 @@ workflows:
     plan:
       steps:
         - run: echo "Custom command"
+          once: true
         - run: terramate run --parallel $(nproc --all) --changed -- terragrunt init -upgrade
+          once: true
         - run: terramate run --changed -- terragrunt plan
+          once: true
     apply:
       depends_on:
         - plan
       steps:
         - run: echo "Custom command"
-          terramate: false
+          once: true
         - run: terragrunt apply -auto-approve
-          terramate: true
-          changed: true
+          once: false

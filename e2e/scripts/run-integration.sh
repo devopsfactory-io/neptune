@@ -15,8 +15,8 @@ function compose_teardown() {
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-E2E_DIR="$SCRIPT_DIR"
+E2E_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$E2E_DIR/.." && pwd)"
 
 cd "$REPO_ROOT"
 

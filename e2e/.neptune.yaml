@@ -6,6 +6,7 @@ repository:
   plan_requirements: []
   apply_requirements: []
   allowed_workflow: default
+  stacks_management: terramate
 
 workflows:
   default:

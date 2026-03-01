@@ -38,7 +38,7 @@ type LockStacksDetails struct {
 	Details []LockStackDetail
 }
 
-// TerraformStacks is the list of changed stack paths from terramate.
+// TerraformStacks is the list of changed stack paths from the stacks provider (terramate or local).
 type TerraformStacks struct {
 	Stacks []string
 }

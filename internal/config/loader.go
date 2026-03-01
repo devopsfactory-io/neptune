@@ -21,8 +21,19 @@ var requiredEnvVars = []string{
 	"GITHUB_TOKEN",
 }
 
+type rawStackEntry struct {
+	Path      string   `yaml:"path"`
+	DependsOn []string `yaml:"depends_on"`
+}
+
+type rawLocalStacks struct {
+	Source string          `yaml:"source"`
+	Stacks []rawStackEntry `yaml:"stacks"`
+}
+
 type rawRepository struct {
 	ObjectStorage     string   `yaml:"object_storage"`
+	StacksManagement  string   `yaml:"stacks_management"`
 	Branch            string   `yaml:"branch"`
 	PlanRequirements  []string `yaml:"plan_requirements"`
 	ApplyRequirements []string `yaml:"apply_requirements"`
@@ -31,9 +42,8 @@ type rawRepository struct {
 }
 
 type rawStep struct {
-	Run       string `yaml:"run"`
-	Terramate *bool  `yaml:"terramate"`
-	Changed   *bool  `yaml:"changed"`
+	Run  string `yaml:"run"`
+	Once *bool  `yaml:"once"`
 }
 
 type rawPhase struct {
@@ -42,9 +52,10 @@ type rawPhase struct {
 }
 
 type rawConfig struct {
-	LogLevel   string                         `yaml:"log_level"`
-	Repository rawRepository                  `yaml:"repository"`
-	Workflows  map[string]map[string]rawPhase `yaml:"workflows"`
+	LogLevel    string                         `yaml:"log_level"`
+	Repository  rawRepository                  `yaml:"repository"`
+	LocalStacks *rawLocalStacks                `yaml:"local_stacks"`
+	Workflows   map[string]map[string]rawPhase `yaml:"workflows"`
 }
 
 // LoadEnv loads required environment variables. Returns a map of all required vars or error.
@@ -119,8 +130,28 @@ func parseConfig(data []byte, env map[string]string) (*domain.NeptuneConfig, err
 		Token:             env["GITHUB_TOKEN"],
 	}
 
+	stacksMgmt := strings.TrimSpace(raw.Repository.StacksManagement)
+	if stacksMgmt == "" {
+		stacksMgmt = "terramate"
+	}
+	var localStacks *domain.LocalStacksConfig
+	if raw.LocalStacks != nil {
+		entries := make([]domain.StackEntry, 0, len(raw.LocalStacks.Stacks))
+		for _, e := range raw.LocalStacks.Stacks {
+			entries = append(entries, domain.StackEntry{Path: e.Path, DependsOn: e.DependsOn})
+		}
+		localStacks = &domain.LocalStacksConfig{
+			Source: strings.TrimSpace(strings.ToLower(raw.LocalStacks.Source)),
+			Stacks: entries,
+		}
+		if localStacks.Source == "" {
+			localStacks.Source = "discovery"
+		}
+	}
 	repo := &domain.RepositoryConfig{
 		ObjectStorage:     raw.Repository.ObjectStorage,
+		StacksManagement:  stacksMgmt,
+		LocalStacks:       localStacks,
 		Branch:            raw.Repository.Branch,
 		PlanRequirements:  raw.Repository.PlanRequirements,
 		ApplyRequirements: raw.Repository.ApplyRequirements,
@@ -145,9 +176,8 @@ func parseConfig(data []byte, env map[string]string) (*domain.NeptuneConfig, err
 			steps := make([]domain.WorkflowStep, 0, len(rp.Steps))
 			for _, s := range rp.Steps {
 				steps = append(steps, domain.WorkflowStep{
-					Run:       s.Run,
-					Terramate: s.Terramate,
-					Changed:   s.Changed,
+					Run:  s.Run,
+					Once: s.Once,
 				})
 			}
 			st.Phases[phaseName] = domain.WorkflowPhase{
