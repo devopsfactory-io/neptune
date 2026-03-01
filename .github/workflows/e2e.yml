@@ -39,6 +39,7 @@ jobs:
               - 'docker-compose*.yaml'
               - 'docker-compose*.yml'
               - '.github/workflows/e2e.yml'
+              - 'go.*'
 
   e2e:
     needs: [changes]
