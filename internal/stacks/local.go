@@ -114,8 +114,8 @@ func topologicalOrder(entries []domain.StackEntry) []string {
 // discoverStackHcl walks rootDir for directories that contain stack.hcl (relative paths from root).
 func discoverStackHcl(rootDir string) []string {
 	var stacks []string
-	_ = filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
 			return nil
 		}
 		if info.IsDir() {
@@ -137,6 +137,9 @@ func discoverStackHcl(rootDir string) []string {
 		}
 		return nil
 	})
+	if err != nil {
+		return nil
+	}
 	sort.Strings(stacks)
 	return stacks
 }
