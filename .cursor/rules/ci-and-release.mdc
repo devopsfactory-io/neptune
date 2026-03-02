@@ -11,4 +11,4 @@ alwaysApply: false
 - **integration.yml**: Runs Neptune plan/apply on PRs with real GitHub and MinIO. Needs `statuses: write` so Neptune can set commit statuses (neptune plan / neptune apply).
 - **release.yml**: Triggers on push of tags `v*.*.*`. Uses GoReleaser; needs `contents: write`. Do not change tag pattern or permissions without good reason.
 - **Semver**: Tags are `vMAJOR.MINOR.PATCH` (e.g. `v0.2.0`). GoReleaser reads tag and injects version/commit/date via ldflags in `main.go`.
-- **.goreleaser.yml**: Builds single binary `neptune` from `.`; multi-OS/arch. Do not remove ldflags or rename binary without updating docs.
+- **.goreleaser.yml**: Builds `neptune` binary from `.` (multi-OS/arch) and Lambda `bootstrap` from `lambda/` (linux/amd64, released as `neptune-webhook.zip`). Changelog is auto-generated (e.g. `use: github`). Do not remove ldflags or rename binaries without updating docs.

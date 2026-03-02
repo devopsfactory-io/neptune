@@ -29,6 +29,8 @@ zip neptune-webhook.zip bootstrap
 
 From the repository root you can run `make lambda.build` and `make lambda.zip`. The binary must be named `bootstrap` for the `provided.al2023` runtime. Run `make lambda.test` to execute the Lambda unit tests.
 
+Each [GitHub Release](https://github.com/devopsfactory-io/neptune/releases) includes a pre-built `neptune-webhook.zip` (and checksums) so you can download it instead of building locally.
+
 ## Deploy with CloudFormation
 
 1. **Create two secrets in AWS Secrets Manager** (in the same region/account where you will deploy the stack):

@@ -42,5 +42,10 @@
       matchPackageNames: ['/github-actions/'],
       groupName: 'github-',
     },
+    // Ignore timestamp-authority v2 until indirect deps support it
+    {
+      matchPackageNames: ['github.com/sigstore/timestamp-authority/v2'],
+      enabled: false,
+    },
   ],
 }
