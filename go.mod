@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.10
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.1
 	github.com/google/go-github/v62 v62.0.0
-	github.com/rs/zerolog v1.28.0
+	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.10.2
 	github.com/terramate-io/terramate v0.16.0
 	golang.org/x/oauth2 v0.35.0
