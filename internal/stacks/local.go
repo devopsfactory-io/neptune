@@ -172,13 +172,6 @@ func topologicalOrder(entries []domain.StackEntry) ([]string, error) {
 	return order, nil
 }
 
-// discoverStackHcl walks rootDir for directories that contain stack.hcl (relative paths from root).
-// Used only for tests; discovery with ordering uses discoverStackHclOrdered.
-func discoverStackHcl(rootDir string) []string {
-	stacks, _ := discoverStackHclOrdered(rootDir)
-	return stacks
-}
-
 // discoverStackHclOrdered discovers stacks with stack.hcl, parses depends_on, resolves relative
 // paths, expands directory deps, and returns stack paths in topological order. Returns error on
 // parse failure or dependency cycle.

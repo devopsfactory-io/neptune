@@ -127,7 +127,9 @@ func writeStacksListOutput(w io.Writer, format string, paths []string) error {
 	switch format {
 	case formatText:
 		for _, p := range paths {
-			fmt.Fprintln(w, p)
+			if _, err := fmt.Fprintln(w, p); err != nil {
+				return err
+			}
 		}
 		return nil
 	case formatJSON:
@@ -141,7 +143,9 @@ func writeStacksListOutput(w io.Writer, format string, paths []string) error {
 		for _, p := range paths {
 			lines = append(lines, "  - "+p)
 		}
-		log.BannerTo(w, "Neptune Stacks", lines)
+		if err := log.BannerTo(w, "Neptune Stacks", lines); err != nil {
+			return err
+		}
 		return nil
 	default:
 		return fmt.Errorf("format must be one of: json, yaml, text, formatted")
@@ -264,7 +268,9 @@ type stackCreateOutput struct {
 func writeStackCreateOutput(w io.Writer, format string, path string) error {
 	switch format {
 	case formatText:
-		fmt.Fprintln(w, path)
+		if _, err := fmt.Fprintln(w, path); err != nil {
+			return err
+		}
 		return nil
 	case formatJSON:
 		enc := json.NewEncoder(w)
@@ -274,7 +280,9 @@ func writeStackCreateOutput(w io.Writer, format string, path string) error {
 		return yaml.NewEncoder(w).Encode(stackCreateOutput{Path: path})
 	case formatFormatted:
 		lines := []string{"", "  - Path: " + path}
-		log.BannerTo(w, "Neptune Stack Created", lines)
+		if err := log.BannerTo(w, "Neptune Stack Created", lines); err != nil {
+			return err
+		}
 		return nil
 	default:
 		return fmt.Errorf("format must be one of: json, yaml, text, formatted")
