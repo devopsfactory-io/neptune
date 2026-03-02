@@ -122,3 +122,18 @@ func TestBanner_NoPanic(t *testing.T) {
 	Banner("Short", nil)
 	Banner("Long title here", []string{"body"})
 }
+
+func TestBannerTo_WritesToWriter(t *testing.T) {
+	var buf bytes.Buffer
+	BannerTo(&buf, "Neptune Stacks", []string{"", "  - stack-a", "  - stack-b"})
+	out := buf.String()
+	if !strings.Contains(out, "Neptune Stacks") {
+		t.Errorf("output should contain title, got %q", out)
+	}
+	if !strings.Contains(out, "stack-a") || !strings.Contains(out, "stack-b") {
+		t.Errorf("output should contain body lines, got %q", out)
+	}
+	if !strings.Contains(out, "╭") || !strings.Contains(out, "╮") || !strings.Contains(out, "╰") || !strings.Contains(out, "╯") {
+		t.Errorf("output should contain box characters, got %q", out)
+	}
+}

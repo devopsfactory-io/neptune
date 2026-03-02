@@ -1,6 +1,6 @@
 repository:
   object_storage: gs://object_storage_url
-  stacks_management: terramate
+  stacks_management: local
   branch: main
   plan_requirements:
     - undiverged

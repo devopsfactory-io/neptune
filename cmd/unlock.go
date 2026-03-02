@@ -23,14 +23,14 @@ func NewUnlockCmd() *cobra.Command {
 			if !allStacks {
 				return fmt.Errorf("you need to use the flag --all to run this command")
 			}
-			return runUnlock()
+			return runUnlock(cmd)
 		},
 	}
 	c.Flags().BoolVarP(&allStacks, "all", "a", false, "Unlock all stacks (required)")
 	return c
 }
 
-func runUnlock() error {
+func runUnlock(cmd *cobra.Command) error {
 	ctx := context.Background()
 	env, err := config.LoadEnv()
 	if err != nil {
@@ -46,7 +46,11 @@ func runUnlock() error {
 		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
-	log.Init(cfg.LogLevel)
+	level, err := effectiveLogLevel(cmd, cfg.LogLevel)
+	if err != nil {
+		return err
+	}
+	log.Init(level)
 	ghClient := github.NewClient(cfg)
 	isPROpen := func(ctx context.Context, prNumber string) (bool, error) {
 		if ghClient == nil {

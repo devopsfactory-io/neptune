@@ -10,8 +10,9 @@ In CI (when not in E2E mode), Neptune loads `.neptune.yaml` from the **default b
 
 You can control how verbose Neptune's logs are:
 
-- **Config file**: Set `log_level` at the top level of `.neptune.yaml` to one of `DEBUG`, `INFO`, or `ERROR` (case-insensitive). Default is `INFO`.
+- **Config file**: Set `log_level` at the top level of `.neptune.yaml` to one of `DEBUG`, `INFO`, or `ERROR` (case-insensitive). Default is `ERROR`.
 - **Environment**: Set `NEPTUNE_LOG_LEVEL` to one of `DEBUG`, `INFO`, or `ERROR`. This overrides the config file value.
+- **CLI**: Pass **--log-level** to any command (e.g. `neptune command plan --log-level DEBUG`, `neptune stacks list --log-level INFO`). This overrides both the config file and `NEPTUNE_LOG_LEVEL`. The flag is applied before config is loaded, so it affects all logging (including config load messages).
 
 Use `DEBUG` for detailed output (e.g. each step and lock operation); use `ERROR` to only see errors. Log lines include a source (e.g. `neptune.config`, `neptune.lock`, `neptune.run`), and bordered banners are printed for the command, config summary, requirements check, lock, runner, and steps summary.
 
@@ -61,8 +62,8 @@ workflows:
 
 ### Top-level optional fields
 
-- **log_level**: One of `DEBUG`, `INFO`, or `ERROR`. Default `INFO`. Overridden by the `NEPTUNE_LOG_LEVEL` environment variable.
-- **local_stacks** (optional, only when `stacks_management: local`): Root-level key (sibling of `repository` and `workflows`) for local stack discovery. **source**: `config` (use the **stacks** list) or `discovery` (scan the repo for directories containing **stack.hcl**). **stacks**: list of `{ path: "<dir>", depends_on: ["<dir>"] }` for run order; used when source is `config`.
+- **log_level**: One of `DEBUG`, `INFO`, or `ERROR`. Default `ERROR`. Overridden by the `NEPTUNE_LOG_LEVEL` environment variable and by the global **--log-level** CLI flag.
+- **local_stacks** (optional, only when `stacks_management: local`): Root-level key (sibling of `repository` and `workflows`) for local stack discovery. **source**: `config` (use the **stacks** list) or `discovery` (scan the repo for directories containing **stack.hcl**). **stacks**: list of `{ path: "<dir>", depends_on: ["<dir>"] }` for run order; used when source is `config`. When source is **discovery**, each **stack.hcl** can optionally declare `depends_on = ["<path>", ...]` inside its `stack` block to control run order (see below).
 
 ### Workflows
 
@@ -97,4 +98,4 @@ See [.neptune.example.yaml](../.neptune.example.yaml) in the repo root for a ful
 ## Stacks management: terramate vs local
 
 - **terramate** (default): The repository must be a [Terramate](https://github.com/terramate-io/terramate) project (root and stack config) so Neptune can detect changed stacks and their run order. Neptune uses the Terramate Go SDK for this; the Terramate CLI is **not** required for listing changed stacks or for running steps when `once` is false. When a step has `once: true` and your `run` string invokes `terramate run ...`, the Terramate CLI must be installed (e.g. in CI).
-- **local**: Set `stacks_management: local` and optionally `local_stacks` (source **config** or **discovery**). Neptune discovers stacks and filters by git changes. Use **neptune stacks list** and **neptune stacks list --changed**; use **neptune stacks create &lt;name&gt;** to scaffold a new stack with **stack.hcl**.
+- **local**: Set `stacks_management: local` and optionally `local_stacks` (source **config** or **discovery**). Neptune discovers stacks and filters by git changes. Use **neptune stacks list** and **neptune stacks list --changed**; use **neptune stacks create &lt;name&gt;** to scaffold a new stack with **stack.hcl**. When using **discovery** (directories containing **stack.hcl**), you can set run order via an optional **depends_on** attribute in the `stack` block: a list of **paths** (repo-root-relative or relative to the stack’s directory, e.g. `../foundation`). Each path can be a single stack directory or a directory that contains multiple stacks; in the latter case, this stack runs after **all** stacks inside that folder. Paths are path-only (no stack name resolution). Same run-order semantics as config-based `depends_on`.

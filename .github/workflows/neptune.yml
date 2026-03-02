@@ -7,9 +7,9 @@ on:
   repository_dispatch:
     types: [neptune-command]
 
-# concurrency:
-#   group: neptune-${{ github.event.client_payload.pull_request_number }}
-#   cancel-in-progress: false
+concurrency:
+  group: neptune-${{ github.event.client_payload.pull_request_number }}
+  cancel-in-progress: false
 
 permissions:
   pull-requests: write

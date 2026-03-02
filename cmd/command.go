@@ -102,7 +102,7 @@ func loadConfig(env map[string]string) (*domain.NeptuneConfig, error) {
 	return nil, fmt.Errorf(".neptune.yaml not found on default branch (%s) or PR branch (HEAD), and refusing to use local file: %w", defaultBranch, err)
 }
 
-func runCommand(_ *cobra.Command, args []string) error {
+func runCommand(cmd *cobra.Command, args []string) error {
 	workflow := args[0]
 	ctx := context.Background()
 
@@ -119,7 +119,11 @@ func runCommand(_ *cobra.Command, args []string) error {
 	if err := config.Validate(cfg); err != nil {
 		notifyAndExit(cfg, err.Error(), 1)
 	}
-	log.Init(cfg.LogLevel)
+	level, err := effectiveLogLevel(cmd, cfg.LogLevel)
+	if err != nil {
+		return err
+	}
+	log.Init(level)
 
 	// Config summary banner (after validate, like Python)
 	configSummaryLines := configSummaryLines(cfg)

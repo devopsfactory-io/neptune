@@ -68,6 +68,46 @@ func TestLoadEnv_Success(t *testing.T) {
 	}
 }
 
+func TestLoadEnvForLocal_NoGitHubVarsRequired(t *testing.T) {
+	os.Unsetenv("NEPTUNE_E2E")
+	for _, k := range requiredEnvVars {
+		os.Unsetenv(k)
+	}
+	env, err := LoadEnvForLocal()
+	if err != nil {
+		t.Fatalf("LoadEnvForLocal should not require GitHub/CI vars: %v", err)
+	}
+	if env["NEPTUNE_CONFIG_PATH"] != ".neptune.yaml" {
+		t.Errorf("NEPTUNE_CONFIG_PATH should default to .neptune.yaml, got %q", env["NEPTUNE_CONFIG_PATH"])
+	}
+	if env["GITHUB_TOKEN"] != "" {
+		t.Errorf("GITHUB_TOKEN should be empty when unset, got %q", env["GITHUB_TOKEN"])
+	}
+	// LoadEnv would fail with same unset vars
+	if _, loadErr := LoadEnv(); loadErr == nil {
+		t.Error("LoadEnv() should fail when GitHub vars are unset (contrast with LoadEnvForLocal)")
+	}
+}
+
+func TestLoadEnvForLocal_PicksUpEnvWhenSet(t *testing.T) {
+	os.Setenv("NEPTUNE_CONFIG_PATH", "/custom/config.yaml")
+	os.Setenv("GITHUB_TOKEN", "secret")
+	defer func() {
+		os.Unsetenv("NEPTUNE_CONFIG_PATH")
+		os.Unsetenv("GITHUB_TOKEN")
+	}()
+	env, err := LoadEnvForLocal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env["NEPTUNE_CONFIG_PATH"] != "/custom/config.yaml" {
+		t.Errorf("got NEPTUNE_CONFIG_PATH %q", env["NEPTUNE_CONFIG_PATH"])
+	}
+	if env["GITHUB_TOKEN"] != "secret" {
+		t.Errorf("got GITHUB_TOKEN %q", env["GITHUB_TOKEN"])
+	}
+}
+
 func TestLoad_FileNotFound(t *testing.T) {
 	env := map[string]string{
 		"NEPTUNE_CONFIG_PATH":        "/nonexistent/.neptune.yaml",
@@ -134,8 +174,8 @@ workflows:
 	if _, ok := wf.Phases["plan"]; !ok {
 		t.Fatal("phase plan not found")
 	}
-	if cfg.LogLevel != "INFO" {
-		t.Errorf("default log_level should be INFO, got %q", cfg.LogLevel)
+	if cfg.LogLevel != "ERROR" {
+		t.Errorf("default log_level should be ERROR, got %q", cfg.LogLevel)
 	}
 }
 
@@ -233,8 +273,8 @@ workflows:
 	if _, ok := wf.Phases["plan"]; !ok {
 		t.Fatal("phase plan not found")
 	}
-	if cfg.LogLevel != "INFO" {
-		t.Errorf("default log_level should be INFO, got %q", cfg.LogLevel)
+	if cfg.LogLevel != "ERROR" {
+		t.Errorf("default log_level should be ERROR, got %q", cfg.LogLevel)
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 func init() {
 	level := os.Getenv("NEPTUNE_LOG_LEVEL")
 	if level == "" {
-		level = "INFO"
+		level = "ERROR"
 	}
 	Init(level)
 }

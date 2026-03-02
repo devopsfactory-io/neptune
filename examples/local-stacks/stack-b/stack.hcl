@@ -1,3 +1,4 @@
 stack {
-  name = "stack-b"
+  name       = "stack-b"
+  depends_on = ["../foundation"]
 }
