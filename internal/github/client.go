@@ -9,7 +9,7 @@ import (
 
 	"neptune/internal/domain"
 
-	"github.com/google/go-github/v62/github"
+	"github.com/google/go-github/v83/github"
 	"golang.org/x/oauth2"
 )
 
@@ -104,7 +104,7 @@ func (c *Client) CreateCommitStatus(ctx context.Context, sha, contextName, state
 	if targetURL != "" {
 		status.TargetURL = &targetURL
 	}
-	_, _, err := c.client.Repositories.CreateStatus(ctx, owner, repoName, sha, &status)
+	_, _, err := c.client.Repositories.CreateStatus(ctx, owner, repoName, sha, status)
 	return err
 }
 
