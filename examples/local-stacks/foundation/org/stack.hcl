@@ -1,0 +1,3 @@
+stack {
+  name = "foundation/org"
+}

@@ -1,3 +1,0 @@
-stack {
-  name = "stack-b"
-}

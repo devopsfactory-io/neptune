@@ -14,9 +14,9 @@ local_stacks:
   source: config
   stacks:
     - path: stack-a
-    - path: stack-b
       depends_on:
-        - stack-a
+        - stack-b
+    - path: stack-b
 
 workflows:
   default:

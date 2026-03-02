@@ -3,6 +3,7 @@ package stacks
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,6 +12,9 @@ import (
 	"neptune/internal/domain"
 	"neptune/internal/git"
 )
+
+// stackHclFilename is the filename used for discovery.
+const stackHclFilename = "stack.hcl"
 
 // LocalProvider returns changed stacks from config or stack.hcl discovery, filtered by git changes.
 type LocalProvider struct{}
@@ -80,40 +84,106 @@ func (p *LocalProvider) listAllStacks(rootDir string, cfg *domain.NeptuneConfig)
 		if local == nil || len(local.Stacks) == 0 {
 			return nil, errors.New("local_stacks.source is config but local_stacks.stacks is empty")
 		}
-		return topologicalOrder(local.Stacks), nil
+		order, err := topologicalOrder(local.Stacks)
+		if err != nil {
+			return nil, err
+		}
+		return order, nil
 	}
-	// discovery: find directories containing stack.hcl
-	return discoverStackHcl(rootDir), nil
+	// discovery: find directories containing stack.hcl, parse depends_on, resolve and expand, then order
+	return discoverStackHclOrdered(rootDir)
+}
+
+// resolveDepPath resolves a depends_on entry to a repo-root-relative path.
+// stackPath is the stack's directory (repo-root-relative). If dep is relative (contains ".." or
+// starts with "./" or "."), it is resolved relative to the stack's directory; otherwise it is
+// treated as repo-root-relative. Returned path uses forward slashes.
+func resolveDepPath(rootDir, stackPath, dep string) string {
+	isRelative := strings.Contains(dep, "..") || strings.HasPrefix(dep, "./") || (len(dep) > 0 && dep[0] == '.')
+	if isRelative {
+		joined := filepath.Join(rootDir, filepath.FromSlash(stackPath), dep)
+		rel, err := filepath.Rel(rootDir, joined)
+		if err != nil {
+			return filepath.ToSlash(filepath.Clean(dep))
+		}
+		return filepath.ToSlash(filepath.Clean(rel))
+	}
+	return filepath.ToSlash(filepath.Clean(dep))
+}
+
+// expandDirDeps expands dependency paths to concrete stack paths. For each dep in depPaths (repo-
+// root-relative), adds every stack in allPaths that equals dep or is under dep (dep is a directory
+// of stacks). Returned list has no duplicates and uses forward slashes.
+func expandDirDeps(allPaths []string, depPaths []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	for _, dep := range depPaths {
+		dep = filepath.ToSlash(filepath.Clean(dep))
+		for _, p := range allPaths {
+			p := filepath.ToSlash(p)
+			if p == dep || strings.HasPrefix(p+"/", dep+"/") {
+				if !seen[p] {
+					seen[p] = true
+					result = append(result, p)
+				}
+			}
+		}
+	}
+	return result
 }
 
 // topologicalOrder returns stack paths in run order (dependencies first).
-func topologicalOrder(entries []domain.StackEntry) []string {
+// It detects cycles and returns an error (wrapped in a sentinel or we need to change signature).
+// For now we keep the same signature and add cycle detection that returns a partial order and
+// no error (or we add error return). Plan says "optional but recommended" - we add cycle detection
+// and on cycle return error. So we need topologicalOrder to return ([]string, error).
+func topologicalOrder(entries []domain.StackEntry) ([]string, error) {
 	pathToDeps := make(map[string][]string)
 	for _, e := range entries {
 		pathToDeps[e.Path] = e.DependsOn
 	}
 	var order []string
 	visited := make(map[string]bool)
-	var visit func(path string)
-	visit = func(path string) {
+	visiting := make(map[string]bool)
+	var visit func(path string) error
+	visit = func(path string) error {
+		if visiting[path] {
+			return fmt.Errorf("cycle in stack dependencies involving %q", path)
+		}
 		if visited[path] {
-			return
+			return nil
+		}
+		visiting[path] = true
+		defer func() { visiting[path] = false }()
+		for _, dep := range pathToDeps[path] {
+			if err := visit(dep); err != nil {
+				return err
+			}
 		}
 		visited[path] = true
-		for _, dep := range pathToDeps[path] {
-			visit(dep)
-		}
 		order = append(order, path)
+		return nil
 	}
 	for _, e := range entries {
-		visit(e.Path)
+		if err := visit(e.Path); err != nil {
+			return nil, err
+		}
 	}
-	return order
+	return order, nil
 }
 
 // discoverStackHcl walks rootDir for directories that contain stack.hcl (relative paths from root).
+// Used only for tests; discovery with ordering uses discoverStackHclOrdered.
 func discoverStackHcl(rootDir string) []string {
-	var stacks []string
+	stacks, _ := discoverStackHclOrdered(rootDir)
+	return stacks
+}
+
+// discoverStackHclOrdered discovers stacks with stack.hcl, parses depends_on, resolves relative
+// paths, expands directory deps, and returns stack paths in topological order. Returns error on
+// parse failure or dependency cycle.
+func discoverStackHclOrdered(rootDir string) ([]string, error) {
+	var paths []string
 	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
 			return nil
@@ -124,7 +194,7 @@ func discoverStackHcl(rootDir string) []string {
 			}
 			return nil
 		}
-		if info.Name() == "stack.hcl" {
+		if info.Name() == stackHclFilename {
 			dir := filepath.Dir(path)
 			rel, err := filepath.Rel(rootDir, dir)
 			if err != nil {
@@ -132,14 +202,49 @@ func discoverStackHcl(rootDir string) []string {
 			}
 			rel = filepath.ToSlash(rel)
 			if rel != "." && rel != "" {
-				stacks = append(stacks, rel)
+				paths = append(paths, rel)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	sort.Strings(stacks)
-	return stacks
+	sort.Strings(paths)
+	if len(paths) == 0 {
+		return nil, nil
+	}
+	// Parse each stack.hcl and collect path -> resolved depends_on (repo-root paths).
+	type parsed struct {
+		path     string
+		depPaths []string
+	}
+	var parsedList []parsed
+	for _, p := range paths {
+		hclPath := filepath.Join(rootDir, filepath.FromSlash(p), stackHclFilename)
+		_, rawDeps, err := ParseStackHcl(hclPath)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", hclPath, err)
+		}
+		var resolved []string
+		for _, d := range rawDeps {
+			resolved = append(resolved, resolveDepPath(rootDir, p, d))
+		}
+		parsedList = append(parsedList, parsed{path: p, depPaths: resolved})
+	}
+	// Expand directory deps to concrete stack paths and build entries.
+	pathSet := make(map[string]bool)
+	for _, p := range paths {
+		pathSet[p] = true
+	}
+	var entries []domain.StackEntry
+	for _, s := range parsedList {
+		concreteDeps := expandDirDeps(paths, s.depPaths)
+		entries = append(entries, domain.StackEntry{Path: s.path, DependsOn: concreteDeps})
+	}
+	order, err := topologicalOrder(entries)
+	if err != nil {
+		return nil, err
+	}
+	return order, nil
 }

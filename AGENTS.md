@@ -8,7 +8,7 @@ Guidance for AI coding agents working on the Neptune project.
 
 **Neptune** is a Terraform and OpenTofu pull request automation tool inspired by [Atlantis](https://github.com/runatlantis/atlantis). It runs plan/apply (Terraform or OpenTofu) on pull requests using the [Terramate](https://github.com/terramate-io/terramate) Go SDK for change detection and run order. When a step has `once` false or unset (default), Neptune runs the step’s command in each changed stack (Terramate SDK or local stacks; no Terramate CLI needed when using Terramate); object storage (GCS or S3) is used for stack locking, and GitHub for PR requirements and comments.
 
-**Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once in root when `once: true`); for stacks_management: local, **neptune stacks** provides list (--changed) and create; post results as PR comments. Optional `repository.automerge: true` enables PR auto-merge after a successful apply (GitHub GraphQL). Log level is configurable via `log_level` (config) or `NEPTUNE_LOG_LEVEL` (DEBUG, INFO, ERROR).
+**Main capabilities**: Load config from `.neptune.yaml` and env; in CI (non-E2E), config is loaded from the repository’s default branch via git (fallback to PR branch) so PR authors cannot change workflow steps; check PR requirements (approved, mergeable, undiverged, rebased); lock stacks in object storage (GCS, AWS S3, or S3-compatible e.g. MinIO); run workflow steps (per-stack by default, or once in root when `once: true`); for stacks_management: local, **neptune stacks** provides list (--changed) and create, with **--format** (json, yaml, text, formatted; default formatted); when using discovery, run order can be set via **depends_on** in each **stack.hcl** (path-only; relative paths and directory-of-stacks supported); post results as PR comments. Optional `repository.automerge: true` enables PR auto-merge after a successful apply (GitHub GraphQL). Log level is configurable via `log_level` (config), `NEPTUNE_LOG_LEVEL`, or the global **--log-level** CLI flag (DEBUG, INFO, ERROR).
 
 **Language**: Go (see `go.mod`).
 
@@ -17,7 +17,7 @@ Guidance for AI coding agents working on the Neptune project.
 ## Repository Structure
 
 - **`main.go`** – Entry point; version/commit/date via ldflags.
-- **`cmd/`** – CLI (Cobra): `root.go`, `version.go`, `command.go`, `unlock.go`, `stacks.go` (stacks list, create).
+- **`cmd/`** – CLI (Cobra): `root.go` (global **--log-level** flag), `version.go`, `command.go`, `unlock.go`, `stacks.go` (stacks list, create; **--format** json|yaml|text|formatted, default formatted; **neptune stacks create** supports optional **--depends-on** comma-separated paths). **neptune stacks list** and **neptune stacks create** are for local use and do not require `GITHUB_TOKEN` or other CI env vars (unlike **neptune command** and **neptune unlock**).
 - **`internal/config`** – Load env + YAML, validate `.neptune.yaml` (including optional `log_level`, `stacks_management`, root-level `local_stacks`).
 - **`internal/domain`** – Config, lock, run, and GitHub domain structs (WorkflowStep uses `once`; RepositoryConfig has `StacksManagement`, `LocalStacks`).
 - **`internal/log`** – Structured logging (DEBUG, INFO, ERROR) via `log/slog`; level from `NEPTUNE_LOG_LEVEL` or config `log_level`.
@@ -90,7 +90,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 - **`.github/workflows/integration.yml`** – On PRs when integration-relevant paths change; runs Neptune plan/apply on the same PR with real GitHub (requirements check, PR comments, commit statuses) and MinIO for locks. Needs `statuses: write` for commit status API. See [e2e/README.md](e2e/README.md#integration-tests).
 - **`.github/workflows/lint.yml`** – On PRs; path filter for Go; runs golangci-lint.
 - **`.github/workflows/release.yml`** – On push of tags `v*.*.*` (and workflow_dispatch); runs GoReleaser to create GitHub Release and binaries.
-- **Renovate** – Dependency-update PRs (Go modules and GitHub Actions) are opened by [Renovate](https://docs.renovatebot.com/) from [.github/renovate.json5](.github/renovate.json5). Do not remove or override this config without reason.
+- **Renovate** – Dependency-update PRs (Go modules and GitHub Actions) are opened by [Renovate](https://docs.renovatebot.com/) from [.github/renovate.json5](.github/renovate.json5). To enable Renovate, install the [Renovate GitHub App](https://github.com/apps/renovate) and select the repo. Do not remove or override this config without reason.
 
 Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/date into the binary via ldflags.
 

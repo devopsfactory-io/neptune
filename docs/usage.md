@@ -32,6 +32,16 @@ neptune command apply
 
 # Unlock all stacks (requires --all)
 neptune unlock --all
+
+# List or create local stacks (stacks_management: local; no CI env vars required)
+neptune stacks list
+neptune stacks list --changed
+neptune stacks create <path>
+neptune stacks create foundation/network --depends-on foundation/base,foundation/iam
 ```
 
-Set the same environment variables as in the workflow (`GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`, and object storage vars); see [Installation](installation.md) and the getting-started guides.
+For **neptune stacks list** and **neptune stacks create**, the **--format** flag controls output: `json`, `yaml`, `text`, or `formatted`. Default is `formatted` (a bordered summary box). Use `--format=json` or `--format=text` for script-friendly output. For **neptune stacks create**, use optional **--depends-on** with a comma-separated list of stack paths (e.g. `--depends-on foundation/base,foundation/iam`) to add a `depends_on` attribute to the generated `stack.hcl`.
+
+You can pass **--log-level** to any command to override the configured log level (e.g. `neptune command plan --log-level DEBUG`, `neptune stacks list --log-level INFO`). See [Configuration](configuration.md#log-level).
+
+Set the same environment variables as in the workflow (`GITHUB_REPOSITORY`, `GITHUB_PULL_REQUEST_NUMBER`, `GITHUB_PULL_REQUEST_BRANCH`, `GITHUB_RUN_ID`, `GITHUB_TOKEN`, and object storage vars); see [Installation](installation.md) and the getting-started guides. **neptune stacks list** and **neptune stacks create** can be run locally without those variables; they only need a valid `.neptune.yaml` with `repository.stacks_management: local`.

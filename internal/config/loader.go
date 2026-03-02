@@ -88,6 +88,21 @@ func LoadEnv() (map[string]string, error) {
 	return env, nil
 }
 
+// LoadEnvForLocal loads environment variables for local-only commands (e.g. stacks list, stacks create)
+// that do not need GitHub or CI env vars. Only NEPTUNE_CONFIG_PATH is used (defaults to ".neptune.yaml");
+// GitHub-related vars are read from env if set, otherwise empty. Never returns an error for missing vars.
+func LoadEnvForLocal() (map[string]string, error) {
+	log.For("config").Info("Loading environment variables for local command")
+	env := make(map[string]string)
+	env["NEPTUNE_CONFIG_PATH"] = getEnv("NEPTUNE_CONFIG_PATH", ".neptune.yaml")
+	env["GITHUB_REPOSITORY"] = os.Getenv("GITHUB_REPOSITORY")
+	env["GITHUB_PULL_REQUEST_BRANCH"] = os.Getenv("GITHUB_PULL_REQUEST_BRANCH")
+	env["GITHUB_PULL_REQUEST_NUMBER"] = os.Getenv("GITHUB_PULL_REQUEST_NUMBER")
+	env["GITHUB_RUN_ID"] = os.Getenv("GITHUB_RUN_ID")
+	env["GITHUB_TOKEN"] = os.Getenv("GITHUB_TOKEN")
+	return env, nil
+}
+
 func getEnv(key, def string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
@@ -190,7 +205,7 @@ func parseConfig(data []byte, env map[string]string) (*domain.NeptuneConfig, err
 
 	effectiveLevel := strings.TrimSpace(raw.LogLevel)
 	if effectiveLevel == "" {
-		effectiveLevel = "INFO"
+		effectiveLevel = "ERROR"
 	}
 	if v := os.Getenv("NEPTUNE_LOG_LEVEL"); v != "" {
 		effectiveLevel = strings.TrimSpace(v)

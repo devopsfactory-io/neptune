@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -11,6 +12,12 @@ const bannerWidth = 76
 // Banner prints a bordered box with title and body lines to stderr.
 // Long lines are truncated or wrapped to bannerWidth to keep layout consistent.
 func Banner(title string, lines []string) {
+	BannerTo(os.Stderr, title, lines)
+}
+
+// BannerTo writes a bordered box with title and body lines to w.
+// Long lines are truncated or wrapped to bannerWidth to keep layout consistent.
+func BannerTo(w io.Writer, title string, lines []string) {
 	pad := func(s string, width int) string {
 		if len(s) > width {
 			return s[:width-3] + "..."
@@ -29,16 +36,16 @@ func Banner(title string, lines []string) {
 	leftDash := dashCount / 2
 	rightDash := dashCount - leftDash
 	top := "╭" + strings.Repeat("─", leftDash) + titleLine + strings.Repeat("─", rightDash) + "╮"
-	fmt.Fprintln(os.Stderr, top)
-	fmt.Fprintln(os.Stderr, "│"+strings.Repeat(" ", lineLen)+"│")
+	fmt.Fprintln(w, top)
+	fmt.Fprintln(w, "│"+strings.Repeat(" ", lineLen)+"│")
 	innerWidth := bannerWidth - 4
 	for _, line := range lines {
 		for _, part := range wrap(line, innerWidth) {
-			fmt.Fprintln(os.Stderr, "│ "+pad(part, innerWidth)+" │")
+			fmt.Fprintln(w, "│ "+pad(part, innerWidth)+" │")
 		}
 	}
-	fmt.Fprintln(os.Stderr, "│"+strings.Repeat(" ", lineLen)+"│")
-	fmt.Fprintln(os.Stderr, "╰"+strings.Repeat("─", lineLen)+"╯")
+	fmt.Fprintln(w, "│"+strings.Repeat(" ", lineLen)+"│")
+	fmt.Fprintln(w, "╰"+strings.Repeat("─", lineLen)+"╯")
 }
 
 func wrap(s string, width int) []string {
