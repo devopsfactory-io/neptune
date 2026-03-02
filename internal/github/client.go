@@ -9,7 +9,7 @@ import (
 
 	"neptune/internal/domain"
 
-	"github.com/google/go-github/v62/github"
+	"github.com/google/go-github/v83/github"
 	"golang.org/x/oauth2"
 )
 

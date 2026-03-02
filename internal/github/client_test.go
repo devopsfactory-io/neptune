@@ -10,7 +10,7 @@ import (
 
 	"neptune/internal/domain"
 
-	gh "github.com/google/go-github/v62/github"
+	gh "github.com/google/go-github/v83/github"
 )
 
 const baseURLPath = "/api-v3"
