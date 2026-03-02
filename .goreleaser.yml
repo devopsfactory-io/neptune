@@ -3,7 +3,7 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - cd lambda && go mod tidy
+    - sh -c "cd lambda && go mod tidy"
 
 builds:
   - id: neptune
