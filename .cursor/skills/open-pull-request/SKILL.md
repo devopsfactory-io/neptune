@@ -25,7 +25,7 @@ Use this skill **only** when the user explicitly requests to open a pull request
 
 - Run `git add .`
 - **Commit message**: Use conventional style per project (e.g. `feat(scope): description`, `fix(scope): description`). If the user provided a message, use it; otherwise generate from `git status` and `git diff` (or `git diff --staged` after add).
-- Run `git commit -s -m "<message>"` so the commit includes a Signed-off-by line (DCO). The repo has the [DCO bot](https://github.com/apps/dco) enabled; PRs must have all commits signed off.
+- Run `git commit -s -m "<message>"` so the commit includes a Signed-off-by line (DCO). Do not add a `Made-with: Cursor` or similar trailer to the commit message. The repo has the [DCO bot](https://github.com/apps/dco) enabled; PRs must have all commits signed off.
 
 ### 3. Push and create PR
 
