@@ -113,7 +113,7 @@ Do not edit plan files (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.
 
 Before submitting:
 
-1. **Commits must be signed off (DCO).** Use `git commit -s` when creating commits. If you already committed without sign-off, run `git commit --amend -s --no-edit` then force-push. See [CONTRIBUTING.md](CONTRIBUTING.md) and the `.cursor/rules/commits-dco.mdc` rule.
+1. **Commits must be signed off (DCO).** Use `git commit -s` when creating commits. Do not add a `Made-with: Cursor` (or similar) trailer to commit messages. If you already committed without sign-off, run `git commit --amend -s --no-edit` then force-push. See [CONTRIBUTING.md](CONTRIBUTING.md) and the `.cursor/rules/commits-dco.mdc` rule.
 2. Run `make test-all` and `make check-fmt`.
 3. Ensure no new linter errors (`make lint` if available).
 4. If behavior or setup changed, update README, docs/, examples/, and/or AGENTS.md and rules/skills as above.
@@ -128,4 +128,6 @@ PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ..
 - **Governance**: [GOVERNANCE.md](GOVERNANCE.md), [MAINTAINERS.md](MAINTAINERS.md), [ROADMAP.md](ROADMAP.md).
 - **Cursor rules**: `.cursor/rules/` – file-specific and always-applied rules.
 - **Cursor skills**: `.cursor/skills/` – workflows for documentation maintenance, releases, testing, and open-pull-request (open a PR from current changes via gh CLI).
+- **Getting started**: [docs/getting-started-terramate.md](docs/getting-started-terramate.md) and [docs/getting-started-local-stacks.md](docs/getting-started-local-stacks.md) – onboarding with GitHub Actions and neptbot (Terramate or local stacks).
 - **Neptune config**: [docs/configuration.md](docs/configuration.md) and [.neptune.example.yaml](.neptune.example.yaml) for `.neptune.yaml` schema; [docs/object-storage.md](docs/object-storage.md) for backend env vars.
+- **Why Neptune / workflow comparison**: [docs/workflow-comparison.md](docs/workflow-comparison.md) – comparison of normal Terraform + GitHub Actions, Neptune, and Atlantis; use when explaining rationale for apply-before-merge.

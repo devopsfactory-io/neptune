@@ -8,8 +8,9 @@ You can also run Neptune from a workflow that triggers on `pull_request` and/or 
 
 1. **Install the neptbot GitHub App** on your organization or user account. (Install link to be added when the app is published.)
 2. **Add the workflow below** to each repository where you want Neptune to run. The app will trigger it via `repository_dispatch` when a PR is opened/updated or when someone comments `@neptbot apply` or `@neptbot plan`.
-3. Configure **object storage** (e.g. S3) and a **`.neptune.yaml`** in the repo as required by Neptune (see [Configuration](configuration.md) and [Object storage](object-storage.md)).
-4. Optionally add **branch protection** so that **neptune apply** is a required status check (see [Branch protection (recommended)](#5-branch-protection-recommended)).
+3. **Ensure PRs have the label `neptune`** — neptbot triggers `repository_dispatch` only for pull requests that have the label **neptune**. To apply the label automatically, use the [labeler](https://github.com/actions/labeler) GitHub Action: add a workflow (e.g. `.github/workflows/labeler.yml`) that runs the labeler on `pull_request`, and a config file (e.g. `.github/labeler.yml`) that assigns the `neptune` label based on changed files (e.g. when PRs touch your Terraform/OpenTofu paths). See the [terramate-stacks](../examples/terramate-stacks/) or [automerge](../examples/automerge/) examples for reference.
+4. Configure **object storage** (e.g. S3) and a **`.neptune.yaml`** in the repo as required by Neptune (see [Configuration](configuration.md) and [Object storage](object-storage.md)).
+5. Optionally add **branch protection** so that **neptune apply** is a required status check (see [Branch protection (recommended)](#5-branch-protection-recommended)).
 
 No Lambda or AWS setup is required; the Neptune project runs the webhook endpoint.
 
