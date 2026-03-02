@@ -128,4 +128,6 @@ PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ..
 - **Governance**: [GOVERNANCE.md](GOVERNANCE.md), [MAINTAINERS.md](MAINTAINERS.md), [ROADMAP.md](ROADMAP.md).
 - **Cursor rules**: `.cursor/rules/` – file-specific and always-applied rules.
 - **Cursor skills**: `.cursor/skills/` – workflows for documentation maintenance, releases, testing, and open-pull-request (open a PR from current changes via gh CLI).
+- **Getting started**: [docs/getting-started-terramate.md](docs/getting-started-terramate.md) and [docs/getting-started-local-stacks.md](docs/getting-started-local-stacks.md) – onboarding with GitHub Actions and neptbot (Terramate or local stacks).
 - **Neptune config**: [docs/configuration.md](docs/configuration.md) and [.neptune.example.yaml](.neptune.example.yaml) for `.neptune.yaml` schema; [docs/object-storage.md](docs/object-storage.md) for backend env vars.
+- **Why Neptune / workflow comparison**: [docs/workflow-comparison.md](docs/workflow-comparison.md) – comparison of normal Terraform + GitHub Actions, Neptune, and Atlantis; use when explaining rationale for apply-before-merge.
