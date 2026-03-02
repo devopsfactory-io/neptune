@@ -113,9 +113,10 @@ Do not edit plan files (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.
 
 Before submitting:
 
-1. Run `make test-all` and `make check-fmt`.
-2. Ensure no new linter errors (`make lint` if available).
-3. If behavior or setup changed, update README, docs/, examples/, and/or AGENTS.md and rules/skills as above.
+1. **Commits must be signed off (DCO).** Use `git commit -s` when creating commits. If you already committed without sign-off, run `git commit --amend -s --no-edit` then force-push. See [CONTRIBUTING.md](CONTRIBUTING.md) and the `.cursor/rules/commits-dco.mdc` rule.
+2. Run `make test-all` and `make check-fmt`.
+3. Ensure no new linter errors (`make lint` if available).
+4. If behavior or setup changed, update README, docs/, examples/, and/or AGENTS.md and rules/skills as above.
 
 PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ...`, `docs: ...`) but this is not enforced.
 
