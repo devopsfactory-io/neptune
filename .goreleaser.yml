@@ -3,6 +3,7 @@ version: 2
 before:
   hooks:
     - go mod tidy
+    - cd lambda && go mod tidy
 
 builds:
   - id: neptune
@@ -24,8 +25,19 @@ builds:
       - goos: windows
         goarch: arm64
 
+  - id: lambda
+    dir: lambda
+    main: .
+    binary: bootstrap
+    goos:
+      - linux
+    goarch:
+      - amd64
+
 archives:
-  - format: tar.gz
+  - ids:
+      - neptune
+    format: tar.gz
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -36,10 +48,18 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-    rlcp: true
+
+  - id: lambda-archive
+    ids:
+      - lambda
+    format: zip
+    name_template: neptune-webhook
+    strip_binary_directory: true
+    wrap_in_directory: false
 
 checksum:
   name_template: checksums.txt
 
 changelog:
-  skip: true
+  use: github
+  sort: asc
