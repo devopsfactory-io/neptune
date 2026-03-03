@@ -17,7 +17,7 @@ description: Runs tests, lint, and format checks; explains CI workflows. Use whe
 - **test.yml** – On push to `main`/`release-*` and on PRs. Path filter for Go files and Makefile. Runs `make test-all` and `make check-fmt`.
 - **lint.yml** – On PRs. Path filter for Go and lint config. Runs golangci-lint.
 - **labeler.yml** – On pull_request. Runs actions/labeler with `.github/labeler.yml` (path and head-branch rules).
-- **label-old-prs.yml** – workflow_dispatch. Applies the labeler to existing PRs (state and limit); use to backfill labels.
+- **label-old-prs.yml** – workflow_dispatch. Backfills labels: applies head-branch rules (labeler has no branch context on manual run), then runs the labeler for path-based labels. Use state and limit inputs.
 - **release.yml** – On push of tags `v*.*.*`. Runs GoReleaser to create the GitHub Release and artifacts.
 
 ## Adding Tests
