@@ -1,4 +1,4 @@
-.PHONY: build test-all check-fmt fmt e2e e2e.terramate e2e.localstacksfiles e2e.localdeclaredstacks lambda.build lambda.zip lambda.test
+.PHONY: build test-all check-fmt fmt e2e e2e.terramate e2e.localstacksfiles e2e.localdeclaredstacks lambda.build lambda.zip lambda.test goreleaser.test
 BINARY := neptune
 
 build:
@@ -36,3 +36,7 @@ lambda.zip: lambda.build
 
 lambda.test:
 	cd lambda && go test ./...
+
+# Test GoReleaser locally (build + changelog; no publish). Requires goreleaser on PATH. Output: dist/ (artifacts, dist/CHANGELOG.md).
+goreleaser.test:
+	goreleaser release --skip=publish,validate --clean

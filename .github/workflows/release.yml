@@ -24,7 +24,7 @@ jobs:
         with:
           args: release --clean
           distribution: goreleaser
-          version: "~> v2"
+          version: "latest"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GORELEASER_CURRENT_REPOSITORY: devopsfactory-io/neptune
+          GORELEASER_CURRENT_REPOSITORY: ${{ github.repository }}

@@ -64,3 +64,21 @@ For a dry run without publishing:
 ```bash
 goreleaser release --snapshot --clean
 ```
+
+### Testing the changelog
+
+To verify the changelog format (e.g. after changing the `changelog.format` in [.goreleaser.yml](../.goreleaser.yml)) without publishing a real release:
+
+- **GoReleaser Pro**: Use the dedicated changelog command to preview the next release notes (from latest tag to current commit). Output goes to stdout or to a file:
+  ```bash
+  goreleaser changelog
+  goreleaser changelog -o preview.md
+  ```
+  See [goreleaser changelog](https://goreleaser.com/cmd/goreleaser_changelog/).
+
+- **Open-source GoReleaser**: The changelog is generated as the release body but not written to a file. To preview it:
+  1. Create and push a **draft** release from the tag you want to test (e.g. a new tag or an existing one): run GoReleaser with `--draft` and `--skip=announce`, or trigger the release workflow and mark the release as draft in GitHub.
+  2. Open the draft release on GitHub to see the generated changelog.
+  3. Delete the draft release (and the tag if you created it only for this test).
+
+  **Local run with changelog file**: Run `make goreleaser.test` from a tagged commit (or `goreleaser release --skip=publish,validate --clean`). GoReleaser writes the generated changelog to **`dist/CHANGELOG.md`**, which you can open to verify the format. When there is no previous tag, GoReleaser falls back to the `git` provider locally, so author appears as `Name <Email>`; in CI with a previous tag, `github` is used and author appears as `@username` when available.
