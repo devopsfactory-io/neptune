@@ -19,7 +19,7 @@ Use this skill **only** when the user explicitly requests to open a pull request
 ### 1. Create a new branch
 
 - Create a new branch from current HEAD: `git checkout -b <branch-name>`.
-- **Branch name**: Use user-provided name if given. Otherwise derive from the commit message: e.g. `feat/scope-short-desc` or `fix/short-desc` (slug from the first line of the conventional commit). Prefer lowercase, hyphens; avoid spaces.
+- **Branch name**: Use user-provided name if given. Otherwise derive from the commit message: e.g. `feat/scope-short-desc`, `fix/short-desc`, `enhance/improve-x`, `ci/update-workflow`, or `(deps)/go-mod` (slug from the first line of the conventional commit). These patterns align with [.github/labeler.yml](.github/labeler.yml) so the labeler auto-applies PR labels (feature, bug, enhancement, github-actions, dependencies). For breaking changes, include `!` in the branch name to get the `breaking-change` label. Prefer lowercase, hyphens; avoid spaces.
 
 ### 2. Stage and commit
 
