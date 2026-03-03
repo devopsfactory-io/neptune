@@ -15,13 +15,14 @@ bug:
 github-actions:
   - head-branch: ['^ci']
 dependencies:
-  - changed-files:
-    - any-glob-to-any-file:
-        - 'go.mod'
-        - 'go.sum'
-        - 'lambda/go.mod'
-        - 'lambda/go.sum'
-        - '.github/workflows/**/*.yml'
+  - any:
+    - changed-files:
+        - any-glob-to-any-file:
+            - 'go.mod'
+            - 'go.sum'
+            - 'lambda/go.mod'
+            - 'lambda/go.sum'
+    - head-branch: ['\\(deps\\)']
 documentation:
   - changed-files:
     - any-glob-to-any-file:
