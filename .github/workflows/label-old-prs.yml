@@ -1,0 +1,45 @@
+# Run the labeler on existing PRs (e.g. to apply current .github/labeler.yml rules to old/merged PRs).
+# Trigger manually: Actions → "Label old PRs" → Run workflow.
+name: label-old-prs
+
+on:
+  workflow_dispatch:
+    inputs:
+      state:
+        description: 'PR state to include'
+        required: false
+        default: 'merged'
+        type: choice
+        options:
+          - merged
+          - closed
+          - all
+      limit:
+        description: 'Max number of PRs to process'
+        required: false
+        default: 200
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901aee4e7506a1a2a2361e5b2e2b76a9bd # v4
+      - name: Get PR numbers
+        id: prs
+        run: |
+          echo "numbers<<EOF" >> $GITHUB_OUTPUT
+          gh pr list --state "${{ inputs.state }}" --limit "${{ inputs.limit }}" -q .number >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run labeler on existing PRs
+        uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6
+        with:
+          pr-number: ${{ steps.prs.outputs.numbers }}
