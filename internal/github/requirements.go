@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"neptune/internal/domain"
-	"neptune/internal/git"
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/git"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 // CheckRequirements checks if the PR meets the given requirements (approved, mergeable, undiverged, rebased).

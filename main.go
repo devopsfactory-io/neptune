@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"neptune/cmd"
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/cmd"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 var (

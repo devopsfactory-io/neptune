@@ -11,9 +11,9 @@ import (
 	"runtime"
 	"strings"
 
-	"neptune/internal/domain"
-	"neptune/internal/lock"
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/lock"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 // Runner runs workflow phase steps and updates lock status.

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 const graphQLURL = "https://api.github.com/graphql"

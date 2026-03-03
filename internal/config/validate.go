@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"neptune/internal/domain"
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 var allowedRequirements = map[string]bool{

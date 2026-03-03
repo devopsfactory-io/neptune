@@ -9,14 +9,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"neptune/internal/config"
-	"neptune/internal/domain"
-	"neptune/internal/git"
-	"neptune/internal/github"
-	"neptune/internal/lock"
-	"neptune/internal/log"
-	githubnotify "neptune/internal/notifications/github"
-	"neptune/internal/run"
+	"github.com/devopsfactory-io/neptune/internal/config"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/git"
+	"github.com/devopsfactory-io/neptune/internal/github"
+	"github.com/devopsfactory-io/neptune/internal/lock"
+	"github.com/devopsfactory-io/neptune/internal/log"
+	githubnotify "github.com/devopsfactory-io/neptune/internal/notifications/github"
+	"github.com/devopsfactory-io/neptune/internal/run"
 )
 
 // NewCommandCmd returns the command (workflow) subcommand.

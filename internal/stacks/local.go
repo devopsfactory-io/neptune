@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"neptune/internal/domain"
-	"neptune/internal/git"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/git"
 )
 
 // stackHclFilename is the filename used for discovery.

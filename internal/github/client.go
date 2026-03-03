@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 
 	"github.com/google/go-github/v83/github"
 	"golang.org/x/oauth2"

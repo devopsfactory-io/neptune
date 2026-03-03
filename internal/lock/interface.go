@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"neptune/internal/domain"
-	"neptune/internal/log"
-	"neptune/internal/stacks"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/stacks"
 )
 
 // IsPROpenFunc returns true if the given PR number is still open.

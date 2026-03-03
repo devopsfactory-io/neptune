@@ -1,5 +1,12 @@
 # Neptune GitHub App webhook Lambda (self-hosted)
 
+<p align="center">
+  <a href="https://github.com/devopsfactory-io/neptune/releases"><img src="https://img.shields.io/github/v/release/devopsfactory-io/neptune?color=%239F50DA&display_name=tag&label=Version" alt="Latest Release" /></a>
+  <a href="https://pkg.go.dev/github.com/devopsfactory-io/neptune/lambda"><img src="https://pkg.go.dev/badge/github.com/devopsfactory-io/neptune/lambda" alt="Go Docs" /></a>
+  <a href="https://goreportcard.com/report/github.com/devopsfactory-io/neptune/lambda"><img src="https://goreportcard.com/badge/github.com/devopsfactory-io/neptune/lambda" alt="Go Report Card" /></a>
+  <a href="https://github.com/devopsfactory-io/neptune/actions?query=branch%3Amain"><img src="https://github.com/devopsfactory-io/neptune/actions/workflows/test.yml/badge.svg" alt="CI Status" /></a>
+</p>
+
 This directory is for **self-hosting** the webhook handler. The default way to use Neptune with webhooks is to install the Neptune project's **neptbot** GitHub App; use this Lambda code and CloudFormation only if you want to run your own GitHub App and Lambda (e.g. in your AWS account).
 
 The Lambda receives webhooks (pull request and issue comment events), verifies the signature, and triggers a GitHub Actions workflow in the target repository via `repository_dispatch` so that Neptune runs `plan` (on PR open/sync) or `apply` (when someone comments e.g. `@neptune apply`). It also adds a 👀 (eyes) reaction to the PR and to the comment that triggered the command for visibility. This repo provides the Lambda code and a CloudFormation template to deploy it.

@@ -3,8 +3,8 @@ package lock
 import (
 	"context"
 
-	"neptune/internal/domain"
-	"neptune/internal/stacks"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/stacks"
 )
 
 // ChangedStacks returns the list of changed stack paths in run order using the Terramate SDK.

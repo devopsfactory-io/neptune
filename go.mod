@@ -1,4 +1,4 @@
-module neptune
+module github.com/devopsfactory-io/neptune
 
 go 1.26.0
 
