@@ -94,7 +94,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 
 Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/date into the binary via ldflags.
 
-**Changelog and breaking changes**: The release changelog is grouped by conventional-commit type (Breaking Changes, Features, Bug fixes, etc.). For a release that includes **breaking changes**, use the conventional `!` before `:` in the commit subject so those commits appear under "Breaking Changes" (e.g. `feat!: remove deprecated flag`, `fix(config)!: change default behavior`). Without `!:` in the subject, the commit is grouped by type (e.g. feat/fix) but not under Breaking Changes.
+**Changelog and breaking changes**: The release changelog is grouped by conventional-commit type (Breaking Changes, Features, Bug fixes, etc.). Each line uses a custom format: commit hash is a link to the commit, authors are shown as @username, and PR refs (e.g. #5) in the message are autolinked by GitHub in the release body. For a release that includes **breaking changes**, use the conventional `!` before `:` in the commit subject so those commits appear under "Breaking Changes" (e.g. `feat!: remove deprecated flag`, `fix(config)!: change default behavior`). Without `!:` in the subject, the commit is grouped by type (e.g. feat/fix) but not under Breaking Changes.
 
 ---
 

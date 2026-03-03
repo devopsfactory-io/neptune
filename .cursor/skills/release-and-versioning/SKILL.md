@@ -21,7 +21,7 @@ description: Cuts a new release with semantic versioning and GoReleaser. Use whe
 
 ## GoReleaser
 
-- **.goreleaser.yml**: Builds `neptune` from the repo root (ldflags set `main.version`, `main.commit`, `main.date`) and Lambda `neptune-webhook` from `lambda/` (released as `neptune-webhook.zip` and raw `neptune-webhook_linux_amd64`). Produces lowercase-named archives (e.g. `neptune_linux_amd64.tar.gz`), raw binaries, and checksums; changelog is grouped (Breaking Changes, Features, Bug fixes, etc.) with release footer linking to full changelog.
+- **.goreleaser.yml**: Builds `neptune` from the repo root (ldflags set `main.version`, `main.commit`, `main.date`) and Lambda `neptune-webhook` from `lambda/` (released as `neptune-webhook.zip` and raw `neptune-webhook_linux_amd64`). Produces lowercase-named archives (e.g. `neptune_linux_amd64.tar.gz`), raw binaries, and checksums; changelog is grouped (Breaking Changes, Features, Bug fixes, etc.) with a custom format: commit hash as link to commit, authors as @username; PR refs (#N) in messages are autolinked by GitHub. Release footer links to full changelog.
 - **release.yml**: Uses `goreleaser/goreleaser-action` with `release --clean` and `contents: write` permission.
 
 ## Breaking changes and changelog
