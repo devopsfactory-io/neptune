@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/devopsfactory-io/neptune/lambda/pkg/webhooks"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const (
