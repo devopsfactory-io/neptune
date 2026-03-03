@@ -8,7 +8,7 @@ before:
 builds:
   - id: neptune
     main: .
-    binary: neptune
+    binary: neptune-{{ .Os}}-{{ .Arch}}
     ldflags:
       - -s -w
       - -X main.version={{.Version}}
@@ -28,7 +28,7 @@ builds:
   - id: lambda
     dir: lambda
     main: .
-    binary: neptune-webhook
+    binary: neptune-webhook-{{ .Os}}-{{ .Arch}}
     goos:
       - linux
     goarch:
@@ -41,10 +41,7 @@ archives:
     formats:
       - tar.gz
     name_template: >-
-      {{ .ProjectName }}_{{ tolower .Os }}_{{ if eq .Arch "amd64" }}amd64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ tolower .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
+      {{ .ProjectName }}-{{ .Os }}-{{ .Arch }}
     format_overrides:
       - goos: windows
         formats:
@@ -56,16 +53,15 @@ archives:
     formats:
       - binary
     name_template: >-
-      neptune_{{ tolower .Os }}_{{ if eq .Arch "amd64" }}amd64
-      {{- else }}{{ tolower .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
+      {{ .ProjectName }}-{{ .Os }}-{{ .Arch }}
 
   - id: lambda-archive
     ids:
       - lambda
     formats:
       - zip
-    name_template: neptune-webhook
+    name_template: >-
+      neptune-webhook-{{ .Os}}-{{ .Arch}}
     strip_binary_directory: true
     wrap_in_directory: false
 
@@ -74,7 +70,8 @@ archives:
       - lambda
     formats:
       - binary
-    name_template: neptune-webhook_linux_amd64
+    name_template: >-
+      neptune-webhook-{{ .Os}}-{{ .Arch}}
 
 checksum:
   name_template: checksums.txt
@@ -84,12 +81,12 @@ release:
     **Full Changelog**: https://github.com/{{ .Env.GORELEASER_CURRENT_REPOSITORY }}/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 changelog:
-  use: github
-  # Commit as link; author as @username (Logins). PR refs (#N) are autolinked by GitHub in release body.
-  # Repo fallback used when Env is not available in changelog format context (e.g. devopsfactory-io/neptune).
-  format: "[{{ .SHA }}](https://github.com/{{ if .Env.GORELEASER_CURRENT_REPOSITORY }}{{ .Env.GORELEASER_CURRENT_REPOSITORY }}{{ else }}devopsfactory-io/neptune{{ end }}/commit/{{ .SHA }}): {{ .Message }}{{ if .Logins }} ({{ .Logins | englishJoin }}){{ end }}"
+  use: github-native
+  # SHA as plain text; author as @Username when set, else Name <Email>. PR refs (#N) are autolinked by GitHub in release body.
+  # Author: when use is github, .Author has Username/Name/Email; when fallback is git, use AuthorName/AuthorEmail (AuthorUsername not set).
+  # format: "{{ .SHA }}: {{ .Message }} ({{ with index . \"Author\" }}{{ with .Username }}@{{ . }}{{ else }}{{ .Name }} <{{ .Email }}>{{ end }}{{ else }}{{ with .AuthorUsername }}@{{ . }}{{ else }}{{ .AuthorName }} <{{ .AuthorEmail }}>{{ end }}{{ end }})"
   sort: asc
-  abbrev: 7
+  abbrev: 0
   groups:
     - title: 'Breaking Changes'
       regexp: '^.*?(\([[:word:]]+\))??!:.+$'
@@ -97,15 +94,15 @@ changelog:
     - title: 'Features'
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 100
-    - title: 'Bug fixes'
-      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
-      order: 200
     - title: 'Documentation'
       regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
       order: 300
     - title: 'Dependency updates'
       regexp: '^.*?(feat|fix|chore)\(deps?.+\)!?:.+$'
       order: 400
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 200
     - title: 'Other work'
       order: 999
   filters:
