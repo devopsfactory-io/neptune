@@ -3,6 +3,7 @@
 <p align="center">
   <a href="https://github.com/devopsfactory-io/neptune/releases"><img src="https://img.shields.io/github/v/release/devopsfactory-io/neptune?color=%239F50DA&display_name=tag&label=Version" alt="Latest Release" /></a>
   <a href="https://pkg.go.dev/github.com/devopsfactory-io/neptune"><img src="https://pkg.go.dev/badge/github.com/devopsfactory-io/neptune" alt="Go Docs" /></a>
+  <a href="https://goreportcard.com/report/github.com/devopsfactory-io/neptune"><img src="https://goreportcard.com/badge/github.com/devopsfactory-io/neptune" alt="Go Report Card" /></a>
   <a href="https://github.com/devopsfactory-io/neptune/actions?query=branch%3Amain"><img src="https://github.com/devopsfactory-io/neptune/actions/workflows/test.yml/badge.svg" alt="CI Status" /></a>
 </p>
 
