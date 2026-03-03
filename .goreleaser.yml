@@ -28,38 +28,85 @@ builds:
   - id: lambda
     dir: lambda
     main: .
-    binary: bootstrap
+    binary: neptune-webhook
     goos:
       - linux
     goarch:
       - amd64
 
 archives:
-  - ids:
+  - id: neptune-archive
+    ids:
       - neptune
-    format: tar.gz
+    formats:
+      - tar.gz
     name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
+      {{ .ProjectName }}_{{ tolower .Os }}_{{ if eq .Arch "amd64" }}amd64
       {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
+      {{- else }}{{ tolower .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
+
+  - id: neptune-binary
+    ids:
+      - neptune
+    formats:
+      - binary
+    name_template: >-
+      neptune_{{ tolower .Os }}_{{ if eq .Arch "amd64" }}amd64
+      {{- else }}{{ tolower .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
 
   - id: lambda-archive
     ids:
       - lambda
-    format: zip
+    formats:
+      - zip
     name_template: neptune-webhook
     strip_binary_directory: true
     wrap_in_directory: false
 
+  - id: lambda-binary
+    ids:
+      - lambda
+    formats:
+      - binary
+    name_template: neptune-webhook_linux_amd64
+
 checksum:
   name_template: checksums.txt
+
+release:
+  footer: |
+    **Full Changelog**: https://github.com/{{ .Env.GORELEASER_CURRENT_REPOSITORY }}/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 changelog:
   use: github
   sort: asc
+  abbrev: 7
+  groups:
+    - title: 'Breaking Changes'
+      regexp: '^.*?(\([[:word:]]+\))??!:.+$'
+      order: 0
+    - title: 'Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 100
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 200
+    - title: 'Documentation'
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 300
+    - title: 'Dependency updates'
+      regexp: '^.*?(feat|fix|chore)\(deps?.+\)!?:.+$'
+      order: 400
+    - title: 'Other work'
+      order: 999
+  filters:
+    exclude:
+      - '^test:'
+      - '^.*?Bump(\([[:word:]]+\))?.+$'
+      - '^.*?\[Bot\](\([[:word:]]+\))?.+$'

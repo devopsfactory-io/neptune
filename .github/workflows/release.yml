@@ -27,3 +27,4 @@ jobs:
           version: "~> v2"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_REPOSITORY: devopsfactory-io/neptune

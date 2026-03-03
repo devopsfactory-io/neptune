@@ -43,10 +43,10 @@ Tags follow the pattern `vMAJOR.MINOR.PATCH` (e.g., `v0.2.0`, `v1.0.0`). The `v`
 3. **GoReleaser runs automatically**: The [`.github/workflows/release.yml`](../.github/workflows/release.yml) workflow triggers on tag push and runs GoReleaser with the configuration from [`.goreleaser.yml`](../.goreleaser.yml).
 
 4. **Release artifacts**: GoReleaser creates a [GitHub Release](https://github.com/devopsfactory-io/neptune/releases) with:
-   - `neptune` binaries for multiple OS/arch (Linux, macOS, Windows; amd64, arm64)
-   - `neptune-webhook.zip` (AWS Lambda handler for the GitHub App)
+   - Neptune binaries: archives (e.g. `neptune_linux_amd64.tar.gz`, `neptune_darwin_arm64.tar.gz`, `neptune_windows_amd64.zip`) and raw binaries (e.g. `neptune_linux_amd64`, `neptune_windows_amd64.exe`) for Linux, macOS, Windows (amd64, arm64)
+   - `neptune-webhook.zip` and raw `neptune-webhook_linux_amd64` (Lambda handler binary is `neptune-webhook`; CloudFormation Handler must match)
    - `checksums.txt` (SHA256 checksums for all artifacts)
-   - Auto-generated changelog from commit messages since the previous tag
+   - Changelog grouped by section (Breaking Changes, Features, Bug fixes, Documentation, Dependency updates, Other work) and a Full Changelog link in the release footer
 
 The version, commit SHA, and build date are injected into the binary via ldflags at build time (see `main.version`, `main.commit`, `main.date`).
 

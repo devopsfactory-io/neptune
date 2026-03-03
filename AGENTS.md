@@ -89,10 +89,12 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 - **`.github/workflows/e2e.yml`** – On push/PR when e2e-related paths change; runs `./e2e/scripts/run-terramate.sh` with MinIO (Docker Compose). See [e2e/README.md](e2e/README.md).
 - **`.github/workflows/integration.yml`** – On PRs when integration-relevant paths change; runs Neptune plan/apply on the same PR with real GitHub (requirements check, PR comments, commit statuses) and MinIO for locks. Needs `statuses: write` for commit status API. See [e2e/README.md](e2e/README.md#integration-tests).
 - **`.github/workflows/lint.yml`** – On PRs; path filter for Go; runs golangci-lint.
-- **`.github/workflows/release.yml`** – On push of tags `v*.*.*` (and workflow_dispatch); runs GoReleaser to create GitHub Release with neptune binaries, Lambda zip (`neptune-webhook.zip`), and auto-generated changelog.
+- **`.github/workflows/release.yml`** – On push of tags `v*.*.*` (and workflow_dispatch); runs GoReleaser to create GitHub Release with neptune binaries (archives e.g. `neptune_linux_amd64.tar.gz` and raw binaries e.g. `neptune_linux_amd64`), Lambda zip (`neptune-webhook.zip`) and raw binary `neptune-webhook_linux_amd64` (Lambda binary is `neptune-webhook`; zip contains it), checksums, and changelog grouped by section (Breaking Changes, Features, Bug fixes, Documentation, Dependency updates, Other work). Release footer includes Full Changelog link.
 - **Renovate** – Dependency-update PRs (Go modules and GitHub Actions) are opened by [Renovate](https://docs.renovatebot.com/) from [.github/renovate.json5](.github/renovate.json5). To enable Renovate, install the [Renovate GitHub App](https://github.com/apps/renovate) and select the repo. Do not remove or override this config without reason.
 
 Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/date into the binary via ldflags.
+
+**Changelog and breaking changes**: The release changelog is grouped by conventional-commit type (Breaking Changes, Features, Bug fixes, etc.). For a release that includes **breaking changes**, use the conventional `!` before `:` in the commit subject so those commits appear under "Breaking Changes" (e.g. `feat!: remove deprecated flag`, `fix(config)!: change default behavior`). Without `!:` in the subject, the commit is grouped by type (e.g. feat/fix) but not under Breaking Changes.
 
 ---
 

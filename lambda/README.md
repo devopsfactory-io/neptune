@@ -23,11 +23,11 @@ If you are self-hosting, you need:
 From this directory (`lambda/`):
 
 ```bash
-GOOS=linux GOARCH=amd64 go build -o bootstrap .
-zip neptune-webhook.zip bootstrap
+GOOS=linux GOARCH=amd64 go build -o neptune-webhook .
+zip neptune-webhook.zip neptune-webhook
 ```
 
-From the repository root you can run `make lambda.build` and `make lambda.zip`. The binary must be named `bootstrap` for the `provided.al2023` runtime. Run `make lambda.test` to execute the Lambda unit tests.
+From the repository root you can run `make lambda.build` and `make lambda.zip`. The binary is named `neptune-webhook`; the CloudFormation template's Handler must match (e.g. `neptune-webhook`). Run `make lambda.test` to execute the Lambda unit tests.
 
 Each [GitHub Release](https://github.com/devopsfactory-io/neptune/releases) includes a pre-built `neptune-webhook.zip` (and checksums) so you can download it instead of building locally.
 
