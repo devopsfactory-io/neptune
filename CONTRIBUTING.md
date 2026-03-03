@@ -7,7 +7,7 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 ## Getting started
 
 1. Fork the repository and clone your fork (infra examples are in the `examples/` directory).
-2. Create a branch from `main` for your changes.
+2. Create a branch from `main` for your changes. Optionally follow the [branch naming conventions](#branch-naming-and-pr-labels) below so the labeler can auto-apply PR labels (and release-note categories).
 3. Set up your environment and run the project locally. See [docs/development.md](docs/development.md) for build and test commands (e.g. `make build`, `make test-all`, `make check-fmt`). Use the Go version from [go.mod](go.mod).
 
 ## How to contribute
@@ -29,6 +29,21 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 - Complete the checklist before requesting review: breaking changes (if any), documentation updated, tests added or updated.
 - You can add an **AI Summary** at the end if you have one (e.g. from Cursor or GitHub Copilot) to help reviewers.
 - The `neptune` label is applied automatically when you open a PR; you don't need to add it yourself.
+
+### Branch naming and PR labels
+
+The [labeler](.github/workflows/labeler.yml) uses the **head branch name** (and changed files) to auto-apply labels. Those labels drive release-note categories. To get the right label automatically, you can name your branch as follows (see [.github/labeler.yml](.github/labeler.yml) for the exact rules):
+
+| Branch name pattern | Label applied |
+|---------------------|---------------|
+| Starts with `feat` (e.g. `feat/add-thing`) | `feature` |
+| Starts with `enhance` (e.g. `enhance/improve-x`) | `enhancement` |
+| Starts with `fix` and not `fix*dep*` (e.g. `fix/bug-123`) | `bug` |
+| Contains `!` (e.g. `feat!/breaking`) | `breaking-change` |
+| Starts with `ci` (e.g. `ci/update-workflow`) | `github-actions` |
+| Contains `(deps)` (e.g. `(deps)/go-mod`) | `dependencies` |
+
+Labels are also applied from **changed files** (e.g. `dependencies` for `go.mod`/`go.sum`, `documentation` for `docs/**` or `*.md`). Branch naming is optional but helps ensure your PR is categorized correctly in release notes.
 
 ## Code and documentation
 
