@@ -41,26 +41,28 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # actions/labeler reads head/base branch from github.context.payload.pull_request, which is
       # unset on workflow_dispatch, so it never applies head-branch rules. This step applies the
-      # same head-branch rules as .github/labeler.yml so backfilled PRs get labels like "feature".
-      - name: Apply head-branch labels
+      # same rules as .github/labeler.yml to both head branch and PR title; label if either matches.
+      - name: Apply head-branch and title labels
         run: |
           pr_list="${{ steps.prs.outputs.numbers }}"
           for n in $pr_list; do
             [ -z "$n" ] && continue
-            head=$(gh pr view "$n" --json headRefName -q '.headRefName' 2>/dev/null) || continue
+            out=$(gh pr view "$n" --json headRefName,title -q '[.headRefName, .title] | join("\u001f")' 2>/dev/null) || continue
+            head="${out%%$'\x1f'*}"
+            title="${out#*$'\x1f'}"
             [ -z "$head" ] && continue
-            # breaking-change: branch contains '!'
-            echo "$head" | grep -q '!' && gh pr edit "$n" --add-label "breaking-change" 2>/dev/null || true
-            # feature: branch starts with feat
-            echo "$head" | grep -qE '^feat' && gh pr edit "$n" --add-label "feature" 2>/dev/null || true
-            # enhancement: branch starts with enhance
-            echo "$head" | grep -qE '^enhance' && gh pr edit "$n" --add-label "enhancement" 2>/dev/null || true
-            # bug: branch starts with fix and does not contain "dep" (mirrors ^fix(?!.*dep).*)
-            echo "$head" | grep -qE '^fix' && ! echo "$head" | grep -q 'dep' && gh pr edit "$n" --add-label "bug" 2>/dev/null || true
-            # github-actions: branch starts with ci
-            echo "$head" | grep -qE '^ci' && gh pr edit "$n" --add-label "github-actions" 2>/dev/null || true
-            # dependencies: branch contains (deps)
-            echo "$head" | grep -q '(deps)' && gh pr edit "$n" --add-label "dependencies" 2>/dev/null || true
+            # breaking-change: head or title contains '!'
+            (echo "$head" | grep -q '!' || echo "$title" | grep -q '!') && gh pr edit "$n" --add-label "breaking-change" 2>/dev/null || true
+            # feature: head or title starts with feat
+            (echo "$head" | grep -qE '^feat' || echo "$title" | grep -qE '^feat') && gh pr edit "$n" --add-label "feature" 2>/dev/null || true
+            # enhancement: head or title starts with enhance
+            (echo "$head" | grep -qE '^enhance' || echo "$title" | grep -qE '^enhance') && gh pr edit "$n" --add-label "enhancement" 2>/dev/null || true
+            # bug: (head or title) starts with fix and does not contain "dep"
+            ( (echo "$head" | grep -qE '^fix' && ! echo "$head" | grep -q 'dep') || (echo "$title" | grep -qE '^fix' && ! echo "$title" | grep -q 'dep') ) && gh pr edit "$n" --add-label "bug" 2>/dev/null || true
+            # github-actions: head or title starts with ci
+            (echo "$head" | grep -qE '^ci' || echo "$title" | grep -qE '^ci') && gh pr edit "$n" --add-label "github-actions" 2>/dev/null || true
+            # dependencies: head or title contains (deps)
+            (echo "$head" | grep -q '(deps)' || echo "$title" | grep -q '(deps)') && gh pr edit "$n" --add-label "dependencies" 2>/dev/null || true
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
