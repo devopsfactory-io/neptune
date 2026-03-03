@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 func TestRunner_Execute_SimpleStep(t *testing.T) {

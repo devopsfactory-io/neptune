@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 
 	gh "github.com/google/go-github/v83/github"
 )

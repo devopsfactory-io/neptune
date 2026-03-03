@@ -7,10 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"neptune/internal/config"
-	"neptune/internal/github"
-	"neptune/internal/lock"
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/config"
+	"github.com/devopsfactory-io/neptune/internal/github"
+	"github.com/devopsfactory-io/neptune/internal/lock"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 // NewUnlockCmd returns the unlock subcommand.

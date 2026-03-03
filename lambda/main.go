@@ -11,10 +11,10 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
-	"neptune-lambda/pkg/config"
-	"neptune-lambda/pkg/github"
-	"neptune-lambda/pkg/verify"
-	"neptune-lambda/pkg/webhooks"
+	"github.com/devopsfactory-io/neptune/lambda/pkg/config"
+	"github.com/devopsfactory-io/neptune/lambda/pkg/github"
+	"github.com/devopsfactory-io/neptune/lambda/pkg/verify"
+	"github.com/devopsfactory-io/neptune/lambda/pkg/webhooks"
 )
 
 var (

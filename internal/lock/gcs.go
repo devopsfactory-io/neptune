@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"neptune/internal/domain"
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 // Ensure GCSStorage implements ObjectStorage.

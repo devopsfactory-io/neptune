@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"neptune-lambda/pkg/webhooks"
+	"github.com/devopsfactory-io/neptune/lambda/pkg/webhooks"
 )
 
 const (

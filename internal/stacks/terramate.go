@@ -12,7 +12,7 @@ import (
 	"github.com/terramate-io/terramate/run"
 	"github.com/terramate-io/terramate/stack"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 // TerramateProvider returns changed stacks using the Terramate SDK.

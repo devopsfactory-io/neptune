@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
 // NewRootCmd returns the root command for the Neptune CLI.

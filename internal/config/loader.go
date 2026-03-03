@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"neptune/internal/domain"
-	"neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/log"
 
 	"gopkg.in/yaml.v3"
 )

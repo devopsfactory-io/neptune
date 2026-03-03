@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"neptune/internal/config"
-	"neptune/internal/log"
-	"neptune/internal/stacks"
+	"github.com/devopsfactory-io/neptune/internal/config"
+	"github.com/devopsfactory-io/neptune/internal/log"
+	"github.com/devopsfactory-io/neptune/internal/stacks"
 )
 
 const (

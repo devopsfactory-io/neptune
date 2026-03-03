@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 // IsBranchRebased returns true if the current HEAD has no commits behind origin/<defaultBranch>.

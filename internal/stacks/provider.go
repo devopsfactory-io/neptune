@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 // Provider returns the list of changed stack paths in run order.

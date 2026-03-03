@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 func TestValidate_ObjectStorage(t *testing.T) {

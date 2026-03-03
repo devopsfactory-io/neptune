@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 // ObjectStorage is the abstraction for lock file storage (GCS, S3, or S3-compatible).

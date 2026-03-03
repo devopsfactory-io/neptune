@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 func TestChangedStacks_NoTerramateConfig(t *testing.T) {

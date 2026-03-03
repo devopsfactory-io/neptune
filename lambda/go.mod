@@ -1,4 +1,4 @@
-module neptune-lambda
+module github.com/devopsfactory-io/neptune/lambda
 
 go 1.26.0
 

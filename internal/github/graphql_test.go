@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"neptune/internal/domain"
+	"github.com/devopsfactory-io/neptune/internal/domain"
 )
 
 func TestEnablePullRequestAutoMerge_Success(t *testing.T) {
