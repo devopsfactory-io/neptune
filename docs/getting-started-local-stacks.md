@@ -37,11 +37,11 @@ You can copy structure and config from the [local-stacks](../examples/local-stac
 
 ## Step 1: Install neptbot
 
-Install the **neptbot GitHub App** on your organization or user account so that PR events and comments (e.g. `@neptbot apply`) can trigger your workflow. No Lambda or AWS setup is required; the Neptune project runs the webhook endpoint.
+Install the **neptbot GitHub App** on your organization or user account so that PR events and comments (e.g. `@neptbot apply`) can trigger your workflow. Install from [github.com/apps/neptbot](https://github.com/apps/neptbot). No Lambda or AWS setup is required; the Neptune project runs the webhook endpoint.
 
 **PR label required:** Pull requests must have the label **neptune** to trigger the `repository_dispatch` workflow. You can auto-apply the label using the [labeler](https://github.com/actions/labeler) GitHub Action: add a workflow (e.g. `.github/workflows/labeler.yml`) and a config file (e.g. `.github/labeler.yml`) so that PRs touching your infra paths get the `neptune` label. See the [terramate-stacks](../examples/terramate-stacks/) or [automerge](../examples/automerge/) examples (`.github/workflows/labeler.yml` and `.github/labeler.yml`) for reference.
 
-See [GitHub App and Lambda — Default: Install neptbot](github-app-and-lambda.md#default-install-neptbot) for the install link and details.
+See [GitHub App and Lambda — Default: Install neptbot](github-app-and-lambda.md#default-install-neptbot) for details.
 
 ## Step 2: Object storage for Neptune
 

@@ -6,13 +6,26 @@ You can also run Neptune from a workflow that triggers on `pull_request` and/or 
 
 ## Default: Install neptbot
 
-1. **Install the neptbot GitHub App** on your organization or user account. (Install link to be added when the app is published.)
+1. **Install the neptbot GitHub App** on your organization or user account: [Install neptbot](https://github.com/apps/neptbot).
 2. **Add the workflow below** to each repository where you want Neptune to run. The app will trigger it via `repository_dispatch` when a PR is opened/updated or when someone comments `@neptbot apply` or `@neptbot plan`.
 3. **Ensure PRs have the label `neptune`** — neptbot triggers `repository_dispatch` only for pull requests that have the label **neptune**. To apply the label automatically, use the [labeler](https://github.com/actions/labeler) GitHub Action: add a workflow (e.g. `.github/workflows/labeler.yml`) that runs the labeler on `pull_request`, and a config file (e.g. `.github/labeler.yml`) that assigns the `neptune` label based on changed files (e.g. when PRs touch your Terraform/OpenTofu paths). See the [terramate-stacks](../examples/terramate-stacks/) or [automerge](../examples/automerge/) examples for reference.
 4. Configure **object storage** (e.g. S3) and a **`.neptune.yaml`** in the repo as required by Neptune (see [Configuration](configuration.md) and [Object storage](object-storage.md)).
 5. Optionally add **branch protection** so that **neptune apply** is a required status check (see [Branch protection (recommended)](#5-branch-protection-recommended)).
 
 No Lambda or AWS setup is required; the Neptune project runs the webhook endpoint.
+
+### Why we request these permissions
+
+When you install neptbot, GitHub will show the permissions the app requests. Here is why each one is needed:
+
+| Permission | Level | Why we need it |
+|------------|--------|----------------|
+| **Contents** | Read and write | Required by GitHub to trigger your repository’s workflow via the [Repository dispatch](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event) API. Neptbot does not read or modify your repository contents; it only sends the dispatch event so your GitHub Actions workflow runs. |
+| **Pull requests** | Read and write | **Read**: We receive webhook events when a PR is opened, updated, or labeled so we can trigger **plan**. We also need to read PR context when you comment `@neptbot apply` or `@neptbot plan`. **Write**: We add a 👀 (eyes) reaction on the PR after we trigger the workflow so you can see that neptbot received the event. |
+| **Issues** | Read and write | Pull requests are treated as issues in the GitHub API. **Write** is required to add a 👀 reaction to the PR and to the comment that triggered **apply** or **plan**, so you get a visible confirmation that the command was received. We do not create, edit, or close issues or PRs. |
+| **Metadata** | Read | Default repository metadata (e.g. name, visibility). Required for GitHub Apps that need to identify the repository. |
+
+Neptbot only triggers your workflow and adds reactions; it does not push code, merge PRs, or access your source beyond what is needed for those actions.
 
 ### Workflow on `repository_dispatch`
 
@@ -134,3 +147,6 @@ The webhook handler (neptbot or your Lambda) triggers `repository_dispatch` with
   - `pull_request_repo_full`: `owner/repo` (optional)
 
 Your workflow reads these from `github.event.client_payload` and passes the required env to the `neptune` CLI.
+
+
+Contents: we only call the Repository dispatch API to trigger your workflow. We don't read or change your code. PRs/Issues: we read events and add a reaction so you see we got the command. Metadata: repo id. We never push, merge, or edit issues.
