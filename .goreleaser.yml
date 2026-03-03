@@ -85,6 +85,9 @@ release:
 
 changelog:
   use: github
+  # Commit as link; author as @username (Logins). PR refs (#N) are autolinked by GitHub in release body.
+  # Repo fallback used when Env is not available in changelog format context (e.g. devopsfactory-io/neptune).
+  format: "[{{ .SHA }}](https://github.com/{{ if .Env.GORELEASER_CURRENT_REPOSITORY }}{{ .Env.GORELEASER_CURRENT_REPOSITORY }}{{ else }}devopsfactory-io/neptune{{ end }}/commit/{{ .SHA }}): {{ .Message }}{{ if .Logins }} ({{ .Logins | englishJoin }}){{ end }}"
   sort: asc
   abbrev: 7
   groups:
