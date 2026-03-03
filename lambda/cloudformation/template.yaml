@@ -7,7 +7,7 @@ Parameters:
     Description: GitHub App ID (numeric).
   LambdaS3Bucket:
     Type: String
-    Description: S3 bucket containing the Lambda deployment package (zip with bootstrap binary).
+    Description: S3 bucket containing the Lambda deployment package (zip with neptune-webhook binary).
   LambdaS3Key:
     Type: String
     Description: S3 object key of the Lambda zip (e.g. neptune-webhook.zip).
@@ -66,7 +66,7 @@ Resources:
       FunctionName: neptune-github-app-webhook
       Description: Receives GitHub App webhooks and triggers repository_dispatch for Neptune plan/apply.
       Runtime: provided.al2023
-      Handler: bootstrap
+      Handler: neptune-webhook
       Code:
         S3Bucket: !Ref LambdaS3Bucket
         S3Key: !Ref LambdaS3Key
