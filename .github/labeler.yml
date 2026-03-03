@@ -1,6 +1,6 @@
 # actions/labeler: path-based (changed-files) and head-branch (regex) rules.
 # Head-branch rules: breaking-change (!), feature (feat), enhancement (enhance),
-# bug (fix, no dep), github-actions (ci).
+# bug (fix, no dep), github-actions (ci or .github/workflows/ changes).
 neptune:
   - changed-files:
     - any-glob-to-any-file: '**'
@@ -13,7 +13,10 @@ enhancement:
 bug:
   - head-branch: ['^fix(?!.*dep).*']
 github-actions:
-  - head-branch: ['^ci']
+  - any:
+    - head-branch: ['^ci']
+    - changed-files:
+        - any-glob-to-any-file: '.github/workflows/**'
 dependencies:
   - any:
     - changed-files:
