@@ -35,7 +35,7 @@ jobs:
         id: prs
         run: |
           echo "numbers<<EOF" >> $GITHUB_OUTPUT
-          gh pr list --state "${{ inputs.state }}" --limit "${{ inputs.limit }}" -q .number >> $GITHUB_OUTPUT
+          gh pr list --state "${{ inputs.state }}" --limit "${{ inputs.limit }}" --json number -q '.[].number' >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
