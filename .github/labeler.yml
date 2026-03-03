@@ -1,9 +1,19 @@
-# Apply "neptune" label to every PR (any changed file matches).
-# v5+ requires each label to be an array of config options (changed-files, etc.).
+# actions/labeler: path-based (changed-files) and head-branch (regex) rules.
+# Head-branch rules: breaking-change (!), feature (feat), enhancement (enhance),
+# bug (fix, no dep), github-actions (ci).
 neptune:
   - changed-files:
     - any-glob-to-any-file: '**'
-# Apply "dependencies" when dependency-related files change (Renovate PRs).
+breaking-change:
+  - head-branch: ['!']
+feature:
+  - head-branch: ['^feat']
+enhancement:
+  - head-branch: ['^enhance']
+bug:
+  - head-branch: ['^fix(?!.*dep).*']
+github-actions:
+  - head-branch: ['^ci']
 dependencies:
   - changed-files:
     - any-glob-to-any-file:
@@ -12,3 +22,12 @@ dependencies:
         - 'lambda/go.mod'
         - 'lambda/go.sum'
         - '.github/workflows/**/*.yml'
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+        - 'docs/**'
+        - '*.md'
+        - 'README*'
+        - '.cursor/**/*.md'
+        - 'AGENTS.md'
+        - 'CONTRIBUTING.md'
