@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.60.0
 	github.com/aws/aws-sdk-go-v2 v1.41.2
 	github.com/aws/aws-sdk-go-v2/config v1.32.10
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.2
 	github.com/google/go-github/v83 v83.0.0
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/rs/zerolog v1.34.0
@@ -54,7 +54,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kms v1.49.1 // indirect
