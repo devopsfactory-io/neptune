@@ -48,7 +48,7 @@ Labels are also applied from **changed files** (e.g. `dependencies` for `go.mod`
 ## Code and documentation
 
 - **Code style**: Format with `gofmt -s` and run `make check-fmt` before committing. Linting follows [.golangci.yml](.golangci.yml). For more detail, see [AGENTS.md](AGENTS.md).
-- **Documentation**: When you change behavior, configuration, or setup, update the relevant docs: [README.md](README.md), [docs/](docs/), and/or [AGENTS.md](AGENTS.md) as appropriate. See the project's documentation guidelines (e.g. in [.cursor/rules](.cursor/rules) or [.cursor/skills/maintain-documentation](.cursor/skills/maintain-documentation/)).
+- **Documentation**: When you change behavior, configuration, or setup, update the relevant docs: [README.md](README.md), [docs/](docs/), and/or [AGENTS.md](AGENTS.md) as appropriate. The project keeps AI and human docs in sync via the [documentation-maintainer](.cursor/agents/documentation-maintainer.md) subagent and [.cursor/rules/docs-and-ai-context.mdc](.cursor/rules/docs-and-ai-context.mdc).
 - **Infra examples**: Live in the `examples/` directory.
 
 ## CI

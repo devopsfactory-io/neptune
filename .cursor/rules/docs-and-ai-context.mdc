@@ -1,5 +1,5 @@
 ---
-description: After any code/config/CI change, consider updating README, AGENTS.md, .cursor/rules, .cursor/skills. When in doubt, update.
+description: After any code/config/CI change, delegate to the documentation-maintainer subagent to run the doc checklist. When in doubt, update.
 alwaysApply: true
 ---
 
@@ -7,10 +7,7 @@ alwaysApply: true
 
 After making changes to code, config, or CI:
 
-1. **Ask**: "Do README, AGENTS.md, examples/, or any .cursor rule or skill need an update?"
-2. **New behavior or CLI flags** → Update README and/or AGENTS.md (install, usage, structure).
-3. **New config or usage that users can try** → Consider adding or updating an example in **examples/** (examples are part of the documentation).
-4. **New conventions or workflows** → Update the relevant `.cursor/rules/*.mdc` or `.cursor/skills/*/SKILL.md`.
-5. **Do not edit plan files** (e.g. `neptune_go_rewrite*.plan.md`, `ai_agent_config*.plan.md`) unless the user explicitly asks.
+1. **Delegate**: Delegate documentation updates to the **documentation-maintainer** subagent so it can run the full maintain-documentation checklist (README, docs/, examples/, AGENTS.md, .cursor/rules, .cursor/commands, .cursor/skills).
+2. **Do not edit plan files** (e.g. `neptune_go_rewrite*.plan.md`, `ai_agent_config*.plan.md`) unless the user explicitly asks.
 
-Use the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`) for the full checklist and when to update each artifact.
+The **documentation-maintainer** subagent (`.cursor/agents/documentation-maintainer.md`) embodies the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`); use the subagent for the full checklist and when to update each artifact.
