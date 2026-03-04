@@ -1,6 +1,6 @@
 ---
 name: maintain-documentation
-description: Ensures human and AI documentation stay in sync with code and config. Use when changing behavior, adding features, refactoring, or when the user asks to update docs. Always consider whether README, docs/, examples/, AGENTS.md, .cursor/rules, or .cursor/skills need updates.
+description: Ensures human and AI documentation stay in sync with code and config. Use when changing behavior, adding features, refactoring, or when the user asks to update docs. Always consider whether README, docs/, examples/, AGENTS.md, .cursor/rules, .cursor/commands, or .cursor/skills need updates.
 ---
 
 # Maintain Documentation
@@ -37,6 +37,7 @@ Use this skill when:
 | .github/ISSUE_TEMPLATE/ | Humans | Bug report, feature request templates |
 | AGENTS.md | AI agents | Project overview, structure, setup, style, testing, CI, doc-update requirement |
 | .cursor/rules/*.mdc | AI agents | File-specific or always-applied rules (Go, CI, config, docs) |
+| .cursor/commands/*.md | AI agents | Cursor slash commands (e.g. /feature, /bug) |
 | .cursor/skills/*/SKILL.md | AI agents | Step-by-step workflows (e.g. maintain-documentation, release, open-pull-request) |
 
 ## When to Update AI Docs
@@ -46,5 +47,6 @@ Use this skill when:
 - **New Make targets or CI jobs** → AGENTS.md, ci-and-release rule, testing-and-ci skill.
 - **New features or workflow options users can try** → Consider adding or updating an example in **examples/**.
 - **New patterns agents should follow** → Add or update a rule or skill; mention in AGENTS.md if central.
+- **New or changed Cursor slash commands** (`.cursor/commands/`) → AGENTS.md (repository structure and References).
 
 Do not edit plan files (e.g. in .cursor/plans or *.plan.md) unless the user explicitly asks.
