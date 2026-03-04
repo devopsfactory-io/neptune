@@ -37,7 +37,7 @@ Use this skill when:
 | .github/ISSUE_TEMPLATE/ | Humans | Bug report, feature request templates |
 | AGENTS.md | AI agents | Project overview, structure, setup, style, testing, CI, doc-update requirement |
 | .cursor/rules/*.mdc | AI agents | File-specific or always-applied rules (Go, CI, config, docs) |
-| .cursor/commands/*.md | AI agents | Cursor slash commands (e.g. /feature, /bug) |
+| .cursor/commands/*.md | AI agents | Cursor slash commands (e.g. /feature, /bug); /feature and /bug include mandatory issue-reviewer validation before creating the issue |
 | .cursor/skills/*/SKILL.md | AI agents | Step-by-step workflows (e.g. maintain-documentation, release, open-pull-request) |
 
 ## When to Update AI Docs
@@ -48,5 +48,6 @@ Use this skill when:
 - **New features or workflow options users can try** → Consider adding or updating an example in **examples/**.
 - **New patterns agents should follow** → Add or update a rule or skill; mention in AGENTS.md if central.
 - **New or changed Cursor slash commands** (`.cursor/commands/`) → AGENTS.md (repository structure and References).
+- **Workflow changes to issue creation** (e.g. validation step) → .cursor/commands/ (feature, bug), .cursor/agents/ (issue-writer, issue-reviewer), AGENTS.md.
 
 Do not edit plan files (e.g. in .cursor/plans or *.plan.md) unless the user explicitly asks.
