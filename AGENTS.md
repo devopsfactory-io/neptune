@@ -33,7 +33,7 @@ Guidance for AI coding agents working on the Neptune project.
 - **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`—including `labeled` when the added label is `NEPTUNE_PR_LABEL`—and `issue_comment`, trigger `repository_dispatch`; optional `NEPTUNE_PR_LABEL` gates on PR label). See [lambda/README.md](lambda/README.md).
 - **`lambda/cloudformation/`** – CloudFormation template to deploy the Lambda (Function URL, IAM, Secrets Manager). See [lambda/README.md](lambda/README.md#deploy-with-cloudformation).
 - **`Makefile`**, **`.golangci.yml`**, **`.goreleaser.yml`**, **`.github/workflows/`** – Build, test, lint, release.
-- **`.cursor/agents/`** – Cursor/Task subagents: issue-reviewer, pr-reviewer (discoverable for triage and PR review), issue-writer (opens feature requests and bug reports from `/feature` and `/bug` using [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/); drafts are validated by issue-reviewer before upload).
+- **`.cursor/agents/`** – Cursor/Task subagents: documentation-maintainer (runs the doc checklist after code/config/CI changes; delegate to it for README, docs/, examples/, AGENTS.md, rules, commands, skills), issue-reviewer, pr-reviewer (discoverable for triage and PR review), issue-writer (opens feature requests and bug reports from `/feature` and `/bug` using [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/); drafts are validated by issue-reviewer before upload).
 - **`.cursor/commands/`** – Cursor slash commands: `/feature`, `/bug` (invoke the issue-writer workflow to create issues from the repo’s issue templates; the draft is validated by issue-reviewer before `gh issue create`).
 - **Root community docs**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md), [GOVERNANCE.md](GOVERNANCE.md), [MAINTAINERS.md](MAINTAINERS.md), [ROADMAP.md](ROADMAP.md), [LICENSE](LICENSE).
 
@@ -106,12 +106,10 @@ Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/d
 
 After any change that affects behavior, APIs, config, or CI:
 
-1. **Consider human docs**: **README.md** is the high-level entry point; detailed user docs (configuration, object storage, installation, usage, development) live in **docs/** (see [docs/README.md](docs/README.md)); **examples/** is part of the documentation (copy-pasteable usage examples). Update README, **docs/*.md**, **examples/** (add or update examples when behavior or config changes), and **`.neptune.example.yaml`** (or comments) if install, usage, or config schema changed.
-2. **Consider AI docs**: Update **AGENTS.md** if project structure, setup, or conventions changed. Update **`.cursor/rules/*.mdc`** if coding or workflow rules changed. Update **`.cursor/skills/*/SKILL.md`** if a documented workflow or checklist changed.
+1. **Delegate**: Delegate documentation updates to the **documentation-maintainer** subagent (`.cursor/agents/documentation-maintainer.md`) so it runs the full maintain-documentation checklist (README, docs/, examples/, AGENTS.md, .cursor/rules, .cursor/commands, .cursor/skills).
+2. **Do not edit plan files** (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.plan.md`) unless the user explicitly asks.
 
-If you add a feature, change a command, or modify workflows: check README, docs/, examples/, and AGENTS.md; if rules or skills are affected, update the corresponding file. When in doubt, update. See the project skill **maintain-documentation** (`.cursor/skills/maintain-documentation/`) for a detailed checklist.
-
-Do not edit plan files (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.plan.md`) unless the user explicitly asks.
+When in doubt, update. See `.cursor/rules/docs-and-ai-context.mdc` (always-applied) and the **maintain-documentation** skill (`.cursor/skills/maintain-documentation/`); the subagent holds the detailed checklist.
 
 ---
 
@@ -122,7 +120,7 @@ Before submitting:
 1. **Commits must be signed off (DCO).** Use `git commit -s` when creating commits. Do not add a `Made-with: Cursor` (or similar) trailer to commit messages. If you already committed without sign-off, run `git commit --amend -s --no-edit` then force-push. See [CONTRIBUTING.md](CONTRIBUTING.md) and the `.cursor/rules/commits-dco.mdc` rule.
 2. Run `make test-all` and `make check-fmt`.
 3. Ensure no new linter errors (`make lint` if available).
-4. If behavior or setup changed, update README, docs/, examples/, and/or AGENTS.md and rules/skills as above.
+4. If behavior or setup changed, delegate to the **documentation-maintainer** subagent.
 5. **Branch naming**: Branch names matching [.github/labeler.yml](.github/labeler.yml) (e.g. `feat/...`, `fix/...`, `enhance/...`, `(deps)/...`, `ci/...`, or branch containing `!` for breaking) get PR labels applied automatically, which drive release-note categories. See [CONTRIBUTING.md](CONTRIBUTING.md#branch-naming-and-pr-labels).
 
 PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ...`, `docs: ...`) but this is not enforced.
