@@ -1,0 +1,10 @@
+---
+description: When creating issues via /feature or /bug, validate the draft with issue-reviewer before calling gh issue create.
+alwaysApply: true
+---
+
+# Issue creation (/feature and /bug)
+
+When handling **`/feature`** or **`/bug`**, the agent must validate the draft (title and body) with the **issue-reviewer** subagent before calling `gh issue create`. Do not upload the issue to GitHub until the review is done and the draft is approved or refined accordingly.
+
+See [.cursor/agents/issue-writer.md](.cursor/agents/issue-writer.md) (step 3.5) and [.cursor/agents/issue-reviewer.md](.cursor/agents/issue-reviewer.md) (draft-content workflow).

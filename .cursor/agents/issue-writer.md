@@ -48,6 +48,12 @@ Templates live in `.github/ISSUE_TEMPLATE/`:
 - **Feature**: Title = clear, concise feature summary. Body = markdown with the three template sections filled from the conversation.
 - **Bug**: Title = `Area: Short description`. Body = markdown with the template sections (What happened?, What did you expect?, Did this work before?, How do we reproduce it?, and optionally Environment, Neptune platform).
 
+### 3.5. Validate with issue-reviewer
+
+- Invoke the **issue-reviewer** subagent with the draft title and body only (no `gh` fetch; pass the draft content so the reviewer evaluates it as pre-upload validation).
+- Use the review output: if the reviewer suggests improvements (e.g. missing repro steps, scope clarification), optionally refine the draft.
+- Proceed to create the issue only after validation.
+
 ### 4. Create the issue
 
 Use the GitHub CLI from the repo root:
@@ -63,7 +69,7 @@ Add labels when appropriate (e.g. `gh issue create ... --label "enhancement"` fo
 
 ### 5. Confirm
 
-After creating the issue, reply with the new issue URL or number (e.g. from `gh issue create` output) and a one-line summary of what was opened.
+After creating the issue, reply with the new issue URL or number (e.g. from `gh issue create` output), a one-line summary of what was opened, and that the draft was validated by issue-reviewer before creation.
 
 ---
 
