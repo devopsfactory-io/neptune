@@ -1153,8 +1153,8 @@ github.com/google/go-github/v58 v58.0.0 h1:Una7GGERlF/37XfkPwpzYJe0Vp4dt2k1kCjlx
 github.com/google/go-github/v58 v58.0.0/go.mod h1:k4hxDKEfoWpSqFlc8LTpGd9fu2KrV1YAa6Hi6FmDNY4=
 github.com/google/go-github/v67 v67.0.0 h1:g11NDAmfaBaCO8qYdI9fsmbaRipHNWRIU/2YGvlh4rg=
 github.com/google/go-github/v67 v67.0.0/go.mod h1:zH3K7BxjFndr9QSeFibx4lTKkYS3K9nDanoI1NjaOtY=
-github.com/google/go-github/v83 v83.0.0 h1:Ydy4gAfqxrnFUwXAuKl/OMhhGa0KtMtnJ3EozIIuHT0=
-github.com/google/go-github/v83 v83.0.0/go.mod h1:gbqarhK37mpSu8Xy7sz21ITtznvzouyHSAajSaYCHe8=
+github.com/google/go-github/v84 v84.0.0 h1:I/0Xn5IuChMe8TdmI2bbim5nyhaRFJ7DEdzmD2w+yVA=
+github.com/google/go-github/v84 v84.0.0/go.mod h1:WwYL1z1ajRdlaPszjVu/47x1L0PXukJBn73xsiYrRRQ=
 github.com/google/go-jsonnet v0.20.0 h1:WG4TTSARuV7bSm4PMB4ohjxe33IHT5WVTrJSU33uT4g=
 github.com/google/go-jsonnet v0.20.0/go.mod h1:VbgWF9JX7ztlv770x/TolZNGGFfiHEVx9G6ca2eUmeA=
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
