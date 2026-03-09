@@ -33,8 +33,8 @@ Guidance for AI coding agents working on the Neptune project.
 - **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`—including `labeled` when the added label is `NEPTUNE_PR_LABEL`—and `issue_comment`, trigger `repository_dispatch`; optional `NEPTUNE_PR_LABEL` gates on PR label). See [lambda/README.md](lambda/README.md).
 - **`lambda/cloudformation/`** – CloudFormation template to deploy the Lambda (Function URL, IAM, Secrets Manager). See [lambda/README.md](lambda/README.md#deploy-with-cloudformation).
 - **`Makefile`**, **`.golangci.yml`**, **`.goreleaser.yml`**, **`.github/workflows/`** – Build, test, lint, release.
-- **`.cursor/agents/`** – Cursor/Task subagents: documentation-maintainer (runs the doc checklist after code/config/CI changes; delegate to it for README, docs/, examples/, AGENTS.md, rules, commands, skills), issue-reviewer, pr-reviewer (discoverable for triage and PR review), issue-writer (opens feature requests and bug reports from `/feature` and `/bug` using [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/); drafts are validated by issue-reviewer before upload).
-- **`.cursor/commands/`** – Cursor slash commands: `/feature`, `/bug` (invoke the issue-writer workflow to create issues from the repo’s issue templates; the draft is validated by issue-reviewer before `gh issue create`).
+- **`.claude/agents/`** – Claude agents: documentation-maintainer (runs the doc checklist after code/config/CI changes; delegate to it for README, docs/, examples/, AGENTS.md, CLAUDE.md, commands, skills), issue-reviewer, pr-reviewer (discoverable for triage and PR review), issue-writer (opens feature requests and bug reports from `/feature` and `/bug` using [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/); drafts are validated by issue-reviewer before upload).
+- **`.claude/commands/`** – Claude slash commands: `/feature`, `/bug` (invoke the issue-writer workflow to create issues from the repo’s issue templates; the draft is validated by issue-reviewer before `gh issue create`).
 - **Root community docs**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md), [GOVERNANCE.md](GOVERNANCE.md), [MAINTAINERS.md](MAINTAINERS.md), [ROADMAP.md](ROADMAP.md), [LICENSE](LICENSE).
 
 ---
@@ -106,10 +106,10 @@ Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/d
 
 After any change that affects behavior, APIs, config, or CI:
 
-1. **Delegate**: Delegate documentation updates to the **documentation-maintainer** subagent (`.cursor/agents/documentation-maintainer.md`) so it runs the full maintain-documentation checklist (README, docs/, examples/, AGENTS.md, .cursor/rules, .cursor/commands, .cursor/skills).
+1. **Delegate**: Delegate documentation updates to the **documentation-maintainer** subagent (`.claude/agents/documentation-maintainer.md`) so it runs the full maintain-documentation checklist (README, docs/, examples/, AGENTS.md, CLAUDE.md, .claude/commands, .claude/skills).
 2. **Do not edit plan files** (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.plan.md`) unless the user explicitly asks.
 
-When in doubt, update. See `.cursor/rules/docs-and-ai-context.mdc` (always-applied) and the **maintain-documentation** skill (`.cursor/skills/maintain-documentation/`); the subagent holds the detailed checklist.
+When in doubt, update. See `CLAUDE.md` (Documentation rule, always applies) and the **maintain-documentation** skill (`.claude/skills/maintain-documentation/`); the agent holds the detailed checklist.
 
 ---
 
@@ -117,7 +117,7 @@ When in doubt, update. See `.cursor/rules/docs-and-ai-context.mdc` (always-appli
 
 Before submitting:
 
-1. **Commits must be signed off (DCO).** Use `git commit -s` when creating commits. Do not add a `Made-with: Cursor` (or similar) trailer to commit messages. If you already committed without sign-off, run `git commit --amend -s --no-edit` then force-push. See [CONTRIBUTING.md](CONTRIBUTING.md) and the `.cursor/rules/commits-dco.mdc` rule.
+1. **Commits must be signed off (DCO).** Use `git commit -s` when creating commits. Do not add a `Made-with: Cursor` (or similar) trailer to commit messages. If you already committed without sign-off, run `git commit --amend -s --no-edit` then force-push. See [CONTRIBUTING.md](CONTRIBUTING.md) and `CLAUDE.md` (DCO rule).
 2. Run `make test-all` and `make check-fmt`.
 3. Ensure no new linter errors (`make lint` if available).
 4. If behavior or setup changed, delegate to the **documentation-maintainer** subagent.
@@ -131,9 +131,9 @@ PR titles may follow a conventional style (e.g. `feat(cmd): ...`, `fix(lock): ..
 
 - **Contributing (human)**: [CONTRIBUTING.md](CONTRIBUTING.md) – main entry for contributors; [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md); issue and PR templates in [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) and [.github/pull_request_template.md](.github/pull_request_template.md).
 - **Governance**: [GOVERNANCE.md](GOVERNANCE.md), [MAINTAINERS.md](MAINTAINERS.md), [ROADMAP.md](ROADMAP.md).
-- **Cursor rules**: `.cursor/rules/` – file-specific and always-applied rules.
-- **Cursor commands**: `.cursor/commands/` – slash commands (e.g. `/feature`, `/bug`) that trigger the issue-writer workflow. Drafts are validated by issue-reviewer before creation.
-- **Cursor skills**: `.cursor/skills/` – workflows for documentation maintenance, releases, testing, and open-pull-request (open a PR from current changes via gh CLI).
+- **Claude project rules**: `CLAUDE.md` – mandatory rules (DCO, Go standards, CI/release, config schema) embedded as project instructions.
+- **Claude commands**: `.claude/commands/` – slash commands (e.g. `/feature`, `/bug`) that trigger the issue-writer workflow. Drafts are validated by issue-reviewer before creation.
+- **Claude skills**: `.claude/skills/` – workflows for documentation maintenance, releases, testing, and open-pull-request (open a PR from current changes via gh CLI).
 - **Getting started**: [docs/getting-started-terramate.md](docs/getting-started-terramate.md) and [docs/getting-started-local-stacks.md](docs/getting-started-local-stacks.md) – onboarding with GitHub Actions and neptbot (Terramate or local stacks).
 - **Neptune config**: [docs/configuration.md](docs/configuration.md) and [.neptune.example.yaml](.neptune.example.yaml) for `.neptune.yaml` schema; [docs/object-storage.md](docs/object-storage.md) for backend env vars.
 - **Why Neptune / workflow comparison**: [docs/workflow-comparison.md](docs/workflow-comparison.md) – comparison of normal Terraform + GitHub Actions, Neptune, and Atlantis; use when explaining rationale for apply-before-merge.
