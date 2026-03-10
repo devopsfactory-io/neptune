@@ -19,7 +19,11 @@ Every commit **must** be signed off with `git commit -s`. The DCO bot is enabled
 
 ### Documentation After Changes
 
-After any change that affects behavior, config, CLI flags, or CI, delegate documentation updates to the **documentation-maintainer** agent:
+After any change that affects behavior, config, CLI flags, or CI, delegate documentation updates to the **documentation-maintainer** agent.
+
+**Within a Claude Code session:** Use the Agent tool with `subagent_type: "documentation-maintainer"` and describe what changed in the prompt.
+
+**From terminal:**
 
 ```bash
 claude --agent documentation-maintainer "update docs for: <what changed>"
