@@ -28,7 +28,7 @@ builds:
   - id: lambda
     dir: lambda
     main: .
-    binary: neptune-webhook-{{ .Os}}-{{ .Arch}}
+    binary: bootstrap
     goos:
       - linux
     goarch:
