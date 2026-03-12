@@ -27,12 +27,12 @@ e2e.localstacksfiles:
 e2e.localdeclaredstacks:
 	./e2e/scripts/run-local-declared-stacks.sh
 
-# Lambda (separate Go module under lambda/). Binary name neptune-webhook; CloudFormation Handler must match.
+# Lambda (separate Go module under lambda/). Binary named bootstrap for provided.al2023 runtime.
 lambda.build:
-	cd lambda && GOOS=linux GOARCH=amd64 go build -o neptune-webhook .
+	cd lambda && GOOS=linux GOARCH=amd64 go build -o bootstrap .
 
 lambda.zip: lambda.build
-	cd lambda && zip -q neptune-webhook.zip neptune-webhook
+	cd lambda && zip -qj neptune-webhook.zip bootstrap
 
 lambda.test:
 	cd lambda && go test ./...

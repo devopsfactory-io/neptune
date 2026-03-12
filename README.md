@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <img src="./img/neptune-logo.png" alt="Neptune Logo" width="175"/><br><br>
+  <img src="./img/neptune-logo.png" alt="Neptune Logo" width="100"/><br><br>
   <b>Terraform and OpenTofu Pull Request Automation with Github Actions</b>
 </p>
 

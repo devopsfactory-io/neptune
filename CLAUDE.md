@@ -17,6 +17,26 @@ Every commit **must** be signed off with `git commit -s`. The DCO bot is enabled
 - If you committed without sign-off: `git commit --amend -s --no-edit` then force-push.
 - Never add `Made-with: Cursor` or similar trailers to commit messages.
 
+Before every commit, verify `user.name` and `user.email` are set in git config (global or local):
+
+```sh
+git config user.name   # must return a non-empty value
+git config user.email  # must return a non-empty value
+```
+
+If either is missing, resolve the values before committing:
+
+1. Try to infer them from context — run `gh api user --jq '.name,.email'` to retrieve the authenticated GitHub user's name and email.
+2. If the email is private or empty, try `gh api user/emails --jq '.[].email'` and pick the primary address.
+3. If the values still cannot be determined, **ask the user** what `user.name` and `user.email` should be — do not use placeholder values.
+
+Once resolved:
+
+```sh
+git config user.name "<resolved name>"
+git config user.email "<resolved email>"
+```
+
 ### Documentation After Changes
 
 After any change that affects behavior, config, CLI flags, or CI, delegate documentation updates to the **documentation-maintainer** agent.
