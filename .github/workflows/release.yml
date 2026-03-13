@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   goreleaser:
@@ -28,3 +29,50 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_REPOSITORY: ${{ github.repository }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          role-to-assume: ${{ secrets.RELEASE_ROLE_ARN }}
+          aws-region: us-east-2
+
+      - name: Upload Lambda to S3
+        run: |
+          aws s3 cp dist/neptune-webhook-linux-amd64.zip \
+            s3://neptune-lambda-s3/${{ github.ref_name }}/neptune-webhook-linux-amd64.zip
+
+      - name: Deploy Lambda via CloudFormation
+        run: |
+          aws cloudformation update-stack \
+            --stack-name neptune-webhook \
+            --use-previous-template \
+            --capabilities CAPABILITY_IAM \
+            --parameters \
+              ParameterKey=GitHubAppId,UsePreviousValue=true \
+              ParameterKey=LambdaS3Bucket,UsePreviousValue=true \
+              ParameterKey=LambdaS3Key,ParameterValue="${{ github.ref_name }}/neptune-webhook-linux-amd64.zip" \
+              ParameterKey=WebhookSecretArn,UsePreviousValue=true \
+              ParameterKey=PrivateKeySecretArn,UsePreviousValue=true \
+              ParameterKey=GitHubAppSlug,UsePreviousValue=true \
+              ParameterKey=NeptunePrLabel,UsePreviousValue=true
+          aws cloudformation wait stack-update-complete --stack-name neptune-webhook
+
+      - name: Smoke test webhook
+        run: |
+          URL=$(aws cloudformation describe-stacks \
+            --stack-name neptune-webhook \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebhookUrl`].OutputValue' \
+            --output text)
+          echo "::add-mask::$URL"
+          # GET must return 405 (Method Not Allowed)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          [ "$STATUS" = "405" ] || { echo "Expected 405, got $STATUS"; exit 1; }
+          echo "GET -> 405 OK"
+
+          # POST with invalid signature must return 401 (Unauthorized)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$URL" \
+            -H "X-Hub-Signature-256: sha256=invalid" \
+            -H "X-GitHub-Event: ping" \
+            -d '{}')
+          [ "$STATUS" = "401" ] || { echo "Expected 401, got $STATUS"; exit 1; }
+          echo "POST invalid-sig -> 401 OK"
