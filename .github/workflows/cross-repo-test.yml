@@ -1,0 +1,335 @@
+# End-to-end test against a real external repository (neptune-tests).
+# Creates a PR on neptune-tests with dynamic stacks, waits for neptbot
+# to trigger plan/apply via the full webhook flow, and verifies results.
+#
+# Runs in parallel with existing e2e and integration workflows.
+name: cross-repo-test
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches:
+      - main
+      - "release-**"
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    outputs:
+      should-run: ${{ steps.changes.outputs.cross-repo == 'true' }}
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: changes
+        with:
+          filters: |
+            cross-repo:
+              - 'e2e/**'
+              - 'cmd/**'
+              - 'internal/**'
+              - 'lambda/**'
+              - '.github/workflows/cross-repo-test.yml'
+              - 'go.*'
+
+  cross-repo-test:
+    needs: [changes]
+    if: needs.changes.outputs.should-run == 'true'
+    name: cross-repo-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build Neptune (verify compile)
+        run: go build -o neptune .
+
+      # Generate a token for the neptune-ci GitHub App to interact with neptune-tests
+      - name: Generate neptune-ci App token
+        id: app-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2
+        with:
+          app-id: ${{ secrets.NEPTUNE_CI_APP_ID }}
+          private-key: ${{ secrets.NEPTUNE_CI_PRIVATE_KEY }}
+          owner: devopsfactory-io
+          repositories: neptune-tests
+
+      - name: Create test branch and PR on neptune-tests
+        id: create-pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          NEPTUNE_PR: ${{ github.event.pull_request.number }}
+          NEPTUNE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          REPO="devopsfactory-io/neptune-tests"
+          BRANCH="neptune-ci/pr-${NEPTUNE_PR}"
+
+          echo "::group::Setup test branch"
+
+          # Get main branch SHA
+          MAIN_SHA=$(gh api "repos/${REPO}/git/ref/heads/main" --jq '.object.sha')
+
+          # Delete existing branch if it exists (from a previous run)
+          gh api "repos/${REPO}/git/refs/heads/${BRANCH}" --method DELETE 2>/dev/null || true
+
+          # Create branch from main
+          gh api "repos/${REPO}/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/${BRANCH}" \
+            -f "sha=${MAIN_SHA}" > /dev/null
+
+          echo "::endgroup::"
+          echo "::group::Create dynamic stacks"
+
+          # Create stack.hcl and terragrunt.hcl for two dynamic stacks
+          for i in 1 2; do
+            STACK_NAME="apps/web/ci-${NEPTUNE_PR}-${i}"
+
+            # stack.hcl content
+            STACK_HCL=$(cat <<STACK_EOF
+          stack {
+            name = "${STACK_NAME}"
+          }
+          STACK_EOF
+          )
+
+            # terragrunt.hcl content
+            TG_HCL=$(cat <<TG_EOF
+          terraform {
+            source = "../../../_modules/null-stack"
+          }
+
+          include "root" {
+            path = find_in_parent_folders("terragrunt.hcl")
+          }
+
+          inputs = {
+            stack_name = "${STACK_NAME}"
+          }
+          TG_EOF
+          )
+
+            # Get the tree SHA for the branch
+            TREE_SHA=$(gh api "repos/${REPO}/git/ref/heads/${BRANCH}" --jq '.object.sha')
+            COMMIT_TREE=$(gh api "repos/${REPO}/git/commits/${TREE_SHA}" --jq '.tree.sha')
+
+            # Create blobs for each file
+            STACK_BLOB=$(gh api "repos/${REPO}/git/blobs" \
+              --method POST \
+              -f "content=${STACK_HCL}" \
+              -f "encoding=utf-8" \
+              --jq '.sha')
+
+            TG_BLOB=$(gh api "repos/${REPO}/git/blobs" \
+              --method POST \
+              -f "content=${TG_HCL}" \
+              -f "encoding=utf-8" \
+              --jq '.sha')
+
+            # Create tree with both files
+            NEW_TREE=$(gh api "repos/${REPO}/git/trees" \
+              --method POST \
+              -f "base_tree=${COMMIT_TREE}" \
+              --input <(jq -n \
+                --arg stack_path "${STACK_NAME}/stack.hcl" \
+                --arg stack_sha "${STACK_BLOB}" \
+                --arg tg_path "${STACK_NAME}/terragrunt.hcl" \
+                --arg tg_sha "${TG_BLOB}" \
+                '{tree: [
+                  {path: $stack_path, mode: "100644", type: "blob", sha: $stack_sha},
+                  {path: $tg_path, mode: "100644", type: "blob", sha: $tg_sha}
+                ]}') \
+              --jq '.sha')
+
+            # Create commit
+            NEW_COMMIT=$(gh api "repos/${REPO}/git/commits" \
+              --method POST \
+              -f "message=ci: add dynamic stack ${STACK_NAME} for Neptune PR #${NEPTUNE_PR}" \
+              -f "tree=${NEW_TREE}" \
+              -f "parents[]=${TREE_SHA}" \
+              --jq '.sha')
+
+            # Update branch ref
+            gh api "repos/${REPO}/git/refs/heads/${BRANCH}" \
+              --method PATCH \
+              -f "sha=${NEW_COMMIT}" > /dev/null
+
+            echo "Created stack: ${STACK_NAME}"
+          done
+
+          echo "::endgroup::"
+          echo "::group::Create PR"
+
+          # Close any existing PR from this branch
+          EXISTING_PR=$(gh pr list --repo "${REPO}" --head "${BRANCH}" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING_PR" ]; then
+            gh pr close --repo "${REPO}" "${EXISTING_PR}" 2>/dev/null || true
+          fi
+
+          # Create PR with neptune-ref in the description and neptune label
+          PR_URL=$(gh pr create \
+            --repo "${REPO}" \
+            --base main \
+            --head "${BRANCH}" \
+            --title "CI: Neptune PR #${NEPTUNE_PR} integration test" \
+            --body "$(cat <<PR_EOF
+          Automated integration test for devopsfactory-io/neptune#${NEPTUNE_PR}
+
+          neptune-ref: ${NEPTUNE_SHA}
+
+          This PR was created by Neptune CI to test plan/apply against real stacks.
+          PR_EOF
+          )" \
+            --label neptune)
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+          echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "Created PR: ${PR_URL}"
+
+          echo "::endgroup::"
+
+      - name: Wait for plan to complete
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
+        run: |
+          set -euo pipefail
+          REPO="devopsfactory-io/neptune-tests"
+          MAX_WAIT=600  # 10 minutes
+          INTERVAL=15
+          ELAPSED=0
+
+          echo "Waiting for 'neptune plan' commit status on PR #${TEST_PR}..."
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # Get the head SHA of the test PR
+            HEAD_SHA=$(gh api "repos/${REPO}/pulls/${TEST_PR}" --jq '.head.sha')
+
+            # Check commit statuses for "neptune plan"
+            STATUS=$(gh api "repos/${REPO}/commits/${HEAD_SHA}/statuses" \
+              --jq '[.[] | select(.context == "neptune plan")] | sort_by(.updated_at) | last | .state // empty')
+
+            if [ "$STATUS" = "success" ]; then
+              echo "Plan succeeded!"
+              break
+            elif [ "$STATUS" = "failure" ] || [ "$STATUS" = "error" ]; then
+              echo "Plan failed with status: ${STATUS}"
+              exit 1
+            fi
+
+            echo "Plan status: ${STATUS:-pending} (${ELAPSED}s / ${MAX_WAIT}s)"
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "Timed out waiting for plan to complete"
+            exit 1
+          fi
+
+      - name: Trigger apply via comment
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
+        run: |
+          gh pr comment --repo devopsfactory-io/neptune-tests "${TEST_PR}" \
+            --body "@neptbot apply"
+
+      - name: Wait for apply to complete
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
+        run: |
+          set -euo pipefail
+          REPO="devopsfactory-io/neptune-tests"
+          MAX_WAIT=600
+          INTERVAL=15
+          ELAPSED=0
+
+          echo "Waiting for 'neptune apply' commit status on PR #${TEST_PR}..."
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            HEAD_SHA=$(gh api "repos/${REPO}/pulls/${TEST_PR}" --jq '.head.sha')
+
+            STATUS=$(gh api "repos/${REPO}/commits/${HEAD_SHA}/statuses" \
+              --jq '[.[] | select(.context == "neptune apply")] | sort_by(.updated_at) | last | .state // empty')
+
+            if [ "$STATUS" = "success" ]; then
+              echo "Apply succeeded!"
+              break
+            elif [ "$STATUS" = "failure" ] || [ "$STATUS" = "error" ]; then
+              echo "Apply failed with status: ${STATUS}"
+              exit 1
+            fi
+
+            echo "Apply status: ${STATUS:-pending} (${ELAPSED}s / ${MAX_WAIT}s)"
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "Timed out waiting for apply to complete"
+            exit 1
+          fi
+
+      - name: Verify automerge
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
+        run: |
+          set -euo pipefail
+          REPO="devopsfactory-io/neptune-tests"
+
+          # Check if the PR was merged or has auto-merge enabled
+          PR_STATE=$(gh api "repos/${REPO}/pulls/${TEST_PR}" --jq '{state: .state, merged: .merged, auto_merge: .auto_merge}')
+          echo "PR state: ${PR_STATE}"
+
+          MERGED=$(echo "$PR_STATE" | jq -r '.merged')
+          AUTO_MERGE=$(echo "$PR_STATE" | jq -r '.auto_merge')
+
+          if [ "$MERGED" = "true" ]; then
+            echo "PR was merged (automerge worked)"
+          elif [ "$AUTO_MERGE" != "null" ]; then
+            echo "Auto-merge is enabled on the PR"
+          else
+            echo "Warning: PR is not merged and auto-merge is not enabled"
+          fi
+
+      - name: Cleanup
+        if: always()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
+          NEPTUNE_PR: ${{ github.event.pull_request.number }}
+        run: |
+          REPO="devopsfactory-io/neptune-tests"
+          BRANCH="neptune-ci/pr-${NEPTUNE_PR}"
+
+          # Close PR if still open
+          if [ -n "${TEST_PR}" ]; then
+            PR_STATE=$(gh api "repos/${REPO}/pulls/${TEST_PR}" --jq '.state' 2>/dev/null || echo "unknown")
+            if [ "$PR_STATE" = "open" ]; then
+              echo "Closing test PR #${TEST_PR}..."
+              gh pr close --repo "${REPO}" "${TEST_PR}" 2>/dev/null || true
+            fi
+          fi
+
+          # Delete branch
+          echo "Deleting branch ${BRANCH}..."
+          gh api "repos/${REPO}/git/refs/heads/${BRANCH}" --method DELETE 2>/dev/null || true
+
+          echo "Cleanup complete"
+
+  skip:
+    needs: [changes]
+    if: needs.changes.outputs.should-run == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No cross-repo-relevant changes, skipping cross-repo-test"
