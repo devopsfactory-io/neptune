@@ -11,6 +11,12 @@ on:
     branches:
       - main
       - "release-**"
+  workflow_dispatch:
+    inputs:
+      root_hcl_filename:
+        description: "Root HCL filename used in find_in_parent_folders() (e.g. root.hcl or terragrunt.hcl)"
+        required: false
+        default: "root.hcl"
 
 permissions:
   contents: read
@@ -136,7 +142,7 @@ jobs:
           }
 
           include "root" {
-            path = find_in_parent_folders("terragrunt.hcl")
+            path = find_in_parent_folders("${{ inputs.root_hcl_filename || 'root.hcl' }}")
           }
 
           inputs = {
