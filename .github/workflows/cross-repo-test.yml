@@ -108,7 +108,16 @@ jobs:
           echo "::endgroup::"
           echo "::group::Create dynamic stacks"
 
-          # Create stack.hcl and terragrunt.hcl for two dynamic stacks
+          # Create stack.hcl and terragrunt.hcl for two dynamic stacks in a single commit
+          # to avoid GitHub API eventual consistency races when updating the branch ref.
+
+          # Read current branch tip once — used as parent commit and base tree
+          PARENT_SHA=$(gh api "repos/${REPO}/git/ref/heads/${BRANCH}" --jq '.object.sha')
+          BASE_TREE=$(gh api "repos/${REPO}/git/commits/${PARENT_SHA}" --jq '.tree.sha')
+
+          # Accumulate jq tree-entry fragments across both stacks
+          TREE_ENTRIES='[]'
+
           for i in 1 2; do
             STACK_NAME="apps/web/ci-${NEPTUNE_PR}-${i}"
 
@@ -136,11 +145,7 @@ jobs:
           TG_EOF
           )
 
-            # Get the tree SHA for the branch
-            TREE_SHA=$(gh api "repos/${REPO}/git/ref/heads/${BRANCH}" --jq '.object.sha')
-            COMMIT_TREE=$(gh api "repos/${REPO}/git/commits/${TREE_SHA}" --jq '.tree.sha')
-
-            # Create blobs for each file
+            # Create blobs for this stack's files
             STACK_BLOB=$(gh api "repos/${REPO}/git/blobs" \
               --method POST \
               -f "content=${STACK_HCL}" \
@@ -153,36 +158,43 @@ jobs:
               -f "encoding=utf-8" \
               --jq '.sha')
 
-            # Create tree with both files
-            NEW_TREE=$(gh api "repos/${REPO}/git/trees" \
-              --method POST \
-              -f "base_tree=${COMMIT_TREE}" \
-              --input <(jq -n \
-                --arg stack_path "${STACK_NAME}/stack.hcl" \
-                --arg stack_sha "${STACK_BLOB}" \
-                --arg tg_path "${STACK_NAME}/terragrunt.hcl" \
-                --arg tg_sha "${TG_BLOB}" \
-                '{tree: [
-                  {path: $stack_path, mode: "100644", type: "blob", sha: $stack_sha},
-                  {path: $tg_path, mode: "100644", type: "blob", sha: $tg_sha}
-                ]}') \
-              --jq '.sha')
+            # Append the two entries for this stack into the accumulated array
+            TREE_ENTRIES=$(jq -n \
+              --argjson existing "${TREE_ENTRIES}" \
+              --arg stack_path "${STACK_NAME}/stack.hcl" \
+              --arg stack_sha "${STACK_BLOB}" \
+              --arg tg_path "${STACK_NAME}/terragrunt.hcl" \
+              --arg tg_sha "${TG_BLOB}" \
+              '$existing + [
+                {path: $stack_path, mode: "100644", type: "blob", sha: $stack_sha},
+                {path: $tg_path,    mode: "100644", type: "blob", sha: $tg_sha}
+              ]')
 
-            # Create commit
-            NEW_COMMIT=$(gh api "repos/${REPO}/git/commits" \
-              --method POST \
-              -f "message=ci: add dynamic stack ${STACK_NAME} for Neptune PR #${NEPTUNE_PR}" \
-              -f "tree=${NEW_TREE}" \
-              -f "parents[]=${TREE_SHA}" \
-              --jq '.sha')
-
-            # Update branch ref
-            gh api "repos/${REPO}/git/refs/heads/${BRANCH}" \
-              --method PATCH \
-              -f "sha=${NEW_COMMIT}" > /dev/null
-
-            echo "Created stack: ${STACK_NAME}"
+            echo "Prepared stack: ${STACK_NAME}"
           done
+
+          # Create ONE tree containing all 4 files, rooted at the current branch tree
+          NEW_TREE=$(jq -n --argjson tree "${TREE_ENTRIES}" '{tree: $tree}' | \
+            gh api "repos/${REPO}/git/trees" \
+            --method POST \
+            -f "base_tree=${BASE_TREE}" \
+            --input - \
+            --jq '.sha')
+
+          # Create ONE commit with that tree
+          NEW_COMMIT=$(gh api "repos/${REPO}/git/commits" \
+            --method POST \
+            -f "message=ci: add dynamic stacks ci-${NEPTUNE_PR}-1 and ci-${NEPTUNE_PR}-2 for Neptune PR #${NEPTUNE_PR}" \
+            -f "tree=${NEW_TREE}" \
+            -f "parents[]=${PARENT_SHA}" \
+            --jq '.sha')
+
+          # Update the branch ref ONCE — eliminates the eventual consistency race
+          gh api "repos/${REPO}/git/refs/heads/${BRANCH}" \
+            --method PATCH \
+            -f "sha=${NEW_COMMIT}" > /dev/null
+
+          echo "Created stacks: apps/web/ci-${NEPTUNE_PR}-1 and apps/web/ci-${NEPTUNE_PR}-2"
 
           echo "::endgroup::"
           echo "::group::Verify branch tree"
