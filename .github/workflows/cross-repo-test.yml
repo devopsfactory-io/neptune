@@ -174,10 +174,12 @@ jobs:
           done
 
           # Create ONE tree containing all 4 files, rooted at the current branch tree
-          NEW_TREE=$(jq -n --argjson tree "${TREE_ENTRIES}" '{tree: $tree}' | \
+          NEW_TREE=$(jq -n \
+            --argjson tree "${TREE_ENTRIES}" \
+            --arg base_tree "${BASE_TREE}" \
+            '{base_tree: $base_tree, tree: $tree}' | \
             gh api "repos/${REPO}/git/trees" \
             --method POST \
-            -f "base_tree=${BASE_TREE}" \
             --input - \
             --jq '.sha')
 
