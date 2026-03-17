@@ -134,9 +134,12 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 		if commentLoginLower == selfBotLogin {
 			return nil, 0, 0, nil, false, nil
 		}
-		// Skip bot comments that contain instructional @mention text
-		// (e.g. plan result comments that say "To apply these changes, comment: @neptbot apply").
-		// This prevents self-triggering when bots post plan results with GITHUB_TOKEN.
+		// Skip bot comments that contain instructional @mention text.
+		// This check is intentionally inside the Bot type guard: human users posting
+		// the same phrase still trigger commands normally.
+		// The phrase "to apply these changes" originates from formatPlan in
+		// internal/notifications/github/comment.go — keep both in sync if the
+		// wording changes.
 		if strings.Contains(bodyLower, "to apply these changes") {
 			return nil, 0, 0, nil, false, nil
 		}

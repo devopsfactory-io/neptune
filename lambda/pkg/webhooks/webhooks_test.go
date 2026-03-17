@@ -389,6 +389,9 @@ func TestParseIssueComment_MentionNoCommand(t *testing.T) {
 	}
 }
 
+// TestParseIssueComment_BotAuthorDoesNotTrigger tests the self-bot login filter:
+// the comment author is neptbot[bot], which matches the selfBotLogin guard and
+// returns early before reaching the instructional text check.
 func TestParseIssueComment_BotAuthorDoesNotTrigger(t *testing.T) {
 	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentBotAuthor), "neptbot")
 	if err != nil {
@@ -517,6 +520,56 @@ const issueCommentWithOtherLabel = `{
   "installation": {"id": 111},
   "comment": {"id": 1002, "body": "@neptbot plan"}
 }`
+
+// issueCommentExternalBotInstructionalText simulates an external bot (not the Neptune
+// app bot) posting a comment that contains the instructional text phrase used in plan
+// results. Despite being a different bot login, the instructional text guard applies to
+// all Bot-type users and must prevent triggering.
+const issueCommentExternalBotInstructionalText = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 7007, "body": "To apply these changes, comment:\n@neptbot apply", "user": {"type": "Bot", "login": "some-other-ci[bot]"}}
+}`
+
+// issueCommentBotInstructionalTextNoApply simulates a bot comment containing "To apply
+// these changes" but without any recognisable command. The early-exit on the
+// instructional text check means the mention guard is never reached for apply/plan
+// matching; the result must still be no-trigger.
+const issueCommentBotInstructionalTextNoApply = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 8008, "body": "To apply these changes, see the run log.", "user": {"type": "Bot", "login": "some-other-ci[bot]"}}
+}`
+
+func TestParseIssueComment_ExternalBotInstructionalTextDoesNotTrigger(t *testing.T) {
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentExternalBotInstructionalText), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatal("expected ok false: external bot posting instructional text should not trigger a command")
+	}
+	if payload != nil {
+		t.Errorf("expected nil payload for external bot instructional text comment, got %+v", payload)
+	}
+}
+
+func TestParseIssueComment_BotInstructionalTextWithoutApplyDoesNotTrigger(t *testing.T) {
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentBotInstructionalTextNoApply), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatal("expected ok false: bot instructional text comment without apply command should not trigger")
+	}
+	if payload != nil {
+		t.Errorf("expected nil payload, got %+v", payload)
+	}
+}
 
 func TestParseIssueComment_Labels(t *testing.T) {
 	payload, _, _, labels, ok, err := ParseIssueComment([]byte(issueCommentWithNeptuneLabel), "neptbot")
