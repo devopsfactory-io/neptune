@@ -76,14 +76,34 @@ jobs:
           # Get main branch SHA
           MAIN_SHA=$(gh api "repos/${REPO}/git/ref/heads/main" --jq '.object.sha')
 
-          # Delete existing branch if it exists (from a previous run)
-          gh api "repos/${REPO}/git/refs/heads/${BRANCH}" --method DELETE 2>/dev/null || true
+          # Force-set the branch to MAIN_SHA: try to create it first; if it already
+          # exists (HTTP 422 "Reference already exists") update it in-place via PATCH.
+          # This avoids the delete→create race where GitHub may not have finished
+          # processing the deletion before the create call arrives.
+          CREATE_OUT=$(gh api "repos/${REPO}/git/refs" \
+               --method POST \
+               -f "ref=refs/heads/${BRANCH}" \
+               -f "sha=${MAIN_SHA}" 2>&1) || {
+            if echo "$CREATE_OUT" | grep -q '"Reference already exists"'; then
+              echo "Branch already exists, force-updating to ${MAIN_SHA}..."
+              gh api "repos/${REPO}/git/refs/heads/${BRANCH}" \
+                --method PATCH \
+                -f "sha=${MAIN_SHA}" \
+                -F "force=true" > /dev/null
+            else
+              echo "ERROR: branch creation failed: $CREATE_OUT"
+              exit 1
+            fi
+          }
 
-          # Create branch from main
-          gh api "repos/${REPO}/git/refs" \
-            --method POST \
-            -f "ref=refs/heads/${BRANCH}" \
-            -f "sha=${MAIN_SHA}" > /dev/null
+          # Verify the ref now points at the expected SHA before we start
+          # committing on top of it.
+          ACTUAL_SHA=$(gh api "repos/${REPO}/git/ref/heads/${BRANCH}" --jq '.object.sha')
+          if [ "${ACTUAL_SHA}" != "${MAIN_SHA}" ]; then
+            echo "ERROR: branch SHA mismatch after setup (expected ${MAIN_SHA}, got ${ACTUAL_SHA})"
+            exit 1
+          fi
+          echo "Branch ${BRANCH} is at ${ACTUAL_SHA} (verified)"
 
           echo "::endgroup::"
           echo "::group::Create dynamic stacks"
@@ -165,6 +185,24 @@ jobs:
           done
 
           echo "::endgroup::"
+          echo "::group::Verify branch tree"
+
+          # Confirm both dynamic stack directories are present in the branch tree.
+          # This catches the case where iteration 1 silently failed to commit.
+          BRANCH_SHA=$(gh api "repos/${REPO}/git/ref/heads/${BRANCH}" --jq '.object.sha')
+          BRANCH_TREE=$(gh api "repos/${REPO}/git/commits/${BRANCH_SHA}" --jq '.tree.sha')
+          FINAL_TREE=$(gh api "repos/${REPO}/git/trees/${BRANCH_TREE}?recursive=1" --jq '[.tree[].path]')
+          for i in 1 2; do
+            EXPECTED_STACK="apps/web/ci-${NEPTUNE_PR}-${i}/stack.hcl"
+            if ! echo "${FINAL_TREE}" | jq -e --arg p "${EXPECTED_STACK}" 'contains([$p])' > /dev/null; then
+              echo "ERROR: expected file '${EXPECTED_STACK}' not found in branch tree"
+              echo "Branch tree paths containing 'ci-': $(echo "${FINAL_TREE}" | jq '[.[] | select(contains("ci-"))]')"
+              exit 1
+            fi
+            echo "Verified: ${EXPECTED_STACK} present in branch tree"
+          done
+
+          echo "::endgroup::"
           echo "::group::Create PR"
 
           # Close any existing PR from this branch
@@ -189,7 +227,11 @@ jobs:
           )" \
             --label neptune)
 
-          PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+          PR_NUMBER=$(echo "$PR_URL" | sed 's|.*/||')
+          if [ -z "${PR_NUMBER}" ]; then
+            echo "ERROR: could not parse PR number from: ${PR_URL}"
+            exit 1
+          fi
           echo "pr-number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
           echo "Created PR: ${PR_URL}"
 
