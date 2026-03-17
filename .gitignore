@@ -21,3 +21,6 @@ neptune
 neptune-webhook.zip
 lambda/neptune-webhook*
 lambda/bootstrap*
+
+# Paperclip
+.paperclip-*
