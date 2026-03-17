@@ -202,10 +202,9 @@ jobs:
           echo "::group::Verify branch tree"
 
           # Confirm both dynamic stack directories are present in the branch tree.
-          # This catches the case where iteration 1 silently failed to commit.
-          BRANCH_SHA=$(gh api "repos/${REPO}/git/ref/heads/${BRANCH}" --jq '.object.sha')
-          BRANCH_TREE=$(gh api "repos/${REPO}/git/commits/${BRANCH_SHA}" --jq '.tree.sha')
-          FINAL_TREE=$(gh api "repos/${REPO}/git/trees/${BRANCH_TREE}?recursive=1" --jq '[.tree[].path]')
+          # Use NEW_TREE directly instead of re-querying the branch ref to avoid
+          # GitHub API eventual consistency returning a stale commit SHA.
+          FINAL_TREE=$(gh api "repos/${REPO}/git/trees/${NEW_TREE}?recursive=1" --jq '[.tree[].path]')
           for i in 1 2; do
             EXPECTED_STACK="apps/web/ci-${NEPTUNE_PR}-${i}/stack.hcl"
             if ! echo "${FINAL_TREE}" | jq -e --arg p "${EXPECTED_STACK}" 'contains([$p])' > /dev/null; then
