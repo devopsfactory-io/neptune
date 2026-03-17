@@ -424,6 +424,31 @@ func TestParseIssueComment_ExternalBotCanTrigger(t *testing.T) {
 	}
 }
 
+// issueCommentPlanTextGitHubActions simulates the plan comment posted by github-actions[bot]
+// when GITHUB_TOKEN is used instead of the app's installation token. The comment body
+// contains "@\u200Bneptbot apply" (zero-width space after @) so it renders identically
+// on GitHub but must not be interpreted as a command by the webhook handler.
+const issueCommentPlanTextGitHubActions = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 5005, "body": "To apply these changes, comment:\n` + "`" + `\n@` + "\u200B" + `neptbot apply\n` + "`" + `", "user": {"type": "Bot", "login": "github-actions[bot]"}}
+}`
+
+func TestParseIssueComment_PlanCommentZWSPDoesNotTrigger(t *testing.T) {
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentPlanTextGitHubActions), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatal("expected ok false: plan comment with zero-width space should not trigger a command")
+	}
+	if payload != nil {
+		t.Errorf("expected nil payload for plan comment with ZWSP, got %+v", payload)
+	}
+}
+
 func TestParseIssueComment_InvalidJSON(t *testing.T) {
 	_, _, _, _, _, err := ParseIssueComment([]byte(`not json`), "neptbot")
 	if err == nil {

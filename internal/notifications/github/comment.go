@@ -180,7 +180,7 @@ func (n *Notifier) formatPlan(comment *domain.PullRequestComment) string {
 			formatStep(&b, out)
 		}
 	}
-	b.WriteString("\nTo apply these changes, comment:\n```\n@neptbot apply\n```\n")
+	b.WriteString("\nTo apply these changes, comment:\n```\n@\u200Bneptbot apply\n```\n")
 	return b.String()
 }
 
