@@ -295,7 +295,15 @@ const issueCommentBotAuthor = `{
   "issue": {"number": 10, "pull_request": {}},
   "repository": {"full_name": "owner/repo"},
   "installation": {"id": 111},
-  "comment": {"id": 3003, "body": "To apply these changes, comment:\n@neptbot apply", "user": {"type": "Bot", "login": "github-actions[bot]"}}
+  "comment": {"id": 3003, "body": "To apply these changes, comment:\n@neptbot apply", "user": {"type": "Bot", "login": "neptbot[bot]"}}
+}`
+
+const issueCommentExternalBot = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 4004, "body": "@neptbot apply", "user": {"type": "Bot", "login": "neptune-ci[bot]"}}
 }`
 
 func TestParseIssueComment_ValidApply(t *testing.T) {
@@ -391,6 +399,28 @@ func TestParseIssueComment_BotAuthorDoesNotTrigger(t *testing.T) {
 	}
 	if payload != nil {
 		t.Errorf("expected nil payload for bot comment, got %+v", payload)
+	}
+}
+
+func TestParseIssueComment_ExternalBotCanTrigger(t *testing.T) {
+	payload, instID, commentID, _, ok, err := ParseIssueComment([]byte(issueCommentExternalBot), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected ok true for external bot comment")
+	}
+	if payload == nil {
+		t.Fatal("expected non-nil payload for external bot comment")
+	}
+	if payload.Command != string(CommandApply) {
+		t.Errorf("command: got %q, want %q", payload.Command, CommandApply)
+	}
+	if instID != 111 {
+		t.Errorf("installation ID: got %d, want 111", instID)
+	}
+	if commentID != 4004 {
+		t.Errorf("comment ID: got %d, want 4004", commentID)
 	}
 }
 

@@ -54,7 +54,8 @@ type IssueCommentPayload struct {
 		ID   int64  `json:"id"`
 		Body string `json:"body"`
 		User struct {
-			Type string `json:"type"`
+			Login string `json:"login"`
+			Type  string `json:"type"`
 		} `json:"user"`
 	} `json:"comment"`
 }
@@ -124,15 +125,21 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 	if !strings.Contains(bodyLower, "@"+mentionLower) {
 		return nil, 0, 0, nil, false, nil
 	}
+	// Only block comments from the app's own bot account to prevent
+	// self-triggering loops. External bots (e.g. neptune-ci[bot]) are
+	// allowed to issue commands.
+	if p.Comment.User.Type == "Bot" {
+		selfBotLogin := mentionLower + "[bot]"
+		if strings.ToLower(p.Comment.User.Login) == selfBotLogin {
+			return nil, 0, 0, nil, false, nil
+		}
+	}
 	var cmd Command
 	if matchApply.MatchString(bodyLower) {
 		cmd = CommandApply
 	} else if matchPlan.MatchString(bodyLower) {
 		cmd = CommandPlan
 	} else {
-		return nil, 0, 0, nil, false, nil
-	}
-	if p.Comment.User.Type == "Bot" {
 		return nil, 0, 0, nil, false, nil
 	}
 	var instID int64
