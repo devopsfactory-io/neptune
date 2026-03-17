@@ -130,7 +130,14 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 	// allowed to issue commands.
 	if p.Comment.User.Type == "Bot" {
 		selfBotLogin := mentionLower + "[bot]"
-		if strings.ToLower(p.Comment.User.Login) == selfBotLogin {
+		commentLoginLower := strings.ToLower(p.Comment.User.Login)
+		if commentLoginLower == selfBotLogin {
+			return nil, 0, 0, nil, false, nil
+		}
+		// Skip bot comments that contain instructional @mention text
+		// (e.g. plan result comments that say "To apply these changes, comment: @neptbot apply").
+		// This prevents self-triggering when bots post plan results with GITHUB_TOKEN.
+		if strings.Contains(bodyLower, "to apply these changes") {
 			return nil, 0, 0, nil, false, nil
 		}
 	}
