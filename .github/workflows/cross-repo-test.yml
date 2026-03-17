@@ -291,13 +291,42 @@ jobs:
             exit 1
           fi
 
-      - name: Trigger apply via comment
+      - name: Trigger apply via repository_dispatch
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
         run: |
-          gh pr comment --repo devopsfactory-io/neptune-tests "${TEST_PR}" \
-            --body "@neptbot apply"
+          set -euo pipefail
+          REPO="devopsfactory-io/neptune-tests"
+
+          # Retrieve current head SHA and branch from the test PR
+          PR_INFO=$(gh api "repos/${REPO}/pulls/${TEST_PR}" \
+            --jq '{sha: .head.sha, branch: .head.ref}')
+          HEAD_SHA=$(echo "$PR_INFO" | jq -r '.sha')
+          PR_BRANCH=$(echo "$PR_INFO" | jq -r '.branch')
+
+          echo "Dispatching apply for PR #${TEST_PR} at ${HEAD_SHA} on branch ${PR_BRANCH}"
+
+          # Use --input to build proper nested JSON for client_payload
+          jq -n \
+            --arg cmd "apply" \
+            --arg pr_num "${TEST_PR}" \
+            --arg repo "${REPO}" \
+            --arg branch "${PR_BRANCH}" \
+            --arg sha "${HEAD_SHA}" \
+            '{
+              event_type: "neptune-command",
+              client_payload: {
+                command: $cmd,
+                pull_request_number: ($pr_num | tonumber),
+                pull_request_repo_full: $repo,
+                pull_request_branch: $branch,
+                pull_request_sha: $sha
+              }
+            }' | \
+          gh api "repos/${REPO}/dispatches" \
+            --method POST \
+            --input -
 
       - name: Wait for apply to complete
         env:
