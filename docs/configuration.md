@@ -93,7 +93,7 @@ steps:
     once: true
 ```
 
-See [.neptune.example.yaml](../.neptune.example.yaml) in the repo root for a full example.
+See [.neptune.example.yaml](https://github.com/devopsfactory-io/neptune/blob/main/.neptune.example.yaml) in the repo root for a full example.
 
 ## Stacks management: terramate vs local
 
