@@ -197,6 +197,56 @@ const pullRequestLabeledOther = `{
   "label": {"name": "other"}
 }`
 
+func TestParsePullRequest_ActionPopulated(t *testing.T) {
+	tests := []struct {
+		name       string
+		body       string
+		wantAction string
+		wantNil    bool
+	}{
+		{
+			name:       "opened",
+			body:       pullRequestOpened,
+			wantAction: "opened",
+		},
+		{
+			name:       "synchronize",
+			body:       pullRequestSynchronize,
+			wantAction: "synchronize",
+		},
+		{
+			name:       "labeled neptune",
+			body:       pullRequestLabeledNeptune,
+			wantAction: "labeled",
+		},
+		{
+			name:    "closed returns nil",
+			body:    pullRequestClosed,
+			wantNil: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			payload, _, _, _, err := ParsePullRequest([]byte(tc.body))
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tc.wantNil {
+				if payload != nil {
+					t.Errorf("expected nil payload, got %+v", payload)
+				}
+				return
+			}
+			if payload == nil {
+				t.Fatal("expected non-nil payload")
+			}
+			if payload.PullRequestAction != tc.wantAction {
+				t.Errorf("PullRequestAction: got %q, want %q", payload.PullRequestAction, tc.wantAction)
+			}
+		})
+	}
+}
+
 func TestParsePullRequest_Labeled(t *testing.T) {
 	payload, instID, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestLabeledNeptune))
 	if err != nil {

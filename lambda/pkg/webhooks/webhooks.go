@@ -21,6 +21,10 @@ type DispatchPayload struct {
 	PullRequestBranch   string `json:"pull_request_branch"`
 	PullRequestSHA      string `json:"pull_request_sha,omitempty"`
 	PullRequestRepoFull string `json:"pull_request_repo_full,omitempty"`
+	// PullRequestAction is the webhook action that triggered this dispatch
+	// (e.g. "opened", "synchronize", "labeled"). It is used internally by the
+	// Lambda handler for deduplication and is not forwarded to the workflow.
+	PullRequestAction string `json:"-"`
 }
 
 // PullRequestPayload is the relevant part of GitHub pull_request webhook.
@@ -70,7 +74,7 @@ type Installation struct {
 	ID int64 `json:"id"`
 }
 
-// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported, label names from pull_request.labels, and for "labeled" the name of the added label (addedLabel); otherwise addedLabel is "".
+// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported, label names from pull_request.labels, and for "labeled" the name of the added label (addedLabel); otherwise addedLabel is "". The returned payload's PullRequestAction field is set to the webhook action.
 func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, string, error) {
 	var p PullRequestPayload
 	if err := json.Unmarshal(body, &p); err != nil {
@@ -102,6 +106,7 @@ func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, string, e
 		PullRequestBranch:   p.PullRequest.Head.Ref,
 		PullRequestSHA:      p.PullRequest.Head.SHA,
 		PullRequestRepoFull: p.Repository.FullName,
+		PullRequestAction:   p.Action,
 	}, instID, labels, addedLabel, nil
 }
 
