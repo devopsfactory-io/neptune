@@ -37,7 +37,7 @@ jobs:
 
   cross-repo-test:
     needs: [changes]
-    if: needs.changes.outputs.should-run == 'true'
+    if: needs.changes.outputs.should-run == 'true' && github.event.pull_request.head.repo.fork != true
     name: cross-repo-test
     runs-on: ubuntu-latest
     env:
@@ -385,7 +385,8 @@ jobs:
           elif [ "$AUTO_MERGE" != "null" ]; then
             echo "Auto-merge is enabled on the PR"
           else
-            echo "Warning: PR is not merged and auto-merge is not enabled"
+            echo "ERROR: PR is not merged and auto-merge is not enabled"
+            exit 1
           fi
 
       - name: Cleanup
