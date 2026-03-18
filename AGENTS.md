@@ -33,7 +33,7 @@ Guidance for AI coding agents working on the Neptune project.
 - **`lambda/`** – AWS Lambda handler for Neptune GitHub App webhooks (verify signature, parse `pull_request`—including `labeled` when the added label is `NEPTUNE_PR_LABEL`—and `issue_comment`, trigger `repository_dispatch`; optional `NEPTUNE_PR_LABEL` gates on PR label). See [lambda/README.md](lambda/README.md).
 - **`lambda/cloudformation/`** – CloudFormation template to deploy the Lambda (Function URL, IAM, Secrets Manager). See [lambda/README.md](lambda/README.md#deploy-with-cloudformation).
 - **`Makefile`**, **`.golangci.yml`**, **`.goreleaser.yml`**, **`.github/workflows/`** – Build, test, lint, release.
-- **`.claude/agents/`** – Claude agents: documentation-maintainer (runs the doc checklist after code/config/CI changes; delegate to it for README, docs/, examples/, AGENTS.md, CLAUDE.md, commands, skills), issue-reviewer, pr-reviewer (discoverable for triage and PR review), issue-writer (opens feature requests and bug reports from `/feature` and `/bug` using [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/); drafts are validated by issue-reviewer before upload).
+- **`.claude/agents/` (migrated to hub)** – Agent definitions have been moved to the [code-agent-hub](https://github.com/devopsfactory-io/code-agent-hub) at `.claude/agents/neptune/`. Agents include: documentation-maintainer, em, go-developer, iac-developer, issue-reviewer, issue-writer, platform-engineering, pr-reviewer, qa, security.
 - **`.claude/commands/`** – Claude slash commands: `/feature`, `/bug` (invoke the issue-writer workflow to create issues from the repo’s issue templates; the draft is validated by issue-reviewer before `gh issue create`).
 - **Root community docs**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md), [GOVERNANCE.md](GOVERNANCE.md), [MAINTAINERS.md](MAINTAINERS.md), [ROADMAP.md](ROADMAP.md), [LICENSE](LICENSE).
 
@@ -107,7 +107,7 @@ Semantic versioning: use tags like `v0.2.0`. GoReleaser injects version/commit/d
 
 After any change that affects behavior, APIs, config, or CI:
 
-1. **Delegate**: Delegate documentation updates to the **documentation-maintainer** subagent (`.claude/agents/documentation-maintainer.md`) so it runs the full maintain-documentation checklist (README, docs/, examples/, AGENTS.md, CLAUDE.md, .claude/commands, .claude/skills).
+1. **Delegate**: Delegate documentation updates to the **documentation-maintainer** agent (defined in the hub at `.claude/agents/neptune/documentation-maintainer/`) so it runs the full maintain-documentation checklist (README, docs/, examples/, AGENTS.md, CLAUDE.md, .claude/commands, .claude/skills).
 2. **Do not edit plan files** (e.g. `neptune_go_rewrite*.plan.md` or `ai_agent_config*.plan.md`) unless the user explicitly asks.
 
 When in doubt, update. See `CLAUDE.md` (Documentation rule, always applies) and the **maintain-documentation** skill (`.claude/skills/maintain-documentation/`); the agent holds the detailed checklist.
