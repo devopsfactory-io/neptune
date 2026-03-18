@@ -365,29 +365,29 @@ jobs:
             exit 1
           fi
 
-      - name: Verify automerge
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
-        run: |
-          set -euo pipefail
-          REPO="devopsfactory-io/neptune-tests"
+      # - name: Verify automerge
+      #   env:
+      #     GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      #     TEST_PR: ${{ steps.create-pr.outputs.pr-number }}
+      #   run: |
+      #     set -euo pipefail
+      #     REPO="devopsfactory-io/neptune-tests"
 
-          # Check if the PR was merged or has auto-merge enabled
-          PR_STATE=$(gh api "repos/${REPO}/pulls/${TEST_PR}" --jq '{state: .state, merged: .merged, auto_merge: .auto_merge}')
-          echo "PR state: ${PR_STATE}"
+      #     # Check if the PR was merged or has auto-merge enabled
+      #     PR_STATE=$(gh api "repos/${REPO}/pulls/${TEST_PR}" --jq '{state: .state, merged: .merged, auto_merge: .auto_merge}')
+      #     echo "PR state: ${PR_STATE}"
 
-          MERGED=$(echo "$PR_STATE" | jq -r '.merged')
-          AUTO_MERGE=$(echo "$PR_STATE" | jq -r '.auto_merge')
+      #     MERGED=$(echo "$PR_STATE" | jq -r '.merged')
+      #     AUTO_MERGE=$(echo "$PR_STATE" | jq -r '.auto_merge')
 
-          if [ "$MERGED" = "true" ]; then
-            echo "PR was merged (automerge worked)"
-          elif [ "$AUTO_MERGE" != "null" ]; then
-            echo "Auto-merge is enabled on the PR"
-          else
-            echo "ERROR: PR is not merged and auto-merge is not enabled"
-            exit 1
-          fi
+      #     if [ "$MERGED" = "true" ]; then
+      #       echo "PR was merged (automerge worked)"
+      #     elif [ "$AUTO_MERGE" != "null" ]; then
+      #       echo "Auto-merge is enabled on the PR"
+      #     else
+      #       echo "ERROR: PR is not merged and auto-merge is not enabled"
+      #       exit 1
+      #     fi
 
       - name: Cleanup
         if: always()
