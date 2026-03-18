@@ -20,4 +20,4 @@ This folder contains detailed documentation for configuration, object storage, i
 | [Usage](usage.md) | GitHub Actions/PR flow and CLI reference |
 | [GitHub App and Lambda](github-app-and-lambda.md) | Trigger Neptune via GitHub App webhooks and AWS Lambda (`repository_dispatch`) |
 | [Development](development.md) | Building, testing, and contributing |
-| [Examples](../examples/) | Sample configs and backends (S3, GCS, automerge, Terramate, Terragrunt) in `examples/` |
+| [Examples](https://github.com/devopsfactory-io/neptune/tree/main/examples) | Sample configs and backends (S3, GCS, automerge, Terramate, Terragrunt) in `examples/` |

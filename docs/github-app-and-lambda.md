@@ -1,6 +1,6 @@
 # GitHub App and Lambda (webhook trigger)
 
-You can trigger Neptune from webhooks: when a PR is opened or updated, **neptune plan** runs; when someone comments e.g. `@neptbot apply` on a PR, **neptune apply** runs. The default is to **install the Neptune project's neptbot GitHub App** on your repos—no need to create an app or run infrastructure. Alternatively, you can self-host by creating your own GitHub App and deploying the [Lambda](../lambda/) in this repo.
+You can trigger Neptune from webhooks: when a PR is opened or updated, **neptune plan** runs; when someone comments e.g. `@neptbot apply` on a PR, **neptune apply** runs. The default is to **install the Neptune project's neptbot GitHub App** on your repos—no need to create an app or run infrastructure. Alternatively, you can self-host by creating your own GitHub App and deploying the [Lambda](https://github.com/devopsfactory-io/neptune/tree/main/lambda) in this repo.
 
 You can also run Neptune from a workflow that triggers on `pull_request` and/or `workflow_dispatch` (see [Installation](installation.md)).
 
@@ -8,7 +8,7 @@ You can also run Neptune from a workflow that triggers on `pull_request` and/or 
 
 1. **Install the neptbot GitHub App** on your organization or user account: [Install neptbot](https://github.com/apps/neptbot).
 2. **Add the workflow below** to each repository where you want Neptune to run. The app will trigger it via `repository_dispatch` when a PR is opened/updated or when someone comments `@neptbot apply` or `@neptbot plan`.
-3. **Ensure PRs have the label `neptune`** — neptbot triggers `repository_dispatch` only for pull requests that have the label **neptune**. To apply the label automatically, use the [labeler](https://github.com/actions/labeler) GitHub Action: add a workflow (e.g. `.github/workflows/labeler.yml`) that runs the labeler on `pull_request`, and a config file (e.g. `.github/labeler.yml`) that assigns the `neptune` label based on changed files (e.g. when PRs touch your Terraform/OpenTofu paths). See the [terramate-stacks](../examples/terramate-stacks/) or [automerge](../examples/automerge/) examples for reference.
+3. **Ensure PRs have the label `neptune`** — neptbot triggers `repository_dispatch` only for pull requests that have the label **neptune**. To apply the label automatically, use the [labeler](https://github.com/actions/labeler) GitHub Action: add a workflow (e.g. `.github/workflows/labeler.yml`) that runs the labeler on `pull_request`, and a config file (e.g. `.github/labeler.yml`) that assigns the `neptune` label based on changed files (e.g. when PRs touch your Terraform/OpenTofu paths). See the [terramate-stacks](https://github.com/devopsfactory-io/neptune/tree/main/examples/terramate-stacks) or [automerge](https://github.com/devopsfactory-io/neptune/tree/main/examples/automerge) examples for reference.
 4. Configure **object storage** (e.g. S3) and a **`.neptune.yaml`** in the repo as required by Neptune (see [Configuration](configuration.md) and [Object storage](object-storage.md)).
 5. Optionally add **branch protection** so that **neptune apply** is a required status check (see [Branch protection (recommended)](#5-branch-protection-recommended)).
 
@@ -112,7 +112,7 @@ If you want to run your own GitHub App and Lambda (e.g. in your AWS account), us
 ### 1. Create your own GitHub App
 
 - Create a [GitHub App](https://docs.github.com/en/apps/creating-github-apps) (e.g. under your user or org).
-- **Webhook**: Leave "Active" checked; set **Payload URL** to your Lambda Function URL (you get this after deploying the stack; see [lambda/README.md](../lambda/README.md)).
+- **Webhook**: Leave "Active" checked; set **Payload URL** to your Lambda Function URL (you get this after deploying the stack; see [lambda/README.md](https://github.com/devopsfactory-io/neptune/blob/main/lambda/README.md)).
 - **Webhook secret**: Generate a secret and store it in AWS Secrets Manager (see below).
 - **Permissions**: Repository → **Contents** (Read and write), **Pull requests** (Read and write), **Issues** (Read and write), **Metadata** (Read). The `repository_dispatch` API requires write access. **Issues** (Read and write) is required for the Lambda to add a 👀 reaction to the PR and to the comment; **Pull requests** (Read and write) is also recommended for reactions on pull requests—see [GitHub App permissions](https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps#repository-permissions-for-pull-requests).
 - **Subscribe to events**: **Pull requests**, **Issue comments**.
@@ -121,9 +121,9 @@ If you want to run your own GitHub App and Lambda (e.g. in your AWS account), us
 
 ### 2. Deploy the Lambda
 
-- Build the Lambda binary and zip it (see [lambda/README.md](../lambda/README.md#build)).
+- Build the Lambda binary and zip it (see [lambda/README.md](https://github.com/devopsfactory-io/neptune/blob/main/lambda/README.md#build)).
 - Create two secrets in **AWS Secrets Manager**: one with the webhook secret (plain string), one with the private key (full PEM).
-- Upload the zip to S3 and deploy the CloudFormation stack from [lambda/cloudformation/template.yaml](../lambda/cloudformation/template.yaml) (see [lambda/README.md](../lambda/README.md#deploy-with-cloudformation)).
+- Upload the zip to S3 and deploy the CloudFormation stack from [lambda/cloudformation/template.yaml](https://github.com/devopsfactory-io/neptune/blob/main/lambda/cloudformation/template.yaml) (see [lambda/README.md](https://github.com/devopsfactory-io/neptune/blob/main/lambda/README.md#deploy-with-cloudformation)).
 - Copy the stack output **WebhookUrl** into your GitHub App's Payload URL.
 
 ### 3. Add the workflow to your repositories
