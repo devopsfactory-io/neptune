@@ -110,17 +110,23 @@ Applies to `.github/**/*.yml`, `Makefile`, `.goreleaser.yml`:
 
 ## Agents, Commands, and Skills
 
-Available in `.claude/`:
+Agents have been migrated to the [code-agent-hub](https://github.com/devopsfactory-io/code-agent-hub) at `.claude/agents/neptune/`. Commands and skills remain local in `.claude/`:
 
-| Type | Name | Purpose |
-| ---- | ---- | ------- |
-| Agent | `documentation-maintainer` | Runs full doc checklist after code/config/CI changes |
-| Agent | `issue-reviewer` | Triages open issues; validates drafts before upload |
-| Agent | `issue-writer` | Creates GitHub issues from `/feature` and `/bug` commands |
-| Agent | `pr-reviewer` | Reviews PRs via `gh` CLI — DCO, Go style, tests, docs |
-| Command | `/bug` | Create a bug report (invokes issue-writer) |
-| Command | `/feature` | Create a feature request (invokes issue-writer) |
-| Skill | `maintain-documentation` | Delegates doc updates to documentation-maintainer agent |
-| Skill | `open-pull-request` | Commits and opens a PR via `gh` with DCO sign-off |
-| Skill | `release-and-versioning` | Cuts a semver release with GoReleaser |
-| Skill | `testing-and-ci` | Runs tests, lint, format checks; explains CI |
+| Type | Name | Purpose | Location |
+| ---- | ---- | ------- | -------- |
+| Agent | `documentation-maintainer` | Runs full doc checklist after code/config/CI changes | hub |
+| Agent | `em` | Engineering Manager — coordinates Neptune team | hub |
+| Agent | `go-developer` | Go implementation for Neptune | hub |
+| Agent | `iac-developer` | IaC modules and GitHub Actions | hub |
+| Agent | `issue-reviewer` | Triages open issues; validates drafts before upload | hub |
+| Agent | `issue-writer` | Creates GitHub issues from `/feature` and `/bug` commands | hub |
+| Agent | `platform-engineering` | GitOps, CI/CD, observability | hub |
+| Agent | `pr-reviewer` | Reviews PRs via `gh` CLI — DCO, Go style, tests, docs | hub |
+| Agent | `qa` | Code quality and test coverage | hub |
+| Agent | `security` | Security scanning for code and IaC | hub |
+| Command | `/bug` | Create a bug report (invokes issue-writer) | local |
+| Command | `/feature` | Create a feature request (invokes issue-writer) | local |
+| Skill | `maintain-documentation` | Delegates doc updates to documentation-maintainer agent | local |
+| Skill | `open-pull-request` | Commits and opens a PR via `gh` with DCO sign-off | local |
+| Skill | `release-and-versioning` | Cuts a semver release with GoReleaser | local |
+| Skill | `testing-and-ci` | Runs tests, lint, format checks; explains CI | local |
