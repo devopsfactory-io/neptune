@@ -197,6 +197,56 @@ const pullRequestLabeledOther = `{
   "label": {"name": "other"}
 }`
 
+func TestParsePullRequest_ActionPopulated(t *testing.T) {
+	tests := []struct {
+		name       string
+		body       string
+		wantAction string
+		wantNil    bool
+	}{
+		{
+			name:       "opened",
+			body:       pullRequestOpened,
+			wantAction: "opened",
+		},
+		{
+			name:       "synchronize",
+			body:       pullRequestSynchronize,
+			wantAction: "synchronize",
+		},
+		{
+			name:       "labeled neptune",
+			body:       pullRequestLabeledNeptune,
+			wantAction: "labeled",
+		},
+		{
+			name:    "closed returns nil",
+			body:    pullRequestClosed,
+			wantNil: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			payload, _, _, _, err := ParsePullRequest([]byte(tc.body))
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tc.wantNil {
+				if payload != nil {
+					t.Errorf("expected nil payload, got %+v", payload)
+				}
+				return
+			}
+			if payload == nil {
+				t.Fatal("expected non-nil payload")
+			}
+			if payload.PullRequestAction != tc.wantAction {
+				t.Errorf("PullRequestAction: got %q, want %q", payload.PullRequestAction, tc.wantAction)
+			}
+		})
+	}
+}
+
 func TestParsePullRequest_Labeled(t *testing.T) {
 	payload, instID, labels, addedLabel, err := ParsePullRequest([]byte(pullRequestLabeledNeptune))
 	if err != nil {
@@ -295,7 +345,15 @@ const issueCommentBotAuthor = `{
   "issue": {"number": 10, "pull_request": {}},
   "repository": {"full_name": "owner/repo"},
   "installation": {"id": 111},
-  "comment": {"id": 3003, "body": "To apply these changes, comment:\n@neptbot apply", "user": {"type": "Bot", "login": "github-actions[bot]"}}
+  "comment": {"id": 3003, "body": "To apply these changes, comment:\n@neptbot apply", "user": {"type": "Bot", "login": "neptbot[bot]"}}
+}`
+
+const issueCommentExternalBot = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 4004, "body": "@neptbot apply", "user": {"type": "Bot", "login": "neptune-ci[bot]"}}
 }`
 
 func TestParseIssueComment_ValidApply(t *testing.T) {
@@ -381,6 +439,9 @@ func TestParseIssueComment_MentionNoCommand(t *testing.T) {
 	}
 }
 
+// TestParseIssueComment_BotAuthorDoesNotTrigger tests the self-bot login filter:
+// the comment author is neptbot[bot], which matches the selfBotLogin guard and
+// returns early before reaching the instructional text check.
 func TestParseIssueComment_BotAuthorDoesNotTrigger(t *testing.T) {
 	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentBotAuthor), "neptbot")
 	if err != nil {
@@ -391,6 +452,82 @@ func TestParseIssueComment_BotAuthorDoesNotTrigger(t *testing.T) {
 	}
 	if payload != nil {
 		t.Errorf("expected nil payload for bot comment, got %+v", payload)
+	}
+}
+
+func TestParseIssueComment_ExternalBotCanTrigger(t *testing.T) {
+	payload, instID, commentID, _, ok, err := ParseIssueComment([]byte(issueCommentExternalBot), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected ok true for external bot comment")
+	}
+	if payload == nil {
+		t.Fatal("expected non-nil payload for external bot comment")
+	}
+	if payload.Command != string(CommandApply) {
+		t.Errorf("command: got %q, want %q", payload.Command, CommandApply)
+	}
+	if instID != 111 {
+		t.Errorf("installation ID: got %d, want 111", instID)
+	}
+	if commentID != 4004 {
+		t.Errorf("comment ID: got %d, want 4004", commentID)
+	}
+}
+
+// issueCommentPlanTextGitHubActions simulates the plan comment posted by github-actions[bot]
+// when GITHUB_TOKEN is used instead of the app's installation token. The comment body
+// contains "To apply these changes, comment: @neptbot apply" instructional text and must
+// not be interpreted as a command by the webhook handler.
+const issueCommentPlanTextGitHubActions = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 5005, "body": "To apply these changes, comment:\n` + "`" + `\n@neptbot apply\n` + "`" + `", "user": {"type": "Bot", "login": "github-actions[bot]"}}
+}`
+
+func TestParseIssueComment_PlanCommentInstructionalTextDoesNotTrigger(t *testing.T) {
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentPlanTextGitHubActions), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatal("expected ok false: plan comment with instructional text should not trigger a command")
+	}
+	if payload != nil {
+		t.Errorf("expected nil payload for plan comment with instructional text, got %+v", payload)
+	}
+}
+
+// issueCommentExternalBotApply simulates an external CI bot (not the Neptune app bot)
+// posting a plain "@neptbot apply" command — this should still trigger apply.
+const issueCommentExternalBotApply = `{
+  "action": "created",
+  "issue": {"number": 11, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 6006, "body": "@neptbot apply", "user": {"type": "Bot", "login": "neptune-ci[bot]"}}
+}`
+
+func TestParseIssueComment_ExternalBotApplyTriggers(t *testing.T) {
+	payload, _, commentID, _, ok, err := ParseIssueComment([]byte(issueCommentExternalBotApply), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected ok true: external bot plain apply comment should trigger a command")
+	}
+	if payload == nil {
+		t.Fatal("expected non-nil payload for external bot apply comment")
+	}
+	if payload.Command != string(CommandApply) {
+		t.Errorf("command: got %q, want %q", payload.Command, CommandApply)
+	}
+	if commentID != 6006 {
+		t.Errorf("comment ID: got %d, want 6006", commentID)
 	}
 }
 
@@ -433,6 +570,56 @@ const issueCommentWithOtherLabel = `{
   "installation": {"id": 111},
   "comment": {"id": 1002, "body": "@neptbot plan"}
 }`
+
+// issueCommentExternalBotInstructionalText simulates an external bot (not the Neptune
+// app bot) posting a comment that contains the instructional text phrase used in plan
+// results. Despite being a different bot login, the instructional text guard applies to
+// all Bot-type users and must prevent triggering.
+const issueCommentExternalBotInstructionalText = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 7007, "body": "To apply these changes, comment:\n@neptbot apply", "user": {"type": "Bot", "login": "some-other-ci[bot]"}}
+}`
+
+// issueCommentBotInstructionalTextNoApply simulates a bot comment containing "To apply
+// these changes" but without any recognisable command. The early-exit on the
+// instructional text check means the mention guard is never reached for apply/plan
+// matching; the result must still be no-trigger.
+const issueCommentBotInstructionalTextNoApply = `{
+  "action": "created",
+  "issue": {"number": 10, "pull_request": {}},
+  "repository": {"full_name": "owner/repo"},
+  "installation": {"id": 111},
+  "comment": {"id": 8008, "body": "To apply these changes, see the run log.", "user": {"type": "Bot", "login": "some-other-ci[bot]"}}
+}`
+
+func TestParseIssueComment_ExternalBotInstructionalTextDoesNotTrigger(t *testing.T) {
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentExternalBotInstructionalText), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatal("expected ok false: external bot posting instructional text should not trigger a command")
+	}
+	if payload != nil {
+		t.Errorf("expected nil payload for external bot instructional text comment, got %+v", payload)
+	}
+}
+
+func TestParseIssueComment_BotInstructionalTextWithoutApplyDoesNotTrigger(t *testing.T) {
+	payload, _, _, _, ok, err := ParseIssueComment([]byte(issueCommentBotInstructionalTextNoApply), "neptbot")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok {
+		t.Fatal("expected ok false: bot instructional text comment without apply command should not trigger")
+	}
+	if payload != nil {
+		t.Errorf("expected nil payload, got %+v", payload)
+	}
+}
 
 func TestParseIssueComment_Labels(t *testing.T) {
 	payload, _, _, labels, ok, err := ParseIssueComment([]byte(issueCommentWithNeptuneLabel), "neptbot")
