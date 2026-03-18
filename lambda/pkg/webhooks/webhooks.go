@@ -21,6 +21,10 @@ type DispatchPayload struct {
 	PullRequestBranch   string `json:"pull_request_branch"`
 	PullRequestSHA      string `json:"pull_request_sha,omitempty"`
 	PullRequestRepoFull string `json:"pull_request_repo_full,omitempty"`
+	// PullRequestAction is the webhook action that triggered this dispatch
+	// (e.g. "opened", "synchronize", "labeled"). It is used internally by the
+	// Lambda handler for deduplication and is not forwarded to the workflow.
+	PullRequestAction string `json:"-"`
 }
 
 // PullRequestPayload is the relevant part of GitHub pull_request webhook.
@@ -54,7 +58,8 @@ type IssueCommentPayload struct {
 		ID   int64  `json:"id"`
 		Body string `json:"body"`
 		User struct {
-			Type string `json:"type"`
+			Login string `json:"login"`
+			Type  string `json:"type"`
 		} `json:"user"`
 	} `json:"comment"`
 }
@@ -69,7 +74,7 @@ type Installation struct {
 	ID int64 `json:"id"`
 }
 
-// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported, label names from pull_request.labels, and for "labeled" the name of the added label (addedLabel); otherwise addedLabel is "".
+// ParsePullRequest parses the pull_request webhook body and returns dispatch payload for "plan" if action is supported, label names from pull_request.labels, and for "labeled" the name of the added label (addedLabel); otherwise addedLabel is "". The returned payload's PullRequestAction field is set to the webhook action.
 func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, string, error) {
 	var p PullRequestPayload
 	if err := json.Unmarshal(body, &p); err != nil {
@@ -101,6 +106,7 @@ func ParsePullRequest(body []byte) (*DispatchPayload, int64, []string, string, e
 		PullRequestBranch:   p.PullRequest.Head.Ref,
 		PullRequestSHA:      p.PullRequest.Head.SHA,
 		PullRequestRepoFull: p.Repository.FullName,
+		PullRequestAction:   p.Action,
 	}, instID, labels, addedLabel, nil
 }
 
@@ -124,15 +130,31 @@ func ParseIssueComment(body []byte, appMention string) (*DispatchPayload, int64,
 	if !strings.Contains(bodyLower, "@"+mentionLower) {
 		return nil, 0, 0, nil, false, nil
 	}
+	// Only block comments from the app's own bot account to prevent
+	// self-triggering loops. External bots (e.g. neptune-ci[bot]) are
+	// allowed to issue commands.
+	if p.Comment.User.Type == "Bot" {
+		selfBotLogin := mentionLower + "[bot]"
+		commentLoginLower := strings.ToLower(p.Comment.User.Login)
+		if commentLoginLower == selfBotLogin {
+			return nil, 0, 0, nil, false, nil
+		}
+		// Skip bot comments that contain instructional @mention text.
+		// This check is intentionally inside the Bot type guard: human users posting
+		// the same phrase still trigger commands normally.
+		// The phrase "to apply these changes" originates from formatPlan in
+		// internal/notifications/github/comment.go — keep both in sync if the
+		// wording changes.
+		if strings.Contains(bodyLower, "to apply these changes") {
+			return nil, 0, 0, nil, false, nil
+		}
+	}
 	var cmd Command
 	if matchApply.MatchString(bodyLower) {
 		cmd = CommandApply
 	} else if matchPlan.MatchString(bodyLower) {
 		cmd = CommandPlan
 	} else {
-		return nil, 0, 0, nil, false, nil
-	}
-	if p.Comment.User.Type == "Bot" {
 		return nil, 0, 0, nil, false, nil
 	}
 	var instID int64

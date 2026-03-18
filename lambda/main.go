@@ -72,12 +72,7 @@ func handler(ctx context.Context, req events.LambdaFunctionURLRequest) (events.L
 		if payload == nil {
 			return response(200, "OK"), nil // unsupported action
 		}
-		if addedLabel != "" {
-			// labeled event: only trigger when PrLabel is set and the added label matches
-			if cfg.PrLabel == "" || addedLabel != cfg.PrLabel {
-				return response(200, "OK"), nil
-			}
-		} else if cfg.PrLabel != "" && !hasLabel(labels, cfg.PrLabel) {
+		if !shouldDispatchPullRequest(cfg.PrLabel, payload.PullRequestAction, addedLabel, labels) {
 			return response(200, "OK"), nil
 		}
 		token, err := github.InstallationToken(ctx, cfg.AppID, cfg.PrivateKey, instID)
@@ -164,6 +159,38 @@ func getHeader(h map[string]string, key string) string {
 		}
 	}
 	return ""
+}
+
+// shouldDispatchPullRequest reports whether a pull_request webhook event should
+// trigger a repository_dispatch. prLabel is the configured label gate (empty
+// means no gate). action is the webhook action (e.g. "opened", "labeled").
+// labels are the PR's current labels. addedLabel is non-empty only for
+// "labeled" events and holds the name of the label that was just added.
+//
+// Deduplication rule: when prLabel is set and the action is "opened",
+// GitHub fires both a pull_request.opened event (with the label already in
+// pull_request.labels) and a pull_request.labeled event. To avoid two
+// dispatches for the same PR creation we suppress "opened" here and rely on
+// the labeled event as the sole initial trigger when a label gate is active.
+// "reopened" is NOT suppressed because GitHub does not fire a labeled event
+// on reopen. synchronize and ready_for_review are also gated on label
+// presence because no labeled event accompanies those actions.
+func shouldDispatchPullRequest(prLabel, action, addedLabel string, labels []string) bool {
+	if addedLabel != "" {
+		// labeled event: only dispatch when the added label matches the gate.
+		return prLabel != "" && addedLabel == prLabel
+	}
+	if prLabel == "" {
+		return true
+	}
+	// prLabel is set; non-labeled action.
+	switch action {
+	case "opened":
+		// Suppress: the accompanying labeled event will trigger dispatch.
+		return false
+	default:
+		return hasLabel(labels, prLabel)
+	}
 }
 
 // hasLabel returns true if want is in labels (case-sensitive).
