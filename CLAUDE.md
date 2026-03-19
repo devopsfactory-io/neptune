@@ -110,7 +110,7 @@ Applies to `.github/**/*.yml`, `Makefile`, `.goreleaser.yml`:
 
 ## Agents, Commands, and Skills
 
-Agents have been migrated to the [code-agent-hub](https://github.com/devopsfactory-io/code-agent-hub) at `.claude/agents/neptune/`. Commands and skills remain local in `.claude/`:
+Agents are managed centrally in the [code-agent-hub](https://github.com/devopsfactory-io/code-agent-hub) at `.claude/agents/<role>/AGENTS.md`, each loading project-specific context from `.claude/skills/neptune/<role>/SKILL.md`. Commands and skills remain local in `.claude/`:
 
 | Type | Name | Purpose | Location |
 | ---- | ---- | ------- | -------- |
