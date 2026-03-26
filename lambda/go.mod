@@ -3,7 +3,7 @@ module github.com/devopsfactory-io/neptune/lambda
 go 1.26.1
 
 require (
-	github.com/aws/aws-lambda-go v1.53.0
+	github.com/aws/aws-lambda-go v1.54.0
 	github.com/aws/aws-sdk-go-v2 v1.41.4
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.4
