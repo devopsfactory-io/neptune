@@ -102,10 +102,9 @@ func loadConfig(env map[string]string) (*domain.NeptuneConfig, error) {
 	return nil, fmt.Errorf(".neptune.yaml not found on default branch (%s) or PR branch (HEAD), and refusing to use local file: %w", defaultBranch, err)
 }
 
-func runCommand(cmd *cobra.Command, args []string) error {
-	workflow := args[0]
-	ctx := context.Background()
-
+// loadAndValidateConfig loads env and config, validates, and initializes logging.
+// Returns the config and env, or exits on failure.
+func loadAndValidateConfig(cmd *cobra.Command) (*domain.NeptuneConfig, map[string]string) {
 	env, err := config.LoadEnv()
 	if err != nil {
 		log.For("cli").Error("Error", "err", err)
@@ -121,14 +120,83 @@ func runCommand(cmd *cobra.Command, args []string) error {
 	}
 	level, err := effectiveLogLevel(cmd, cfg.LogLevel)
 	if err != nil {
-		return err
+		log.For("cli").Error("Error", "err", err)
+		os.Exit(1)
 	}
 	log.Init(level)
+	return cfg, env
+}
 
-	// Config summary banner (after validate, like Python)
-	configSummaryLines := configSummaryLines(cfg)
-	log.Banner("Neptune Config Summary", configSummaryLines)
+// checkPRRequirements verifies PR requirements and returns the GitHub client and isPROpen callback.
+// Returns nil ghClient in E2E mode.
+func checkPRRequirements(ctx context.Context, cfg *domain.NeptuneConfig, workflow string, requirements []string) (*github.Client, func(context.Context, string) (bool, error)) {
+	e2eMode := os.Getenv("NEPTUNE_E2E") == "1"
+	if e2eMode {
+		return nil, func(_ context.Context, _ string) (bool, error) { return true, nil }
+	}
+	ghClient := github.NewClient(cfg)
+	if ghClient == nil {
+		notifyAndExit(cfg, "GITHUB_TOKEN, GITHUB_REPOSITORY, and GITHUB_PULL_REQUEST_NUMBER are required", 1)
+	}
+	status := ghClient.CheckRequirements(ctx, requirements)
+	if !status.IsCompliant {
+		notifyAndExit(cfg, "Cannot run "+workflow+" workflow: "+status.ErrorMessage, 1)
+	}
+	log.For("cli").Info("PR requirements check passed for workflow " + workflow)
+	reqLine := "PR requirements (" + strings.Join(requirements, ", ") + ") check passed for workflow: " + workflow
+	log.Banner("Neptune Plan/Apply Requirements Check", []string{reqLine})
+	isPROpen := func(ctx context.Context, prNumber string) (bool, error) {
+		return ghClient.IsPROpen(ctx, prNumber)
+	}
+	return ghClient, isPROpen
+}
 
+// postResultsAndStatus posts the PR comment, updates commit status, and handles automerge.
+func postResultsAndStatus(ctx context.Context, cfg *domain.NeptuneConfig, ghClient *github.Client, workflow string, headSHA string, runURL string, stepsOut *domain.StepsOutput, stacks *domain.TerraformStacks) {
+	comment := &domain.PullRequestComment{
+		StepsOutput:   stepsOut,
+		Stacks:        stacks,
+		OverallStatus: stepsOut.OverallStatus,
+	}
+	notifier := githubnotify.NewNotifier(cfg)
+	if notifier != nil {
+		if err := notifier.CreateComment(comment); err != nil {
+			log.For("cli").Error("failed to post comment", "err", err)
+		}
+	}
+	if ghClient != nil && headSHA != "" {
+		ctxName := "neptune " + workflow
+		state := "success"
+		desc := workflow + " completed successfully"
+		if stepsOut.OverallStatus != 0 {
+			state = "failure"
+			desc = workflow + " failed"
+		}
+		if err := ghClient.CreateCommitStatus(ctx, headSHA, ctxName, state, desc, runURL); err != nil {
+			log.For("cli").Error("failed to set commit status", "context", ctxName, "err", err)
+		}
+		if workflow == "plan" && stepsOut.OverallStatus == 0 {
+			applyPendingDesc := "Waiting for status to be reported — The PR cannot be merged because the apply command was not executed with success"
+			if err := ghClient.CreateCommitStatus(ctx, headSHA, "neptune apply", "pending", applyPendingDesc, runURL); err != nil {
+				log.For("cli").Error("failed to set neptune apply pending status", "err", err)
+			}
+		}
+		if workflow == "apply" && stepsOut.OverallStatus == 0 && cfg.Repository != nil && cfg.Repository.Automerge {
+			if err := ghClient.EnablePullRequestAutoMerge(ctx); err != nil {
+				log.For("cli").Error("failed to enable auto-merge", "err", err)
+			}
+		}
+	}
+}
+
+func runCommand(cmd *cobra.Command, args []string) error {
+	workflow := args[0]
+	ctx := context.Background()
+
+	cfg, _ := loadAndValidateConfig(cmd)
+
+	configSummary := configSummaryLines(cfg)
+	log.Banner("Neptune Config Summary", configSummary)
 	log.Banner("Neptune Command", []string{"Neptune is running: " + workflow})
 
 	wfs := cfg.Workflows.Workflows[cfg.Repository.AllowedWorkflow]
@@ -145,27 +213,8 @@ func runCommand(cmd *cobra.Command, args []string) error {
 		requirements = cfg.Repository.ApplyRequirements
 	}
 
-	e2eMode := os.Getenv("NEPTUNE_E2E") == "1"
-	var ghClient *github.Client
-	var isPROpen func(context.Context, string) (bool, error)
-	if e2eMode {
-		isPROpen = func(_ context.Context, _ string) (bool, error) { return true, nil }
-	} else {
-		ghClient = github.NewClient(cfg)
-		if ghClient == nil {
-			notifyAndExit(cfg, "GITHUB_TOKEN, GITHUB_REPOSITORY, and GITHUB_PULL_REQUEST_NUMBER are required", 1)
-		}
-		status := ghClient.CheckRequirements(ctx, requirements)
-		if !status.IsCompliant {
-			notifyAndExit(cfg, "Cannot run "+workflow+" workflow: "+status.ErrorMessage, 1)
-		}
-		log.For("cli").Info("PR requirements check passed for workflow " + workflow)
-		reqLine := "PR requirements (" + strings.Join(requirements, ", ") + ") check passed for workflow: " + workflow
-		log.Banner("Neptune Plan/Apply Requirements Check", []string{reqLine})
-		isPROpen = func(ctx context.Context, prNumber string) (bool, error) {
-			return ghClient.IsPROpen(ctx, prNumber)
-		}
-	}
+	ghClient, isPROpen := checkPRRequirements(ctx, cfg, workflow, requirements)
+
 	lockIface, err := lock.NewInterface(ctx, cfg, isPROpen)
 	if err != nil {
 		notifyAndExit(cfg, "Failed to get changed Terraform stacks: "+err.Error(), 1)
@@ -233,44 +282,10 @@ func runCommand(cmd *cobra.Command, args []string) error {
 		notifyAndExit(cfg, "Failed to run steps: "+err.Error(), 1)
 	}
 
-	stepsSummaryLines := stepsSummaryLines(workflow, stepsOut)
-	log.Banner("Neptune Steps Summary", stepsSummaryLines)
+	stepsSummary := stepsSummaryLines(workflow, stepsOut)
+	log.Banner("Neptune Steps Summary", stepsSummary)
 
-	comment := &domain.PullRequestComment{
-		StepsOutput:   stepsOut,
-		Stacks:        lockIface.TerraformStacks,
-		OverallStatus: stepsOut.OverallStatus,
-	}
-	notifier := githubnotify.NewNotifier(cfg)
-	if notifier != nil {
-		if err := notifier.CreateComment(comment); err != nil {
-			log.For("cli").Error("failed to post comment", "err", err)
-		}
-	}
-
-	if ghClient != nil && headSHA != "" {
-		ctxName := "neptune " + workflow
-		state := "success"
-		desc := workflow + " completed successfully"
-		if stepsOut.OverallStatus != 0 {
-			state = "failure"
-			desc = workflow + " failed"
-		}
-		if err := ghClient.CreateCommitStatus(ctx, headSHA, ctxName, state, desc, runURL); err != nil {
-			log.For("cli").Error("failed to set commit status", "context", ctxName, "err", err)
-		}
-		if workflow == "plan" && stepsOut.OverallStatus == 0 {
-			applyPendingDesc := "Waiting for status to be reported — The PR cannot be merged because the apply command was not executed with success"
-			if err := ghClient.CreateCommitStatus(ctx, headSHA, "neptune apply", "pending", applyPendingDesc, runURL); err != nil {
-				log.For("cli").Error("failed to set neptune apply pending status", "err", err)
-			}
-		}
-		if workflow == "apply" && stepsOut.OverallStatus == 0 && cfg.Repository != nil && cfg.Repository.Automerge {
-			if err := ghClient.EnablePullRequestAutoMerge(ctx); err != nil {
-				log.For("cli").Error("failed to enable auto-merge", "err", err)
-			}
-		}
-	}
+	postResultsAndStatus(ctx, cfg, ghClient, workflow, headSHA, runURL, stepsOut, lockIface.TerraformStacks)
 
 	msg := fmt.Sprintf("Workflow %s completed with status %d", workflow, stepsOut.OverallStatus)
 	if stepsOut.OverallStatus != 0 {
