@@ -6,8 +6,10 @@ type WorkflowStatus string
 const (
 	// WorkflowStatusInProgress indicates a workflow phase is currently running.
 	WorkflowStatusInProgress WorkflowStatus = "in_progress"
-	WorkflowStatusPending    WorkflowStatus = "pending"
-	WorkflowStatusCompleted  WorkflowStatus = "completed"
+	// WorkflowStatusPending indicates a workflow phase has not started yet.
+	WorkflowStatusPending WorkflowStatus = "pending"
+	// WorkflowStatusCompleted indicates a workflow phase finished successfully.
+	WorkflowStatusCompleted WorkflowStatus = "completed"
 )
 
 // LockWorkflowPhase is the stored phase status in a lock file.

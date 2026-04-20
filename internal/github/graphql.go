@@ -44,7 +44,7 @@ func (c *Client) graphQLRequest(ctx context.Context, query string, variables map
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Content-Type", "application/json")
 	httpClient := &http.Client{Timeout: 15 * time.Second}
-	resp, err := httpClient.Do(req)
+	resp, err := httpClient.Do(req) //nolint:gosec // G704: URL from internal config constant
 	if err != nil {
 		return nil, fmt.Errorf("GraphQL request: %w", err)
 	}

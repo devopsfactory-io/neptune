@@ -189,6 +189,27 @@ func postResultsAndStatus(ctx context.Context, cfg *domain.NeptuneConfig, ghClie
 	}
 }
 
+// setPendingCommitStatus sets a pending commit status for the given workflow phase.
+func setPendingCommitStatus(ctx context.Context, ghClient *github.Client, workflow string, runURL string) string {
+	if ghClient == nil {
+		return ""
+	}
+	sha, err := ghClient.GetHeadSHA(ctx)
+	if err != nil {
+		log.For("cli").Error("failed to get PR head SHA for status", "err", err)
+		return ""
+	}
+	ctxName := "neptune " + workflow
+	pendingDesc := "Plan in progress…"
+	if workflow == "apply" {
+		pendingDesc = "Apply in progress…"
+	}
+	if err := ghClient.CreateCommitStatus(ctx, sha, ctxName, "pending", pendingDesc, runURL); err != nil {
+		log.For("cli").Error("failed to set commit status", "context", ctxName, "err", err)
+	}
+	return sha
+}
+
 func runCommand(cmd *cobra.Command, args []string) error {
 	workflow := args[0]
 	ctx := context.Background()
@@ -251,23 +272,7 @@ func runCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	runURL := buildRunURL(cfg)
-	var headSHA string
-	if ghClient != nil {
-		sha, err := ghClient.GetHeadSHA(ctx)
-		if err != nil {
-			log.For("cli").Error("failed to get PR head SHA for status", "err", err)
-		} else {
-			headSHA = sha
-			ctxName := "neptune " + workflow
-			pendingDesc := "Plan in progress…"
-			if workflow == "apply" {
-				pendingDesc = "Apply in progress…"
-			}
-			if err := ghClient.CreateCommitStatus(ctx, headSHA, ctxName, "pending", pendingDesc, runURL); err != nil {
-				log.For("cli").Error("failed to set commit status", "context", ctxName, "err", err)
-			}
-		}
-	}
+	headSHA := setPendingCommitStatus(ctx, ghClient, workflow, runURL)
 
 	phase := wfs.Phases[workflow]
 	runner := &run.Runner{

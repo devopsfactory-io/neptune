@@ -20,7 +20,7 @@ func (c *Client) checkSingleRequirement(ctx context.Context, req string, prInfo 
 		return ok && v
 	case "undiverged":
 		v, ok := prInfo.Response["mergeable_state"].(string)
-		return !(ok && v == "behind")
+		return !ok || v != "behind"
 	case "rebased":
 		return git.IsBranchRebased(c.cfg)
 	default:
