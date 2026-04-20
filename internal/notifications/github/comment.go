@@ -66,7 +66,7 @@ func (n *Notifier) CreateComment(comment *domain.PullRequestComment) error {
 	req.Header.Set("Authorization", "token "+n.token)
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := n.client.Do(req)
+	resp, err := n.client.Do(req) //nolint:gosec // G704: URL from controlled repo and PR number
 	if err != nil {
 		return err
 	}

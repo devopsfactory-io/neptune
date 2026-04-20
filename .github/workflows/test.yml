@@ -11,9 +11,7 @@ on:
       - main
       - "release-**"
 
-permissions:
-  contents: read
-  pull-requests: read
+permissions: {}
 
 jobs:
   changes:
@@ -40,6 +38,8 @@ jobs:
     needs: [changes]
     if: needs.changes.outputs.should-run == 'true'
     name: test
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -53,6 +53,7 @@ jobs:
   skip:
     needs: [changes]
     if: needs.changes.outputs.should-run == 'false'
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - run: echo "No Go changes, skipping tests"
