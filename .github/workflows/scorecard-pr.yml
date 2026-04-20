@@ -1,0 +1,122 @@
+name: Scorecard PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  scorecard-check:
+    name: Scorecard Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      checks: read
+    env:
+      SCORECARD_VERSION: "5.4.0"
+      SCORECARD_CHECKSUM: "e5183aeaa5aa548fbb7318a6deb3e1038be0ef9aca24e655422ae88dfbe67502"
+      SCORE_THRESHOLD: "7.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Install scorecard CLI
+        run: |
+          set -euo pipefail
+          TARBALL="scorecard_${SCORECARD_VERSION}_linux_amd64.tar.gz"
+          curl -sLO "https://github.com/ossf/scorecard/releases/download/v${SCORECARD_VERSION}/${TARBALL}"
+          echo "${SCORECARD_CHECKSUM}  ${TARBALL}" | sha256sum --check --strict
+          tar xzf "${TARBALL}" scorecard
+          chmod +x scorecard
+          sudo mv scorecard /usr/local/bin/scorecard
+          rm "${TARBALL}"
+
+      - name: Run scorecard
+        id: scorecard
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          scorecard --repo="github.com/${{ github.repository }}" \
+            --commit="${{ github.event.pull_request.head.sha }}" \
+            --format=json --show-details > scorecard.json
+          SCORE=$(jq -r '.score' scorecard.json)
+          echo "score=${SCORE}" >> "$GITHUB_OUTPUT"
+          echo "Scorecard overall score: ${SCORE}"
+
+      - name: Comment on PR
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('scorecard.json', 'utf8'));
+            const score = data.score;
+            const threshold = parseFloat('${{ env.SCORE_THRESHOLD }}');
+            const passed = score >= threshold;
+            const icon = passed ? ':white_check_mark:' : ':x:';
+            const repo = '${{ github.repository }}';
+
+            const checks = data.checks
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(c => {
+                const s = c.score === -1 ? 'N/A' : `${c.score}/10`;
+                const raw = (c.reason || '').replace(/\|/g, '\\|');
+                const reason = raw.length > 80
+                  ? raw.substring(0, 77) + '...'
+                  : raw;
+                return `| ${c.name} | ${s} | ${reason} |`;
+              })
+              .join('\n');
+
+            let body = `## OpenSSF Scorecard — ${score}/10 ${icon}\n\n`;
+            body += `| Check | Score | Details |\n`;
+            body += `|-------|-------|---------|`;
+            body += `\n${checks}\n\n`;
+
+            if (!passed) {
+              body += `> :rotating_light: Score ${score} is below threshold ${threshold} — this check will fail.\n\n`;
+            }
+
+            body += `> Threshold: ${threshold} | [Full report](https://securityscorecards.dev/viewer/?uri=github.com/${repo})\n`;
+
+            const marker = '<!-- ossf-scorecard-pr-check -->';
+            body = marker + '\n' + body;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Enforce threshold
+        run: |
+          SCORE="${{ steps.scorecard.outputs.score }}"
+          THRESHOLD="${{ env.SCORE_THRESHOLD }}"
+          if [ "$(echo "${SCORE} < ${THRESHOLD}" | bc -l)" -eq 1 ]; then
+            echo "::error::OpenSSF Scorecard score ${SCORE} is below threshold ${THRESHOLD}"
+            exit 1
+          fi
+          echo "Scorecard score ${SCORE} meets threshold ${THRESHOLD}"
