@@ -21,7 +21,20 @@ var allowedLogLevels = map[string]bool{"DEBUG": true, "INFO": true, "ERROR": tru
 // Validate checks the loaded config. Returns an error suitable for GitHub comment if validation fails.
 func Validate(cfg *domain.NeptuneConfig) error {
 	log.For("config").Info("Checking config options")
-	repo := cfg.Repository
+	if err := validateRepository(cfg.Repository); err != nil {
+		return err
+	}
+	if err := validateRequirements(cfg.Repository); err != nil {
+		return err
+	}
+	if err := validateBranchAndWorkflow(cfg); err != nil {
+		return err
+	}
+	return validateWorkflowSteps(cfg)
+}
+
+// validateRepository checks repository-level config fields.
+func validateRepository(repo *domain.RepositoryConfig) error {
 	if repo == nil {
 		return errors.New("repository config is required")
 	}
@@ -43,6 +56,11 @@ func Validate(cfg *domain.NeptuneConfig) error {
 			return errors.New("local_stacks.source is config but local_stacks.stacks is empty")
 		}
 	}
+	return nil
+}
+
+// validateRequirements checks plan and apply requirements are valid.
+func validateRequirements(repo *domain.RepositoryConfig) error {
 	for _, r := range repo.PlanRequirements {
 		if !allowedRequirements[r] {
 			return fmt.Errorf("repository plan requirements must be one of: undiverged, approved, mergeable, rebased")
@@ -53,6 +71,12 @@ func Validate(cfg *domain.NeptuneConfig) error {
 			return fmt.Errorf("repository apply requirements must be one of: undiverged, approved, mergeable, rebased")
 		}
 	}
+	return nil
+}
+
+// validateBranchAndWorkflow checks branch config and workflow references.
+func validateBranchAndWorkflow(cfg *domain.NeptuneConfig) error {
+	repo := cfg.Repository
 	if repo.AllowedWorkflow == "" {
 		return errors.New("repository allowed workflow is required")
 	}
@@ -71,7 +95,11 @@ func Validate(cfg *domain.NeptuneConfig) error {
 	if cfg.LogLevel != "" && !allowedLogLevels[strings.ToUpper(strings.TrimSpace(cfg.LogLevel))] {
 		return errors.New("log_level must be one of: DEBUG, INFO, ERROR")
 	}
+	return nil
+}
 
+// validateWorkflowSteps checks workflow phase dependencies and step content.
+func validateWorkflowSteps(cfg *domain.NeptuneConfig) error {
 	for _, wf := range cfg.Workflows.Workflows {
 		for phaseName, phase := range wf.Phases {
 			for _, dep := range phase.DependsOn {
