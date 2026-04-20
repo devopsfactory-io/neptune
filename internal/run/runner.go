@@ -114,7 +114,7 @@ func (r *Runner) runCommandInDir(ctx context.Context, dir, command string) domai
 		shell = "cmd"
 		flag = "/c"
 	}
-	cmd := exec.CommandContext(ctx, shell, flag, command)
+	cmd := exec.CommandContext(ctx, shell, flag, command) //nolint:gosec // G204: runs user-defined workflow step commands
 	if dir != "" {
 		cmd.Dir = dir
 	}

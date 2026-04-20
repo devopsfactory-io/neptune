@@ -4,6 +4,7 @@ package domain
 type WorkflowStatus string
 
 const (
+	// WorkflowStatusInProgress indicates a workflow phase is currently running.
 	WorkflowStatusInProgress WorkflowStatus = "in_progress"
 	WorkflowStatusPending    WorkflowStatus = "pending"
 	WorkflowStatusCompleted  WorkflowStatus = "completed"

@@ -15,7 +15,7 @@ const stackBlockType = "stack"
 // name is required; depends_on is optional (nil if missing). Returns an error if the file is invalid
 // or has no stack block or no name.
 func ParseStackHcl(path string) (name string, dependsOn []string, err error) {
-	src, err := os.ReadFile(path)
+	src, err := os.ReadFile(path) //nolint:gosec // G304: path from controlled stack discovery
 	if err != nil {
 		return "", nil, fmt.Errorf("reading stack.hcl: %w", err)
 	}
