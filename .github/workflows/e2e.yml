@@ -11,12 +11,13 @@ on:
       - main
       - "release-**"
 
-permissions:
-  contents: read
-  pull-requests: read
+permissions: {}
 
 jobs:
   changes:
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       should-run: ${{ steps.changes.outputs.e2e == 'true' }}
     if: github.event.pull_request.draft == false || github.event_name == 'push'
@@ -41,6 +42,8 @@ jobs:
     needs: [changes]
     if: needs.changes.outputs.should-run == 'true'
     name: e2e
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -65,6 +68,7 @@ jobs:
   skip:
     needs: [changes]
     if: needs.changes.outputs.should-run == 'false'
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - run: echo "No e2e-relevant changes, skipping e2e"

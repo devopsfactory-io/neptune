@@ -11,11 +11,12 @@ concurrency:
   group: neptune-${{ github.event.client_payload.pull_request_number }}
   cancel-in-progress: false
 
-permissions:
-  pull-requests: write
+permissions: {}
 
 jobs:
   lambda-integration-test:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Comment Lambda integration success

@@ -12,11 +12,13 @@ on:
       - main
       - "release-**"
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   changes:
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       should-run: ${{ steps.changes.outputs.cross-repo == 'true' }}
     if: github.event.pull_request.draft == false
@@ -39,6 +41,8 @@ jobs:
     needs: [changes]
     if: needs.changes.outputs.should-run == 'true' && github.event.pull_request.head.repo.fork != true
     name: cross-repo-test
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     env:
       ROOT_HCL_FILENAME: root.hcl
@@ -417,6 +421,7 @@ jobs:
   skip:
     needs: [changes]
     if: needs.changes.outputs.should-run == 'false'
+    permissions: {}
     runs-on: ubuntu-latest
     steps:
       - run: echo "No cross-repo-relevant changes, skipping cross-repo-test"
