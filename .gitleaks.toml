@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake/dummy RSA keys in test files"
+paths = [
+  '''.*_test\.go$''',
+]

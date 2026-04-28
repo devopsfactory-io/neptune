@@ -19,7 +19,7 @@ func NewUnlockCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "unlock",
 		Short: "Unlock all stacks",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			if !allStacks {
 				return fmt.Errorf("you need to use the flag --all to run this command")
 			}

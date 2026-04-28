@@ -84,7 +84,7 @@ func parseLsRemoteSymref(out string) (string, error) {
 // ShowFileFromRef runs "git show <ref>:<path>" in workDir and returns the file content.
 // path must be relative to the git repository root (e.g. ".neptune.yaml" or "e2e/.neptune.yaml").
 func ShowFileFromRef(workDir, ref, path string) ([]byte, error) {
-	cmd := exec.Command("git", "show", ref+":"+path)
+	cmd := exec.Command("git", "show", ref+":"+path) //nolint:gosec // G204: controlled git ref and path
 	cmd.Dir = workDir
 	out, err := cmd.Output()
 	if err != nil {
@@ -95,7 +95,7 @@ func ShowFileFromRef(workDir, ref, path string) ([]byte, error) {
 
 // FetchBranch runs "git fetch origin <branch>" in workDir so that origin/<branch> exists.
 func FetchBranch(workDir, branch string) error {
-	cmd := exec.Command("git", "fetch", "origin", branch)
+	cmd := exec.Command("git", "fetch", "origin", branch) //nolint:gosec // G204: controlled branch name
 	cmd.Dir = workDir
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("git fetch origin %s: %w: %s", branch, err, string(out))
@@ -106,7 +106,7 @@ func FetchBranch(workDir, branch string) error {
 // ChangedPaths returns the relative paths of files changed between baseRef and HEAD.
 // baseRef is e.g. "origin/main". Paths are relative to the repository root.
 func ChangedPaths(workDir, baseRef string) ([]string, error) {
-	cmd := exec.Command("git", "diff", "--name-only", baseRef+"...HEAD")
+	cmd := exec.Command("git", "diff", "--name-only", baseRef+"...HEAD") //nolint:gosec // G204: controlled base ref
 	cmd.Dir = workDir
 	out, err := cmd.Output()
 	if err != nil {

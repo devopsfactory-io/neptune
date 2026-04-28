@@ -172,10 +172,8 @@ func topologicalOrder(entries []domain.StackEntry) ([]string, error) {
 	return order, nil
 }
 
-// discoverStackHclOrdered discovers stacks with stack.hcl, parses depends_on, resolves relative
-// paths, expands directory deps, and returns stack paths in topological order. Returns error on
-// parse failure or dependency cycle.
-func discoverStackHclOrdered(rootDir string) ([]string, error) {
+// walkAndCollectStacks walks rootDir and collects directories containing stack.hcl files.
+func walkAndCollectStacks(rootDir string) ([]string, error) {
 	var paths []string
 	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
@@ -204,15 +202,12 @@ func discoverStackHclOrdered(rootDir string) ([]string, error) {
 		return nil, err
 	}
 	sort.Strings(paths)
-	if len(paths) == 0 {
-		return nil, nil
-	}
-	// Parse each stack.hcl and collect path -> resolved depends_on (repo-root paths).
-	type parsed struct {
-		path     string
-		depPaths []string
-	}
-	var parsedList []parsed
+	return paths, nil
+}
+
+// resolveAndBuildEntries parses stack.hcl for each path, resolves dependencies, and builds entries for topological sort.
+func resolveAndBuildEntries(rootDir string, paths []string) ([]domain.StackEntry, error) {
+	var entries []domain.StackEntry
 	for _, p := range paths {
 		hclPath := filepath.Join(rootDir, filepath.FromSlash(p), stackHclFilename)
 		_, rawDeps, err := ParseStackHcl(hclPath)
@@ -223,21 +218,26 @@ func discoverStackHclOrdered(rootDir string) ([]string, error) {
 		for _, d := range rawDeps {
 			resolved = append(resolved, resolveDepPath(rootDir, p, d))
 		}
-		parsedList = append(parsedList, parsed{path: p, depPaths: resolved})
+		concreteDeps := expandDirDeps(paths, resolved)
+		entries = append(entries, domain.StackEntry{Path: p, DependsOn: concreteDeps})
 	}
-	// Expand directory deps to concrete stack paths and build entries.
-	pathSet := make(map[string]bool)
-	for _, p := range paths {
-		pathSet[p] = true
-	}
-	var entries []domain.StackEntry
-	for _, s := range parsedList {
-		concreteDeps := expandDirDeps(paths, s.depPaths)
-		entries = append(entries, domain.StackEntry{Path: s.path, DependsOn: concreteDeps})
-	}
-	order, err := topologicalOrder(entries)
+	return entries, nil
+}
+
+// discoverStackHclOrdered discovers stacks with stack.hcl, parses depends_on, resolves relative
+// paths, expands directory deps, and returns stack paths in topological order. Returns error on
+// parse failure or dependency cycle.
+func discoverStackHclOrdered(rootDir string) ([]string, error) {
+	paths, err := walkAndCollectStacks(rootDir)
 	if err != nil {
 		return nil, err
 	}
-	return order, nil
+	if len(paths) == 0 {
+		return nil, nil
+	}
+	entries, err := resolveAndBuildEntries(rootDir, paths)
+	if err != nil {
+		return nil, err
+	}
+	return topologicalOrder(entries)
 }

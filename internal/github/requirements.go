@@ -9,6 +9,25 @@ import (
 	"github.com/devopsfactory-io/neptune/internal/log"
 )
 
+// checkSingleRequirement checks one PR requirement and returns true if it passes.
+func (c *Client) checkSingleRequirement(ctx context.Context, req string, prInfo *domain.PRInfo) bool {
+	switch req {
+	case "approved":
+		ok, err := c.checkApproved(ctx)
+		return err == nil && ok
+	case "mergeable":
+		v, ok := prInfo.Response["mergeable"].(bool)
+		return ok && v
+	case "undiverged":
+		v, ok := prInfo.Response["mergeable_state"].(string)
+		return !ok || v != "behind"
+	case "rebased":
+		return git.IsBranchRebased(c.cfg)
+	default:
+		return true
+	}
+}
+
 // CheckRequirements checks if the PR meets the given requirements (approved, mergeable, undiverged, rebased).
 func (c *Client) CheckRequirements(ctx context.Context, requirements []string) *domain.PRRequirementsStatus {
 	if len(requirements) == 0 {
@@ -27,29 +46,8 @@ func (c *Client) CheckRequirements(ctx context.Context, requirements []string) *
 	var failed []string
 	for _, req := range requirements {
 		log.For("github").Info("Checking requirement: " + req)
-		switch req {
-		case "approved":
-			ok, err := c.checkApproved(ctx)
-			if err != nil || !ok {
-				failed = append(failed, req)
-			}
-		case "mergeable":
-			log.For("github").Info("Checking PR mergeability")
-			v, ok := prInfo.Response["mergeable"].(bool)
-			if !ok || !v {
-				failed = append(failed, req)
-			}
-		case "undiverged":
-			log.For("github").Info("Checking PR branch is up to date with base")
-			v, ok := prInfo.Response["mergeable_state"].(string)
-			if ok && v == "behind" {
-				failed = append(failed, req)
-			}
-		case "rebased":
-			log.For("github").Info("Checking PR branch is rebased...")
-			if !git.IsBranchRebased(c.cfg) {
-				failed = append(failed, req)
-			}
+		if !c.checkSingleRequirement(ctx, req, prInfo) {
+			failed = append(failed, req)
 		}
 	}
 	log.For("github").Info("PR requirements collected")

@@ -55,7 +55,7 @@ func NewStacksListCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List stack paths",
 		Long:  "List stack paths (from config or stack.hcl discovery). With --changed, only list stacks with changes since the base branch.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			format, err := cmd.Flags().GetString("format")
 			if err != nil {
 				return err
@@ -222,13 +222,13 @@ func runStacksCreate(cmd *cobra.Command, format string, name string, dependsOn [
 		os.Exit(1)
 	}
 	stackDir := filepath.Join(rootDir, name)
-	if err := os.MkdirAll(stackDir, 0755); err != nil {
+	if err := os.MkdirAll(stackDir, 0755); err != nil { //nolint:gosec // G301: standard directory permissions
 		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}
 	stackHcl := filepath.Join(stackDir, "stack.hcl")
 	content := stackHclContent(name, dependsOn)
-	if err := os.WriteFile(stackHcl, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(stackHcl, []byte(content), 0644); err != nil { //nolint:gosec // G306: standard file permissions
 		log.For("cli").Error("Error", "err", err)
 		os.Exit(1)
 	}

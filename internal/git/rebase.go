@@ -19,7 +19,7 @@ func IsBranchRebased(cfg *domain.NeptuneConfig) bool {
 	}
 	ref := "origin/" + branch
 	// rev-list HEAD..origin/branch = commits reachable from origin/branch but not from HEAD (we're behind)
-	cmd := exec.Command("git", "rev-list", "--count", "HEAD.."+ref)
+	cmd := exec.Command("git", "rev-list", "--count", "HEAD.."+ref) //nolint:gosec // G204: controlled ref from config
 	cmd.Dir = "."
 	out, err := cmd.Output()
 	if err != nil {

@@ -8,20 +8,54 @@ linters:
   default: none
   enable:
     - errcheck
+    - gocyclo
+    - gosec
     - govet
     - ineffassign
+    - misspell
+    - revive
     - staticcheck
+    - unconvert
     - unused
   settings:
     errcheck:
       check-type-assertions: true
       check-blank: true
+    gocyclo:
+      min-complexity: 15
+    gosec:
+      excludes:
+        - G115
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+        - name: var-naming
+          severity: warning
+        - name: error-return
+          severity: warning
+        - name: error-naming
+          severity: warning
+        - name: unused-parameter
+          severity: warning
   exclusions:
     rules:
       - path: _test\.go
         linters:
           - errcheck
+          - gosec
+          - gocyclo
+          - revive
+      - path: _test\.go
+        text: "exported"
+        linters:
+          - revive
 
 formatters:
   enable:
     - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/devopsfactory-io/neptune
