@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.98.0
 	github.com/google/go-github/v84 v84.0.0
 	github.com/hashicorp/hcl/v2 v2.24.0
-	github.com/rs/zerolog v1.35.0
+	github.com/rs/zerolog v1.35.1
 	github.com/spf13/cobra v1.10.2
 	github.com/terramate-io/terramate v0.16.0
 	github.com/zclconf/go-cty v1.18.0
