@@ -107,7 +107,7 @@ require (
 	github.com/goware/prefixer v0.0.0-20160118172347-395022866408 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/gruntwork-io/go-commons v0.17.2 // indirect
-	github.com/gruntwork-io/terragrunt v0.82.0 // indirect
+	github.com/gruntwork-io/terragrunt v1.0.4 // indirect
 	github.com/gruntwork-io/terragrunt-engine-go v0.0.15 // indirect
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.72 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
