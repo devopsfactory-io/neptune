@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Neptune README GIF</title>
+<!-- Source for neptune-readme.gif. Render with render-gif.cjs; window.seek(t) draws any time. -->
+<style>
+:root { --bg: #071736; --card: #0f2a5c; --line: #2a4f8f; --ink: #f2f8ff; --muted: #b3cbe9; --cyan: #5fd3f0; --ok: #43d68f; --bad: #ff7070;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif; --mono: ui-monospace, SFMono-Regular, Menlo, monospace; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+.stage { position: relative; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); }
+.scene { position: absolute; inset: 0; visibility: hidden; }
+h1 { margin: 0; font-size: 64px; line-height: 1.05; font-weight: 800; letter-spacing: -.02em; }
+h1 em, h2 em { font-style: normal; color: var(--cyan); }
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.sub { font-size: 34px; color: var(--muted); margin: 18px 0 0; }
+.pipe { display: flex; align-items: center; margin-top: 56px; }
+.node { font-size: 28px; font-weight: 700; padding: 14px 22px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); }
+.node.err { border-color: var(--bad); background: #4a1730; }
+.link { width: 34px; height: 4px; background: var(--muted); }
+.brand { display: flex; align-items: center; gap: 18px; font-size: 40px; font-weight: 800; color: var(--cyan); margin-bottom: 22px; }
+.brand img { width: 84px; height: 84px; }
+.top { position: absolute; left: 48px; right: 48px; top: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+.step { font-size: 22px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+h2 { margin: 0; font-size: 46px; font-weight: 800; letter-spacing: -.01em; }
+.real { flex: none; font-size: 18px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ok); border: 2px solid #2b7a57; border-radius: 999px; padding: 8px 16px; }
+.shot { position: absolute; left: 50%; top: 158px; transform: translateX(-50%); border-radius: 12px; overflow: hidden; border: 3px solid var(--line); background: #fff; }
+.shot img { display: block; transform-origin: 0 0; transform: scale(calc(1 + var(--p, 0) * .05)); }
+.shot.scroll img { transform: translateY(calc(var(--p, 0) * -114px)); } /* 652px crop in a 538px box */
+.badges { position: absolute; right: 48px; bottom: 34px; display: flex; flex-direction: column; gap: 12px; }
+.badge { font-size: 24px; font-weight: 700; padding: 12px 18px; border-radius: 12px; background: var(--card); border: 2px solid var(--ok); }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
+.foot { position: absolute; left: 48px; bottom: 22px; font-size: 18px; color: var(--muted); }
+.url { margin-top: 34px; padding: 18px 30px; border-radius: 14px; background: var(--ink); color: #071a3d; font-size: 30px; font-weight: 800; }
+.url span { display: block; font: 600 24px var(--mono); color: #1e4f9c; margin-top: 4px; }
+.needs { font-size: 22px; color: var(--muted); margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <section class="scene center" data-start="0" data-end="2.8">
+    <h1 data-in="-1">Apply after merge?</h1>
+    <p class="sub" data-in="-1">Then errors land on <span class="bad">main</span>.</p>
+    <div class="pipe">
+      <span class="node" data-in="-1">Open PR</span><i class="link" data-in="0.2"></i>
+      <span class="node" data-in="0.3">Plan</span><i class="link" data-in="0.5"></i>
+      <span class="node" data-in="0.6">Merge</span><i class="link" data-in="0.8"></i>
+      <span class="node" data-in="0.9">Apply on main</span><i class="link" data-in="1.2"></i>
+      <span class="node err" data-in="1.3">✕ Error</span>
+    </div>
+  </section>
+
+  <section class="scene center" data-start="2.8" data-end="5.2">
+    <div class="brand" data-in="0"><img src="neptune-logo-256.png" alt="">Neptune</div>
+    <h1 data-in="0.2">Plan and apply <em>on the PR</em>.</h1>
+    <p class="sub" data-in="0.6">Merge after apply succeeds. Runs in your GitHub Actions.</p>
+  </section>
+
+  <section class="scene" data-start="5.2" data-end="8.2">
+    <div class="top" data-in="0"><div><div class="step">1 · Open a PR</div><h2>Change your <em>stacks</em>.</h2></div><span class="real">Real PR · neptune-tests #311</span></div>
+    <div class="shot" data-in="0.2" style="width:1184px;height:538px"><img src="pr311-files.png" width="1232" alt="" data-grow="0.2" data-dur="2.8"></div>
+  </section>
+
+  <section class="scene" data-start="8.2" data-end="11.8">
+    <div class="top" data-in="0"><div><div class="step">2 · Plan</div><h2>Neptune plans each stack <em>on the PR</em>.</h2></div><span class="real">Real PR · neptune-tests #311</span></div>
+    <div class="shot scroll" data-in="0.2" style="width:830px;height:538px"><img src="pr311-plan.png" width="830" alt="" data-grow="0.8" data-dur="2.4"></div>
+  </section>
+
+  <section class="scene" data-start="11.8" data-end="15.8">
+    <div class="top" data-in="0"><div><div class="step">3 · Apply</div><h2>Apply on the PR. <em>Then merge.</em></h2></div><span class="real">Real PR · neptune-tests #311</span></div>
+    <div class="shot" data-in="0.2" style="width:830px;height:425px;left:48px;transform:none"><img src="pr311-apply.png" width="830" alt="" data-grow="0.2" data-dur="3.8"></div>
+    <div class="badges">
+      <span class="badge" data-in="1"><span class="ok">✓</span> neptune plan</span>
+      <span class="badge" data-in="1.4"><span class="ok">✓</span> neptune apply</span>
+    </div>
+    <p class="foot" data-in="1.8">CI test, Oct 18, 2026 · apply dispatched by CI, no approval review · PR closed unmerged</p>
+  </section>
+
+  <section class="scene center" data-start="15.8" data-end="18.8">
+    <div class="brand" data-in="0"><img src="neptune-logo-256.png" alt="">Neptune</div>
+    <h1 data-in="0.2">Try Neptune <em>now</em>.</h1>
+    <div class="url" data-in="0.5">github.com/devopsfactory-io/neptune<span>docs/getting-started-local-stacks.md</span></div>
+    <p class="needs" data-in="0.8">GitHub Actions · neptbot · Terraform or OpenTofu · GCS or S3 for locks</p>
+  </section>
+</div>
+<script>
+const D = 18.8, FADE = 0.3;
+const scenes = [...document.querySelectorAll('.scene')];
+const ease = x => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+window.seek = t => {
+  scenes.forEach((s, i) => {
+    const a = +s.dataset.start, b = +s.dataset.end, local = t - a;
+    // First scene has no fade-in and the last no fade-out, so the GIF loop starts and ends crisp.
+    const o = t < a || t > b ? 0 : Math.min(i === 0 ? 1 : ease(local / FADE), i === scenes.length - 1 ? 1 : ease((b - t) / FADE));
+    s.style.opacity = o;
+    s.style.visibility = o > 0 ? 'visible' : 'hidden';
+    for (const el of s.querySelectorAll('[data-in]')) {
+      const p = ease((local - +el.dataset.in) / 0.4);
+      el.style.opacity = p;
+      el.style.translate = `0 ${(1 - p) * 16}px`; // `translate` composes with any CSS transform
+    }
+    for (const el of s.querySelectorAll('[data-grow]')) el.style.setProperty('--p', ease((local - +el.dataset.grow) / +el.dataset.dur));
+  });
+};
+window.DURATION = D;
+seek(0);
+</script>
+</body>
+</html>
