@@ -87,6 +87,7 @@ Use Go version from `go.mod`. No other prerequisites for building or testing the
 
 ## CI
 
+- **`.github/workflows/security.yml`** – On pushes and pull requests to `main`; runs Gitleaks and separate `govulncheck ./...` matrix jobs for the root and `lambda/` modules. Each job uses its module's `go.mod` and `go.sum`; matrix fail-fast is disabled so both scans run. See [docs/development.md](docs/development.md#vulnerability-scans) for local commands.
 - **`.github/workflows/test.yml`** – On push to `main`/`release-*` and on PRs; path filter for Go files; runs `make test-all` and `make check-fmt`.
 - **`.github/workflows/e2e.yml`** – On push/PR when e2e-related paths change; runs `./e2e/scripts/run-terramate.sh` with MinIO (Docker Compose). See [e2e/README.md](e2e/README.md).
 - **`.github/workflows/integration.yml`** – On PRs when integration-relevant paths change; runs Neptune plan/apply on the same PR with real GitHub (requirements check, PR comments, commit statuses) and MinIO for locks. Needs `statuses: write` for commit status API. See [e2e/README.md](e2e/README.md#integration-tests).

@@ -14,6 +14,7 @@ description: Runs tests, lint, and format checks; explains CI workflows. Use whe
 
 ## CI Workflows
 
+- **security.yml** – On pushes and PRs to `main`. Runs Gitleaks and separate `govulncheck ./...` jobs for the root and `lambda/` modules, using each module's Go version and dependency cache. Both scans run even if one fails. See [local vulnerability scan commands](../../../docs/development.md#vulnerability-scans).
 - **test.yml** – On push to `main`/`release-*` and on PRs. Path filter for Go files and Makefile. Runs `make test-all` and `make check-fmt`.
 - **lint.yml** – On PRs. Path filter for Go and lint config. Runs golangci-lint.
 - **labeler.yml** – On pull_request. Runs actions/labeler with `.github/labeler.yml` (path and head-branch rules).
