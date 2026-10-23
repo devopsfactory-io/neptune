@@ -15,7 +15,7 @@ The Lambda receives webhooks (pull request and issue comment events), verifies t
 
 If you are self-hosting, you need:
 
-- Go 1.22+ (to build the binary)
+- Go version from [go.mod](go.mod) (to build the binary)
 - AWS CLI configured (to deploy and to create secrets)
 - A [GitHub App](https://docs.github.com/en/apps/creating-github-apps) with:
   - Webhook URL set to your Lambda Function URL (after deploy)
