@@ -2,6 +2,8 @@
 
 E2E tests run Neptune against MinIO (S3-compatible) using Docker Compose. They verify lock storage, workflow execution (plan/apply), and Terramate change detection without a real GitHub PR.
 
+The [Docker Compose fixture](docker-compose.yaml) uses the digest-pinned `pgsty/silo` image, a [Silo fork of MinIO](https://github.com/pgsty/silo), for both the server and the `mc` bucket-setup client. The service names remain `minio` and `minio-init`. This image choice applies to the E2E and integration test fixture; production object-storage setup is described in [Object storage](../docs/object-storage.md).
+
 ## Prerequisites
 
 - **Docker** and **Docker Compose** – for MinIO

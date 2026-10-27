@@ -15,7 +15,9 @@ We take security seriously. If you believe you have found a security vulnerabili
 
 **Preferred method:** Use [GitHub Security Advisories](https://github.com/devopsfactory-io/neptune/security/advisories/new) (private disclosure). This keeps the report confidential until a fix is ready.
 
-**Alternative:** Email the maintainers listed in [MAINTAINERS.md](MAINTAINERS.md) (use the contact method they provide, if any). Do not open a public issue for security vulnerabilities.
+**Alternative:** Email the maintainers listed in [MAINTAINERS.md](MAINTAINERS.md) (use the contact method they provide, if any). Do not open a public issue for new or undisclosed security vulnerabilities.
+
+Maintainers may use public issues to track remediation of upstream dependency advisories that are already publicly disclosed. Limit these issues to facts already published in the upstream advisories. Do not add new vulnerability findings or new exploit details. Report new or undisclosed vulnerabilities through the private channels above.
 
 ### What to include
 

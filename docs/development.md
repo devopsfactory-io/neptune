@@ -15,7 +15,21 @@ make check-fmt  # check formatting
 make lint       # run golangci-lint (optional)
 ```
 
-Use the Go version from `go.mod`. See [AGENTS.md](https://github.com/devopsfactory-io/neptune/blob/main/AGENTS.md) for code style, testing, and CI.
+Use the Go version from `go.mod` for the CLI and `lambda/go.mod` for the separate Lambda module. See [AGENTS.md](https://github.com/devopsfactory-io/neptune/blob/main/AGENTS.md) for code style, testing, and CI.
+
+### Vulnerability scans
+
+The [Security Scanning workflow](https://github.com/devopsfactory-io/neptune/blob/main/.github/workflows/security.yml) runs on pushes and pull requests to `main`. It scans for secrets with Gitleaks and runs `govulncheck ./...` separately in the repository root and `lambda/`, using each module's Go version. Both module scans run even if one fails.
+
+To reproduce the Go vulnerability scans locally, run from the repository root:
+
+```bash
+go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+govulncheck ./...
+(cd lambda && govulncheck ./...)
+```
+
+Ensure the Go binary directory (`$GOBIN`, or `$(go env GOPATH)/bin` when unset) is on your `PATH`. The root scan does not cover the separate Lambda module.
 
 ## Release Process
 
